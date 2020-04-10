@@ -8,7 +8,7 @@ edition = "2018"
 
 
 [dependencies]
-rweb = { version = "0.5.0", features = ["tls", "openapi"] }
+rweb = { version = "0.5.1", features = ["tls", "openapi"] }
 serde = { version = "1.0.106", features = ["derive"] }
 serde_json = "1.0.51"
 tokio = "0.2.17"

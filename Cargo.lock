@@ -958,9 +958,9 @@ dependencies = [
 
 [[package]]
 name = "rweb"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "185c90c0c0ac7111d171d5c7bdce7745937bbcc26319e6394094f8e255189d06"
+checksum = "d47f7cf4a6236a122b41c518bd38677b99a662715869b7e7ba77b702eaf58994"
 dependencies = [
  "futures",
  "http 0.2.1",
@@ -976,9 +976,9 @@ dependencies = [
 
 [[package]]
 name = "rweb-macros"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53de36b0b2c0623278b92bcaf4082ffabd9a2b0a364af5f725f44a7589d830fb"
+checksum = "a8cfd7570b73025c2195d0f41ac4bb51ccf566090b3b190349d3bf809fffb4f1"
 dependencies = [
  "pmutil",
  "proc-macro2",
