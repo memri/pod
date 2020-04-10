@@ -126,6 +126,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.42"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81fb25b677f8bf1eb325017cb6bb8452f87969db0fedb4f757b297bee78a7c62"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "dgraph"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c85dad135549756ae463d7011e265ffd25cf8e11666960a71398de17d43038f9"
+dependencies = [
+ "cfg-if",
+ "futures 0.1.29",
+ "grpcio",
+ "protobuf",
+ "rand 0.6.5",
+]
+
+[[package]]
 name = "digest"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -173,6 +195,12 @@ name = "fuchsia-zircon-sys"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
+
+[[package]]
+name = "futures"
+version = "0.1.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b980f2816d6ee8673b6517b52cb0e808a180efc92e5c19d02cdda79066703ef"
 
 [[package]]
 name = "futures"
@@ -283,6 +311,31 @@ dependencies = [
  "cfg-if",
  "libc",
  "wasi",
+]
+
+[[package]]
+name = "grpcio"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ac757a85603e4f8c40a9f94be06a5ad412acab80b39b4e8895ca931b6619910"
+dependencies = [
+ "futures 0.1.29",
+ "grpcio-sys",
+ "libc",
+ "log 0.4.8",
+ "protobuf",
+]
+
+[[package]]
+name = "grpcio-sys"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b2f22fb0327f153acccedbe91894dd0fb15bb6f202d8195665cd206af0402b0"
+dependencies = [
+ "cc",
+ "cmake",
+ "libc",
+ "pkg-config",
 ]
 
 [[package]]
@@ -695,6 +748,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 
 [[package]]
+name = "pkg-config"
+version = "0.3.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05da548ad6865900e60eaba7f589cc0783590a92e940c26953ff81ddbab2d677"
+
+[[package]]
 name = "pmutil"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -709,6 +768,7 @@ dependencies = [
 name = "pod"
 version = "0.0.1"
 dependencies = [
+ "dgraph",
  "rweb",
  "serde",
  "serde_json",
@@ -741,6 +801,12 @@ checksum = "df246d292ff63439fea9bc8c0a270bed0e390d5ebd4db4ba15aba81111b5abe3"
 dependencies = [
  "unicode-xid",
 ]
+
+[[package]]
+name = "protobuf"
+version = "2.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12b869b619141004a542c9e585b40c1432e7b0d67a826f68cb5fa4c1ee9aff56"
 
 [[package]]
 name = "quick-error"
@@ -962,7 +1028,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d47f7cf4a6236a122b41c518bd38677b99a662715869b7e7ba77b702eaf58994"
 dependencies = [
- "futures",
+ "futures 0.3.4",
  "http 0.2.1",
  "indexmap",
  "rweb-macros",
@@ -1365,7 +1431,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce153bc4ad61ed81c255cad4f1bf2474a1d284b482b20eecaefb152d0675fb1b"
 dependencies = [
  "bytes 0.5.4",
- "futures",
+ "futures 0.3.4",
  "headers",
  "http 0.2.1",
  "hyper",

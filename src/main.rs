@@ -1,5 +1,6 @@
 mod api;
 mod api_model;
+mod dgraph_database;
 
 use api::*;
 use rweb::rt::IndexMap;
@@ -31,4 +32,5 @@ async fn main() {
         .unwrap_or_else(|err| panic!("Failed to open openapi.json for writing, {}", err));
     file.write_all(openapi_spec_string.as_bytes())
         .unwrap_or_else(|err| panic!("Failed to write openapi.json, {}", err));
+    let _dgraph = dgraph_database::create_dgraph();
 }
