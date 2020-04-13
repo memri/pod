@@ -13,14 +13,18 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::get())
         .map(move || internal_api::version());
 
-    let hello = warp::path!("hello" / String)
-        .map(move |user_name| internal_api::hello(user_name, &server_name));
-
+    let dgraph_clone = dgraph.clone();
     let get_item = warp::path!("items" / u64)
         .and(warp::get())
-        .map(move |id: u64| internal_api::get_item(&dgraph, id));
+        .map(move |id: u64| internal_api::get_item(&dgraph_clone, id));
 
-    warp::serve(version.or(hello).or(get_item))
+    let set_item = warp::path("items")
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(warp::body::json())
+        .map(move |body: serde_json::Value| internal_api::set_item(&dgraph, body));
+
+    warp::serve(version.or(get_item).or(set_item))
         .run(([127, 0, 0, 1], 3030))
         .await;
 }
