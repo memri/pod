@@ -12,7 +12,29 @@ pub fn hello(user_name: String, server_name: &str) -> String {
     format!("Hello, {} from server {}!", user_name, &server_name)
 }
 
-pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> String {
-    debug!("Getting item {}", uid);
-    unimplemented!();
+pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> String {
+
 }
+
+//pub fn get_list(_dgraph: &Arc<Dgraph>) -> Json<Vec<DataItem>> {
+//    let query = format!(
+//        r#"{{
+//            items(func: has(deleted)) {{
+//                uid
+//                deleted
+//                starred
+//                version
+//                }}
+//            }}"#
+//    );
+//
+//    let resp = DGRAPH
+//        .new_readonly_txn()
+//        .query(query)
+//        .expect("query");
+//
+//    let items: ItemList = serde_json::from_slice(&resp.json).expect("Failed to serialize JSON.");
+//
+//    Json::from(items.items)
+//}
+
