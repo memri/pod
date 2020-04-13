@@ -13,7 +13,12 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Value {
     unimplemented!();
 }
 
-pub fn set_item(_dgraph: &Arc<Dgraph>, json: Value) -> u64 {
-    debug!("Setting item {}", json);
+pub fn create_item(_dgraph: &Arc<Dgraph>, json: Value) -> u64 {
+    debug!("Creating item {}", json);
+    unimplemented!();
+}
+
+pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, json: Value) {
+    debug!("Updating item {} with {}", uid, json);
     unimplemented!();
 }
