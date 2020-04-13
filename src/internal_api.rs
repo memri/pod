@@ -1,6 +1,7 @@
 use dgraph::Dgraph;
 use log::debug;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 pub fn version() -> &'static str {
     debug!("Returning API version...");
@@ -13,28 +14,28 @@ pub fn hello(user_name: String, server_name: &str) -> String {
 }
 
 pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> String {
+    let query = r#"query all($a: string){
+    items(func: uid($a)) {
+        uid
+        deleted
+        starred
+        version
+    }
+    }"#
+    .to_string();
 
+    let mut vars = HashMap::new();
+    vars.insert("$a".to_string(), uid.to_string());
+
+    let resp = _dgraph
+        .new_readonly_txn()
+        .query_with_vars(query, vars)
+        .expect("query");
+
+    let str = std::str::from_utf8(&resp.json).unwrap();
+
+    str.parse().unwrap()
 }
 
-//pub fn get_list(_dgraph: &Arc<Dgraph>) -> Json<Vec<DataItem>> {
-//    let query = format!(
-//        r#"{{
-//            items(func: has(deleted)) {{
-//                uid
-//                deleted
-//                starred
-//                version
-//                }}
-//            }}"#
-//    );
-//
-//    let resp = DGRAPH
-//        .new_readonly_txn()
-//        .query(query)
-//        .expect("query");
-//
-//    let items: ItemList = serde_json::from_slice(&resp.json).expect("Failed to serialize JSON.");
-//
-//    Json::from(items.items)
-//}
+
 

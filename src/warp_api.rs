@@ -16,9 +16,9 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     let hello = warp::path!("hello" / String)
         .map(move |user_name| internal_api::hello(user_name, &server_name));
 
-    let get_item = warp::path!("items" / u64)
+    let get_item = warp::path!("items" / String)
         .and(warp::get())
-        .map(move |id: u64| internal_api::get_item(&dgraph, id));
+        .map(move |id: String| internal_api::get_item(&dgraph, id));
 
     warp::serve(version.or(hello).or(get_item))
         .run(([127, 0, 0, 1], 3030))
