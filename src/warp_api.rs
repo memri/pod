@@ -11,7 +11,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     let version = warp::path("version")
         .and(warp::path::end())
         .and(warp::get())
-        .map(move || internal_api::version());
+        .map(internal_api::version);
 
     let dgraph_clone = dgraph.clone();
     let get_item = warp::path!("items" / u64)
