@@ -37,5 +37,26 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> String {
     str.parse().unwrap()
 }
 
+pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> String {
+    let query = format!(
+        r#"{{
+            items(func: has(deleted)) {{
+                uid
+                deleted
+                starred
+                version
+                }}
+            }}"#
+    );
+
+    let resp = _dgraph
+        .new_readonly_txn()
+        .query(query)
+        .expect("query");
+
+    let str = std::str::from_utf8(&resp.json).unwrap();
+
+    str.parse().unwrap()
+}
 
 

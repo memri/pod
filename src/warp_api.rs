@@ -20,6 +20,11 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::get())
         .map(move |id: String| internal_api::get_item(&dgraph, id));
 
+//    let get_all_item = warp::path("all")
+//        .and(warp::path::end())
+//        .and(warp::get())
+//        .map(move || internal_api::get_all_item(&dgraph));
+
     warp::serve(version.or(hello).or(get_item))
         .run(([127, 0, 0, 1], 3030))
         .await;
