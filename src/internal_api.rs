@@ -1,5 +1,6 @@
 use dgraph::Dgraph;
 use log::debug;
+use std::str;
 use std::sync::Arc;
 use std::collections::HashMap;
 use serde_json::Value;
@@ -31,9 +32,9 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> Option<String> {
         .query_with_vars(query, vars)
         .expect("query");
 
-    let str = std::str::from_utf8(&resp.json).unwrap();
+    let json_str = str::from_utf8(&resp.json).unwrap();
 
-    Some(str.parse().unwrap())
+    Some(json_str).map(String::from)
 }
 
 pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> String {

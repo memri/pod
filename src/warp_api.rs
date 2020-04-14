@@ -20,8 +20,9 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move |id: String| {
-            let json = internal_api::get_item(&dgraph_clone, id);
-            let boxed: Box<dyn Reply> = if let Some(json) = json {
+            let string = internal_api::get_item(&dgraph_clone, id);
+            let boxed: Box<dyn Reply> = if let Some(string) = string {
+                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 Box::new(warp::reply::json(&json))
             } else {
                 Box::new(StatusCode::NOT_FOUND)
@@ -58,11 +59,6 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 StatusCode::NOT_FOUND
             }
         });
-
-//    let get_all_item = warp::path("all")
-//        .and(warp::path::end())
-//        .and(warp::get())
-//        .map(move || internal_api::get_all_item(&dgraph));
 
     warp::serve(version.or(get_item).or(create_item).or(update_item))
         .run(([127, 0, 0, 1], 3030))
