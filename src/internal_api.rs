@@ -42,7 +42,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = format!(
         r#"{{
-            items(func: has(deleted)) {{
+            items(func: has(version)) {{
                 uid
                 deleted
                 starred
@@ -68,8 +68,18 @@ pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
 ///
 /// New DataItems should have `version = 1`.
 pub fn create_item(_dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
-    debug!("Creating item {}", json);
-    unimplemented!();
+    let mut txn = _dgraph.new_txn();
+    let mut mutation = dgraph::Mutation::new();
+
+    mutation.set_set_json(serde_json::to_vec(&json).expect("Failed to serialize JSON."));
+    let resp = txn.mutate(mutation).expect("Failed to create data.");
+    txn.commit().expect("Failed to commit mutation");
+
+    let hex_uids = resp.uids.values().next().unwrap();
+    let without_pre = hex_uids.trim_start_matches("0x");
+    let uid = u64::from_str_radix(without_pre, 16).unwrap();
+
+    Some(uid)
 }
 
 /// Update an already existing item.
