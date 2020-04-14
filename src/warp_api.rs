@@ -2,7 +2,9 @@ use crate::internal_api;
 use dgraph::Dgraph;
 use log::info;
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
+use warp::Reply;
 
 pub async fn run_server(server_name: String, dgraph: Dgraph) {
     info!("Starting {} HTTP server", server_name);
@@ -19,7 +21,12 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::get())
         .map(move |id: u64| {
             let json = internal_api::get_item(&dgraph_clone, id);
-            warp::reply::json(&json)
+            let boxed: Box<dyn Reply> = if let Some(json) = json {
+                Box::new(warp::reply::json(&json))
+            } else {
+                Box::new(StatusCode::NOT_FOUND)
+            };
+            boxed
         });
 
     let dgraph_clone = dgraph.clone();
@@ -29,8 +36,13 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::body::json())
         .map(move |body: serde_json::Value| {
             let uid = internal_api::create_item(&dgraph_clone, body);
-            let json = serde_json::json!(uid);
-            warp::reply::json(&json)
+            let boxed: Box<dyn Reply> = if let Some(uid) = uid {
+                let json = serde_json::json!(uid);
+                Box::new(warp::reply::json(&json))
+            } else {
+                Box::new(StatusCode::CONFLICT)
+            };
+            boxed
         });
 
     let dgraph_clone = dgraph.clone();
@@ -39,8 +51,12 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::put())
         .and(warp::body::json())
         .map(move |uid: u64, body: serde_json::Value| {
-            internal_api::update_item(&dgraph_clone, uid, body);
-            warp::reply()
+            let result = internal_api::update_item(&dgraph_clone, uid, body);
+            if result {
+                StatusCode::OK
+            } else {
+                StatusCode::NOT_FOUND
+            }
         });
 
     warp::serve(version.or(get_item).or(create_item).or(update_item))
