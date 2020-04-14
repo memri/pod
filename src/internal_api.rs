@@ -16,11 +16,11 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<Value> {
 }
 
 /// Create an item presuming it didn't exist before.
-/// Some(uid) the new data item did not have `uid` and was successfully pud in DB.
-/// None if the data item had `uid` field, which indicates
+/// Returns Some(uid) if the data item did not have a `uid` field, and was successfully put in DB.
+/// Returns None if the data item had `uid` field, which indicates
 /// the misuse of `create` method. Use `update` method instead then.
 ///
-/// New DataItems should have `version = 1`.
+/// New DataItem-s will be created with `version = 1`.
 pub fn create_item(_dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     unimplemented!();
