@@ -37,6 +37,8 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     Some(json_str).map(String::from)
 }
 
+/// Get all items from the dgraph database.
+/// TODO: improve query
 pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = format!(
         r#"{{
