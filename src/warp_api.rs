@@ -16,11 +16,26 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .map(internal_api::version);
 
     let dgraph_clone = dgraph.clone();
-    let get_item = warp::path!("items" / String)
+    let get_item = warp::path!("items" / u64)
         .and(warp::path::end())
         .and(warp::get())
-        .map(move |id: String| {
+        .map(move |id: u64| {
             let string = internal_api::get_item(&dgraph_clone, id);
+            let boxed: Box<dyn Reply> = if let Some(string) = string {
+                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
+                Box::new(warp::reply::json(&json))
+            } else {
+                Box::new(StatusCode::NOT_FOUND)
+            };
+            boxed
+        });
+
+    let dgraph_clone = dgraph.clone();
+    let get_all_item = warp::path!("all")
+        .and(warp::path::end())
+        .and(warp::get())
+        .map(move || {
+            let string = internal_api::get_all_item(&dgraph_clone);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 Box::new(warp::reply::json(&json))

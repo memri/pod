@@ -13,7 +13,7 @@ pub fn version() -> &'static str {
 
 /// Get an item from the dgraph database.
 /// None if the `uid` doesn't exist in DB, Some(json) if it does.
-pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> Option<String> {
+pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     let query = r#"query all($a: string){
     items(func: uid($a)) {
         uid
@@ -37,7 +37,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: String) -> Option<String> {
     Some(json_str).map(String::from)
 }
 
-pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> String {
+pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = format!(
         r#"{{
             items(func: has(deleted)) {{
@@ -54,9 +54,9 @@ pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> String {
         .query(query)
         .expect("query");
 
-    let str = std::str::from_utf8(&resp.json).unwrap();
+    let json_str = str::from_utf8(&resp.json).unwrap();
 
-    str.parse().unwrap()
+    Some(json_str).map(String::from)
 }
 
 /// Create an item presuming it didn't exist before.
