@@ -1,3 +1,4 @@
+use crate::data_model;
 use dgraph::Dgraph;
 use log::debug;
 use std::str;
@@ -15,12 +16,12 @@ pub fn version() -> &'static str {
 /// None if the `uid` doesn't exist in DB, Some(json) if it does.
 pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     let query = r#"query all($a: string){
-    items(func: uid($a)) {
-        uid
-        deleted
-        starred
-        version
-    }
+        items(func: uid($a)) {
+            uid
+            deleted
+            starred
+            version
+        }
     }"#
     .to_string();
 
@@ -38,7 +39,14 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 }
 
 /// Get all items from the dgraph database.
-/// TODO: improve query
+/// TODO: improve query, e.g.
+/// {
+//  q(func: type(Note)) {
+//    uid
+//    dgraph.type
+//    expand(_all_)
+//  }
+//}
 pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = format!(
         r#"{{
@@ -67,11 +75,11 @@ pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
 /// the misuse of `create` method. Use `update` method instead then.
 ///
 /// New DataItems should have `version = 1`.
-pub fn create_item(_dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
+pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     let mut txn = _dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
 
-    mutation.set_set_json(serde_json::to_vec(&json).expect("Failed to serialize JSON."));
+    mutation.set_set_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
     let resp = txn.mutate(mutation).expect("Failed to create data.");
     txn.commit().expect("Failed to commit mutation");
 
@@ -89,8 +97,47 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
 /// A successful update operation should also
 /// increase `version += 1`, **comparing to the version that was in DB**.
 /// The `version` that is sent to us by the client should be completely ignored.
-pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, json: Value) -> bool {
-    debug!("Updating item {} with {}", uid, json);
-    unimplemented!();
+pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
+    let mut found;
+
+    let query = r#"query all($a: string){
+        items(func: uid($a)) {
+            expand(_all_)
+        }
+    }"#
+    .to_string();
+
+    let mut vars = HashMap::new();
+    vars.insert("$a".to_string(), uid.to_string());
+
+    let resp = _dgraph
+        .new_readonly_txn()
+        .query_with_vars(query, vars)
+        .expect("query");
+
+    let items: Value = serde_json::from_slice(&resp.json).unwrap();
+    let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
+
+    if items == null_item {
+
+        found = bool::from(false);
+
+    } else {
+        let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
+        let new_ver = root.items.first().unwrap().version + 1;
+
+        *_json.get_mut("version").unwrap() = serde_json::json!(new_ver);
+
+        let mut txn = _dgraph.new_txn();
+        let mut mutation = dgraph::Mutation::new();
+
+        mutation.set_set_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
+        let resp = txn.mutate(mutation).expect("Failed to create data.");
+        txn.commit().expect("Failed to commit mutation");
+
+        found = bool::from(true);
+    }
+
+    found
 }
 

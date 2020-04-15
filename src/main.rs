@@ -1,12 +1,11 @@
 mod dgraph_database;
 mod internal_api;
 mod warp_api;
+mod data_model;
 
 use chrono::Utc;
 use env_logger::Env;
 use std::io::Write;
-
-use crate::dgraph_database::set_schema;
 
 #[tokio::main]
 async fn main() {
@@ -24,7 +23,7 @@ async fn main() {
 
     let dgraph = dgraph_database::create_dgraph();
 
-    set_schema(&dgraph);
+    dgraph_database::set_schema(&dgraph);
 
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }
