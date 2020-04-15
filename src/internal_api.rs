@@ -11,7 +11,6 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-
 /// Get an item from the dgraph database.
 /// None if the `uid` doesn't exist in DB, Some(json) if it does.
 pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
@@ -97,8 +96,10 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
 /// A successful update operation should also
 /// increase `version += 1`, **comparing to the version that was in DB**.
 /// The `version` that is sent to us by the client should be completely ignored.
+///
+/// expand(_all_) only works if data has a dgraph.type
 pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
-    let mut found;
+    let found;
 
     let query = r#"query all($a: string){
         items(func: uid($a)) {
@@ -111,19 +112,18 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
     vars.insert("$a".to_string(), uid.to_string());
 
     let resp = _dgraph
-        .new_readonly_txn()
-        .query_with_vars(query, vars)
-        .expect("query");
+    .new_readonly_txn()
+    .query_with_vars(query, vars)
+    .expect("query");
 
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
-
+    println!("{:#?}", items);
     if items == null_item {
-
         found = bool::from(false);
-
     } else {
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
+
         let new_ver = root.items.first().unwrap().version + 1;
 
         *_json.get_mut("version").unwrap() = serde_json::json!(new_ver);
@@ -141,3 +141,47 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
     found
 }
 
+/// Delete an already existing item.
+/// `false` if dgraph didn't have a node with this `uid`.
+/// `true` if dgraph had a node with this `uid` and it was successfully deleted.
+pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
+    let mut deleted;
+
+    let query = r#"query all($a: string){
+        items(func: uid($a)) {
+            expand(_all_)
+        }
+    }"#
+    .to_string();
+
+    let mut vars = HashMap::new();
+    vars.insert("$a".to_string(), uid.to_string());
+
+    let resp = _dgraph
+    .new_readonly_txn()
+    .query_with_vars(query, vars)
+    .expect("query");
+
+    let items: Value = serde_json::from_slice(&resp.json).unwrap();
+
+    let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
+
+    if items == null_item {
+
+        deleted = bool::from(false);
+
+    } else {
+        let mut txn = _dgraph.new_txn();
+        let mut mutation = dgraph::Mutation::new();
+
+        let _json = serde_json::json!({"uid": uid});
+
+        mutation.set_delete_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
+        let resp = txn.mutate(mutation).expect("Failed to create data.");
+        txn.commit().expect("Failed to commit mutation");
+
+        deleted = bool::from(true);
+    }
+
+    deleted
+}
