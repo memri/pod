@@ -132,7 +132,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
         let mut mutation = dgraph::Mutation::new();
 
         mutation.set_set_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
-        let resp = txn.mutate(mutation).expect("Failed to create data.");
+        let _resp = txn.mutate(mutation).expect("Failed to create data.");
         txn.commit().expect("Failed to commit mutation");
 
         found = bool::from(true);
@@ -145,7 +145,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 /// `false` if dgraph didn't have a node with this `uid`.
 /// `true` if dgraph had a node with this `uid` and it was successfully deleted.
 pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
-    let mut deleted;
+    let deleted;
 
     let query = r#"query all($a: string){
         items(func: uid($a)) {
@@ -177,7 +177,7 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
         let _json = serde_json::json!({"uid": uid});
 
         mutation.set_delete_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
-        let resp = txn.mutate(mutation).expect("Failed to create data.");
+        let _resp = txn.mutate(mutation).expect("Failed to create data.");
         txn.commit().expect("Failed to commit mutation");
 
         deleted = bool::from(true);
