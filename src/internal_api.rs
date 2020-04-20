@@ -17,9 +17,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             uid
-            deleted
-            starred
-            version
+            expand(_all_)
         }
     }"#
     .to_string();
@@ -38,22 +36,12 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 }
 
 /// Get all items from the dgraph database.
-/// TODO: improve query, e.g.
-/// {
-//  q(func: type(Note)) {
-//    uid
-//    dgraph.type
-//    expand(_all_)
-//  }
-//}
 pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = format!(
         r#"{{
             items(func: has(version)) {{
                 uid
-                deleted
-                starred
-                version
+                expand(_all_)
                 }}
             }}"#
     );

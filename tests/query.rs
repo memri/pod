@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use dgraph::{make_dgraph};
+use dgraph::make_dgraph;
 use serde::{Deserialize, Serialize};
 use std::str;
 use serde_json;
