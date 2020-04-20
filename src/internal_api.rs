@@ -110,10 +110,10 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
     if items == null_item {
         found = bool::from(false);
     } else {
+        // verify uid, version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
-
         let new_ver = root.items.first().unwrap().version + 1;
-
+        *_json.get_mut("uid").unwrap() = serde_json::json!(uid);
         *_json.get_mut("version").unwrap() = serde_json::json!(new_ver);
 
         let mut txn = _dgraph.new_txn();
