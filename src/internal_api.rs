@@ -118,7 +118,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
-    println!("{:#?}", items);
+
     if items == null_item {
         found = bool::from(false);
     } else {
