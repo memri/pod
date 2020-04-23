@@ -5,39 +5,47 @@ pub fn create_dgraph() -> Dgraph {
     Dgraph::new(vec![dgraph_client])
 }
 
+pub fn drop_schema(dgraph: &Dgraph) {
+    let op_drop = dgraph::Operation {
+        drop_all: true,
+        ..Default::default()
+    };
+
+    dgraph.alter(&op_drop).expect("Failed to drop schema.");
+}
+
 fn format_e_prop(p: &str) -> String {
     p.to_string() + ": [uid] @reverse ."
 }
 
 fn format_n_prop(p: &str, _type: &str, indices: Vec<&str>) -> String {
-    let mut joined = String::new();
-    if indices.is_empty() {
-        joined = String::from("@index(") + &indices.join(",") + ")";
+    let mut joined = String::from(" .");
+    if *indices.first().unwrap() != "" {
+        joined = String::from("@index(") + &indices.join(",") + ") .";
     }
+
     p.to_string() + ": " + _type + " " + &joined
 }
 
 fn combine(ep: &mut Vec<String>, np: &mut Vec<String>) -> String {
     ep.extend_from_slice(&np);
-//    ep.join("\n")
-//    String::from("subtype: [uid] @reverse .\
-//    instance: [uid] @reverse .")
+    ep.join("\n")
 }
 
 fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
     dgraph.alter(&schema).expect("Failed to set schema.");
 }
 
-fn add_schema_from_properties(e_prop: Vec<String>, n_prop: Vec<(&str,&str,Vec<&str>)>) -> dgraph::Operation {
+fn add_schema_from_properties(e_prop: Vec<String>, n_prop: Vec<(&str,&str,[&str;1])>) -> dgraph::Operation {
     let mut eprops: Vec<String> = vec![];
     eprops.extend(e_prop.iter().map(|x| format_e_prop(x)));
 
     let mut nprops: Vec<String> = vec![];
     nprops.extend(n_prop.iter()
-                      .map(|x| format_n_prop(x.0, x.1, x.2.clone())));
+                      .map(|x| format_n_prop(x.0, x.1, x.2.to_vec())));
 
     let combine_prop = combine(&mut eprops, &mut nprops);
-    println!("{:#?}", combine_prop);
+
     let op_schema = dgraph::Operation {
         schema: combine_prop,
         ..Default::default()
@@ -56,10 +64,10 @@ pub fn set_schema(dgraph: &Dgraph) {
     let s_props = vec!["is_type", "name", "confidence", "profile_picture"];
     let mut string_props = vec![];
     for x in 0..s_props.len() {
-        string_props.insert(x, (s_props[x], "string", vec!["exact"]));
+        string_props.insert(x, (s_props[x], "string", ["exact"]));
     }
-    string_props.push(("creationdate", "DateTime", vec![""]));
-    string_props.push(("aliases", "[string]", vec![""]));
+    string_props.push(("creationdate", "DateTime", [""]));
+    string_props.push(("aliases", "string", [""]));
 
     let op_schema = add_schema_from_properties(edge_props, string_props);
 
