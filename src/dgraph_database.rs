@@ -26,6 +26,3 @@ pub fn set_schema(dgraph: &Dgraph) {
 
     data_model::link_types();
 }
-
-
-

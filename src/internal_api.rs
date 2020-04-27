@@ -1,10 +1,10 @@
 use crate::data_model;
 use dgraph::Dgraph;
 use log::debug;
+use serde_json::Value;
+use std::collections::HashMap;
 use std::str;
 use std::sync::Arc;
-use std::collections::HashMap;
-use serde_json::Value;
 
 pub fn version() -> &'static str {
     debug!("Returning API version...");
@@ -46,10 +46,7 @@ pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
             }}"#
     );
 
-    let resp = _dgraph
-        .new_readonly_txn()
-        .query(query)
-        .expect("query");
+    let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
     let json_str = str::from_utf8(&resp.json).unwrap();
 
@@ -100,9 +97,9 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
     vars.insert("$a".to_string(), uid.to_string());
 
     let resp = _dgraph
-    .new_readonly_txn()
-    .query_with_vars(query, vars)
-    .expect("query");
+        .new_readonly_txn()
+        .query_with_vars(query, vars)
+        .expect("query");
 
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
@@ -146,23 +143,21 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
     vars.insert("$a".to_string(), uid.to_string());
 
     let resp = _dgraph
-    .new_readonly_txn()
-    .query_with_vars(query, vars)
-    .expect("query");
+        .new_readonly_txn()
+        .query_with_vars(query, vars)
+        .expect("query");
 
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
 
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
     if items == null_item {
-
         deleted = bool::from(false);
-
     } else {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
-        let _json = serde_json::json!({"uid": uid});
+        let _json = serde_json::json!({ "uid": uid });
 
         mutation.set_delete_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
         let _resp = txn.mutate(mutation).expect("Failed to create data.");

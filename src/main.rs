@@ -1,7 +1,7 @@
+mod data_model;
 mod dgraph_database;
 mod internal_api;
 mod warp_api;
-mod data_model;
 
 use chrono::Utc;
 use env_logger::Env;

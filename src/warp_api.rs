@@ -88,12 +88,14 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             }
         });
 
-    warp::serve(version
-        .or(get_item)
-        .or(get_all_item)
-        .or(create_item)
-        .or(update_item)
-        .or(delete_item))
-        .run(([127, 0, 0, 1], 3030))
-        .await;
+    warp::serve(
+        version
+            .or(get_item)
+            .or(get_all_item)
+            .or(create_item)
+            .or(update_item)
+            .or(delete_item),
+    )
+    .run(([127, 0, 0, 1], 3030))
+    .await;
 }

@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use dgraph::make_dgraph;
 use serde::{Deserialize, Serialize};
-use std::str;
 use serde_json;
+use std::collections::HashMap;
+use std::str;
 
 mod common;
 
@@ -53,7 +53,10 @@ fn it_runs_query_with_vars() {
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
 
-    let resp = dgraph.new_readonly_txn().query_with_vars(query, vars).unwrap();
+    let resp = dgraph
+        .new_readonly_txn()
+        .query_with_vars(query, vars)
+        .unwrap();
     let json: UidJson = serde_json::from_slice(&resp.json).unwrap();
 
     assert_eq!(json.uids[0].uid, uid);
@@ -73,4 +76,3 @@ fn it_commits_a_mutation() {
 
     assert_eq!(result.is_ok(), true);
 }
-

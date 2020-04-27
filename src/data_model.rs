@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use dgraph::*;
-use serde_json::{Value};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -14,15 +14,36 @@ pub struct Item {
 }
 
 pub fn create_edge_property() -> Vec<String> {
-    let edge_prop = ["subtype", "instance", "attends", "parent", "contains", "location", "from", "owns", "diet",
-        "friend", "wife", "husband", "grandparent", "grandmother", "sister", "brother", "father", "mother",
-        "boyfriend", "girlfriend", "daughter", "son"];
+    let edge_prop = [
+        "subtype",
+        "instance",
+        "attends",
+        "parent",
+        "contains",
+        "location",
+        "from",
+        "owns",
+        "diet",
+        "friend",
+        "wife",
+        "husband",
+        "grandparent",
+        "grandmother",
+        "sister",
+        "brother",
+        "father",
+        "mother",
+        "boyfriend",
+        "girlfriend",
+        "daughter",
+        "son",
+    ];
     let mut edge_props = vec![];
     edge_props.extend(edge_prop.iter().map(|x| x.to_string()));
     edge_props
 }
 
-pub fn create_node_property() -> Vec<(&'static str,&'static str,[&'static str;1])> {
+pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
     let s_props = vec!["is_type", "name", "confidence", "profile_picture"];
     let mut string_props = vec![];
     for x in 0..s_props.len() {
@@ -33,13 +54,15 @@ pub fn create_node_property() -> Vec<(&'static str,&'static str,[&'static str;1]
     string_props
 }
 
-pub fn add_schema_from_properties(e_prop: Vec<String>, n_prop: Vec<(&str,&str,[&str;1])>) -> dgraph::Operation {
+pub fn add_schema_from_properties(
+    e_prop: Vec<String>,
+    n_prop: Vec<(&str, &str, [&str; 1])>,
+) -> dgraph::Operation {
     let mut eprops: Vec<String> = vec![];
     eprops.extend(e_prop.iter().map(|x| format_e_prop(x)));
 
     let mut nprops: Vec<String> = vec![];
-    nprops.extend(n_prop.iter()
-                      .map(|x| format_n_prop(x.0, x.1, x.2.to_vec())));
+    nprops.extend(n_prop.iter().map(|x| format_n_prop(x.0, x.1, x.2.to_vec())));
 
     let combine_prop = combine(&mut eprops, &mut nprops);
 
@@ -133,7 +156,7 @@ fn set_types() -> Vec<Vec<String>> {
 }
 
 fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<String>>) {
-   if current_path.len() > 0 {
+    if current_path.len() > 0 {
         output.push(current_path.clone());
     }
 
@@ -142,11 +165,10 @@ fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<Stri
             for (k, v) in map {
                 let mut new_path = current_path.clone();
                 new_path.push(k.to_owned());
-                deep_keys(v,  new_path, output);
-
+                deep_keys(v, new_path, output);
             }
-        },
-        _ => ()
+        }
+        _ => (),
     }
 }
 
@@ -167,14 +189,10 @@ fn set_custom_aliases() {
     }"#;
     let aliases: Value = serde_json::from_str(&custom_aliases).expect("error");
 
-
     get_aliases()
-
 }
 
-fn get_aliases() {
-
-}
+fn get_aliases() {}
 
 pub fn link_types() {
     let types = set_types();
