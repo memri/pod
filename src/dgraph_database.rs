@@ -23,6 +23,8 @@ pub fn set_schema(dgraph: &Dgraph) {
     let op_schema = data_model::add_schema_from_properties(edge_props, node_props);
 
     data_model::add_schema(dgraph, op_schema);
+
+    data_model::link_types();
 }
 
 

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use dgraph::*;
+use serde_json::{Value};
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Items {
@@ -69,4 +71,112 @@ fn combine(ep: &mut Vec<String>, np: &mut Vec<String>) -> String {
 
 pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
     dgraph.alter(&schema).expect("Failed to set schema.");
+}
+
+fn set_types() -> Vec<Vec<String>> {
+    let types = r#"
+    {
+        "photo": null,
+        "person": null,
+        "location": {
+            "city": null,
+            "country": null,
+            "restaurant": null,
+            "island": null
+        },
+        "event": {
+            "trip": {
+                "sailing trip": null
+            },
+            "conference": {
+                "google conference": null,
+                "atlassian conference": null
+            },
+            "bike ride": null,
+            "birthday": null,
+            "night out": null,
+            "visit": null,
+            "party": {
+                "birthday party": null,
+                "dinner party": null
+            },
+            "anniversary": null,
+            "dinner": {
+                "birthday dinner": null,
+                "anniversary dinner": null,
+                "engagement dinner": null
+            },
+            "family weekend": null,
+            "wedding": null,
+            "festival": {
+                "burning man": null
+            },
+            "meeting": {
+                "current meeting": null,
+                "show and tell": null,
+                "weekly ai meeting": null
+            },
+            "dawson dance": null,
+            "icebong": null,
+            "new years eve": null,
+            "public holiday": {
+                "kingsday": null
+            }
+        }
+    }"#;
+    let value: Value = serde_json::from_str(&types).expect("error");
+
+    let mut output = vec![vec![]];
+    let current_path = vec![];
+    deep_keys(&value, current_path, &mut output);
+    output
+}
+
+fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<String>>) {
+   if current_path.len() > 0 {
+        output.push(current_path.clone());
+    }
+
+    match value {
+        Value::Object(map) => {
+            for (k, v) in map {
+                let mut new_path = current_path.clone();
+                new_path.push(k.to_owned());
+                deep_keys(v,  new_path, output);
+
+            }
+        },
+        _ => ()
+    }
+}
+
+fn set_custom_aliases() {
+    let custom_aliases = r#"
+    {
+        "trip": [{"trip": true}, {"journey": true}],
+        "night out": [{"night out": false}, {"nights out": false}],
+        "bike ride": [{"bike ride": true}, {"bicycle tour": true}],
+        "google conference": [{"google io": false}, {"google conference": true},
+                            {"google seminar": true}, {"google symposion": true}],
+        "atlassian conference": [{"atlassian conference": true}, {"atlassian summit": true},
+                               {"atlassian symposion": true}, {"atlassian seminar": true}],
+        "dawson dance": [{"dawson dance": true}, {"dawson": true}],
+        "sailing trip": [{"sailing": true}, {"sailing trip": true}],
+        "burning man": [{"burning man": true}, {"burning mans": true}, {"the burn": true}],
+        "family weekend": [{"family weekdend": true}, {"family trip": true}]
+    }"#;
+    let aliases: Value = serde_json::from_str(&custom_aliases).expect("error");
+
+
+    get_aliases()
+
+}
+
+fn get_aliases() {
+
+}
+
+pub fn link_types() {
+    let types = set_types();
+    set_custom_aliases();
 }
