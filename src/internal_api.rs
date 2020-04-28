@@ -14,13 +14,13 @@ pub fn version() -> &'static str {
 /// Get an item from the dgraph database.
 /// None if the `uid` doesn't exist in DB, Some(json) if it does.
 pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
+    debug!("Getting item {}", uid);
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             uid
             expand(_all_)
         }
-    }"#
-    .to_string();
+    }"#;
 
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
@@ -36,15 +36,13 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 }
 
 /// Get all items from the dgraph database.
-pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
-    let query = format!(
-        r#"{{
+pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
+    let query = "{{
             items(func: has(version)) {{
                 uid
                 expand(_all_)
                 }}
-            }}"#
-    );
+            }}";
 
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
@@ -60,6 +58,7 @@ pub fn get_all_item(_dgraph: &Arc<Dgraph>) -> Option<String> {
 ///
 /// New DataItem-s will be created with `version = 1`.
 pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
+    debug!("Creating item {}", _json);
     let mut txn = _dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
 
@@ -84,14 +83,14 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
 ///
 /// expand(_all_) only works if data has a dgraph.type
 pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
+    debug!("Updating item {} with {}", uid, _json);
     let found;
 
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             expand(_all_)
         }
-    }"#
-    .to_string();
+    }"#;
 
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
@@ -105,7 +104,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
     if items == null_item {
-        found = bool::from(false);
+        found = false;
     } else {
         // verify uid, version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
@@ -120,7 +119,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
         let _resp = txn.mutate(mutation).expect("Failed to create data.");
         txn.commit().expect("Failed to commit mutation");
 
-        found = bool::from(true);
+        found = true;
     }
 
     found
@@ -130,14 +129,14 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 /// `false` if dgraph didn't have a node with this `uid`.
 /// `true` if dgraph had a node with this `uid` and it was successfully deleted.
 pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
+    debug!("Deleting item {}", uid);
     let deleted;
 
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             expand(_all_)
         }
-    }"#
-    .to_string();
+    }"#;
 
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
@@ -152,7 +151,7 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
     if items == null_item {
-        deleted = bool::from(false);
+        deleted = false;
     } else {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
@@ -163,7 +162,7 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
         let _resp = txn.mutate(mutation).expect("Failed to create data.");
         txn.commit().expect("Failed to commit mutation");
 
-        deleted = bool::from(true);
+        deleted = true;
     }
 
     deleted

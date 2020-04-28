@@ -38,9 +38,7 @@ pub fn create_edge_property() -> Vec<String> {
         "daughter",
         "son",
     ];
-    let mut edge_props = vec![];
-    edge_props.extend(edge_prop.iter().map(|x| x.to_string()));
-    edge_props
+    edge_prop.iter().map(|x| x.to_string()).collect()
 }
 
 pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
@@ -156,7 +154,7 @@ fn set_types() -> Vec<Vec<String>> {
 }
 
 fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<String>>) {
-    if current_path.len() > 0 {
+    if !current_path.is_empty() {
         output.push(current_path.clone());
     }
 

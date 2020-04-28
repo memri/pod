@@ -35,7 +35,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
-            let string = internal_api::get_all_item(&dgraph_clone);
+            let string = internal_api::get_all_items(&dgraph_clone);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 Box::new(warp::reply::json(&json))
