@@ -30,9 +30,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
         .query_with_vars(query, vars)
         .expect("query");
 
-    let json_str = str::from_utf8(&resp.json).unwrap();
-
-    Some(json_str).map(String::from)
+    Some(String::from_utf8(resp.json).unwrap())
 }
 
 /// Get all items from the dgraph database.
@@ -46,9 +44,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
 
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
-    let json_str = str::from_utf8(&resp.json).unwrap();
-
-    Some(json_str).map(String::from)
+    Some(String::from_utf8(resp.json).unwrap())
 }
 
 /// Create an item presuming it didn't exist before.
