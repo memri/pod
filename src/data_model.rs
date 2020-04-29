@@ -43,10 +43,10 @@ pub fn create_edge_property() -> Vec<String> {
 
 pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
     let s_props = vec!["is_type", "name", "confidence", "profile_picture"];
-    let mut string_props = vec![];
-    for x in 0..s_props.len() {
-        string_props.insert(x, (s_props[x], "string", ["exact"]));
-    }
+    let mut string_props = s_props
+        .into_iter()
+        .map(|x| (x, "string", ["exact"]))
+        .collect::<Vec<_>>();
     string_props.push(("creationdate", "DateTime", [""]));
     string_props.push(("aliases", "string", [""]));
     string_props
@@ -64,12 +64,10 @@ pub fn add_schema_from_properties(
 
     let combine_prop = combine(&mut eprops, &mut nprops);
 
-    let op_schema = dgraph::Operation {
+    dgraph::Operation {
         schema: combine_prop,
         ..Default::default()
-    };
-
-    op_schema
+    }
 }
 
 fn format_e_prop(p: &str) -> String {
