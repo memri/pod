@@ -1,3 +1,4 @@
+mod data_model;
 mod dgraph_database;
 mod internal_api;
 mod warp_api;
@@ -21,5 +22,9 @@ async fn main() {
         .init();
 
     let dgraph = dgraph_database::create_dgraph();
+
+    dgraph_database::drop_schema(&dgraph);
+    dgraph_database::set_schema(&dgraph);
+
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }
