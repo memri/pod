@@ -97,53 +97,204 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
 fn set_types() -> Vec<Vec<String>> {
     let types = r#"
     {
-        "photo": null,
-        "person": null,
-        "location": {
-            "city": null,
-            "country": null,
-            "restaurant": null,
-            "island": null
+        "note": {
+            "title": null,
+            "content": null,
+            "genericType": "note",
+            "writtenBy": null,
+            "writtenBy": null,
+            "comments": null
         },
-        "event": {
-            "trip": {
-                "sailing trip": null
-            },
-            "conference": {
-                "google conference": null,
-                "atlassian conference": null
-            },
-            "bike ride": null,
-            "birthday": null,
-            "night out": null,
-            "visit": null,
-            "party": {
-                "birthday party": null,
-                "dinner party": null
-            },
-            "anniversary": null,
-            "dinner": {
-                "birthday dinner": null,
-                "anniversary dinner": null,
-                "engagement dinner": null
-            },
-            "family weekend": null,
-            "wedding": null,
-            "festival": {
-                "burning man": null
-            },
-            "meeting": {
-                "current meeting": null,
-                "show and tell": null,
-                "weekly ai meeting": null
-            },
-            "dawson dance": null,
-            "icebong": null,
-            "new years eve": null,
-            "public holiday": {
-                "kingsday": null
-            }
-        }
+         "label": {
+            "name": null,
+            "comment": null,
+            "color": null,
+            "genericType": "label",
+            "computeTitle": null,
+            "appliesTo": null
+        },
+        "photo": {
+            "name": null,
+            "file": null,
+            "width": null,
+            "height": null,
+            "genericType": "photo",
+            "computeTitle": null,
+            "includes" = null
+        },
+        "video": {
+            "name": null,
+            "file": null,
+            "width": null,
+            "height": null,
+            "duration": null,
+            "genericType": "video",
+            "computeTitle": null,
+            "includes" = null
+        },
+        "audio": {
+            "name": null,
+            "file": null,
+            "bitrate": null,
+            "duration": null,
+            "genericType": "audio",
+            "computeTitle": null,
+            "includes" = null
+        },
+        "file": {
+            "uri": null,
+            "genericType": "file",
+            "usedBy": null
+        },
+        "person": {
+            "firstName": null,
+            "lastName": null,
+            "birthDate": null,
+            "gender": null,
+            "sexualOrientation": null,
+            "height": null,
+            "shoulderWidth": null,
+            "armLength": null,
+            "age": null,
+            genericType": "person",
+            "profilePicture": null,
+            "relations": null,
+            "phoneNumber": null,
+            "websites": null,
+             "companies": null,
+             "addresses": null,
+             "publicKeys": null,
+             "onlineProfiles": null,
+             "diets": null,
+             "medicalConditions": null,
+             "computeTitle": null
+        },
+        "logitem": {
+            "date": null,
+            "contents": null,
+            "action": null,
+            genericType": "logitem",
+            "computeTitle": null,
+            "appliesTo": null
+        },
+        "sessions": {
+            genericType": "sessions",
+            "currentSessionIndex": null,
+            "sessions": null,
+            "currentSession": null,
+            "currentView": null,
+            "rmlTokens": null,
+            "cancellables": null
+        },
+        "phonenumber": {
+            genericType": "phonenumber",
+            "type": null,
+            "number": null,
+            "computeTitle": null
+        },
+        "website": {
+            genericType": "website",
+            "type": null,
+            "url": null,
+            "computeTitle": null
+        },
+        "location": {
+            "genericType": "location",
+            "latitude": null,
+            "longitude": null
+        },
+        "address": {
+            "genericType": "address",
+            "type": null,
+            "country": null,
+            "city": null,
+            "street": null,
+            "state": null,
+            "postalCode": null,
+            "location": null,
+            "computeTitle": null
+        },
+        "country": {
+            "genericType": "country",
+            "name": null,
+            "flag": null,
+            "location": null,
+            "computeTitle": null
+        },
+        "company": {
+            "genericType": "company",
+            "type": null,
+            "name": null,
+            "computeTitle": null
+        },
+        "publickey": {
+            "genericType": "publickey",
+            "type": null,
+            "name": null,
+            "key": null
+        },
+        "onlineprofile": {
+            "genericType": "onlineprofile",
+            "type": null,
+            "handle": null,
+            "computeTitle": null
+        },
+        "diet": {
+            "genericType": "diet",
+            "type": null,
+            "name": null,
+            "additions": null
+        },
+        "medicalcondition": {
+            "genericType": "medicalcondition",
+            "type": null,
+            "name": null,
+            "computeTitle": null
+        },
+        "session": {
+            "genericType": "session",
+            "name": null,
+            "currentViewIndex": null,
+            "views": null,
+            "showFilterPanel": null,
+            "showContextPane": null,
+            "editMode": null,
+            "screenshot": null,
+            "isEditMode": null,
+            "rlmTokens": null,
+            "cancellables": null,
+            "backButton": null,
+            "currentView": null
+        },
+        "sessionview": {
+            "genericType": "sessionview",
+            "title": null,
+            "rendererName": null,
+            "subtitle": null,
+            "backTitle": null,
+            "icon": null,
+            "browsingMode": null,
+            "filterText": null,
+            "emptyResultText": null,
+            "showLabels": null,
+            "cascadeOrder": null,
+            "sortFields": null,
+            "selection": null,
+            "editButtons": null,
+            "filterButtons": null,
+            "actionItems": null,
+            "navigateItems": null,
+            "contextButtons": null,
+            "activeStates": null,
+            "queryOptions": null,
+            "renderConfigs": null,
+            "actionButton": null,
+            "editActionButton": null,
+            "session": null,
+            "_variables": null,
+            "variables": null,
+            "computeTitle": null
+        },
     }"#;
     let value: Value = serde_json::from_str(&types).expect("error");
 
@@ -170,29 +321,29 @@ fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<Stri
     }
 }
 
-fn set_custom_aliases() {
-    let custom_aliases = r#"
-    {
-        "trip": [{"trip": true}, {"journey": true}],
-        "night out": [{"night out": false}, {"nights out": false}],
-        "bike ride": [{"bike ride": true}, {"bicycle tour": true}],
-        "google conference": [{"google io": false}, {"google conference": true},
-                            {"google seminar": true}, {"google symposion": true}],
-        "atlassian conference": [{"atlassian conference": true}, {"atlassian summit": true},
-                               {"atlassian symposion": true}, {"atlassian seminar": true}],
-        "dawson dance": [{"dawson dance": true}, {"dawson": true}],
-        "sailing trip": [{"sailing": true}, {"sailing trip": true}],
-        "burning man": [{"burning man": true}, {"burning mans": true}, {"the burn": true}],
-        "family weekend": [{"family weekdend": true}, {"family trip": true}]
-    }"#;
-    let aliases: Value = serde_json::from_str(&custom_aliases).expect("error");
-
-    get_aliases()
-}
-
-fn get_aliases() {}
+// fn set_custom_aliases() {
+//     let custom_aliases = r#"
+//     {
+//         "trip": [{"trip": true}, {"journey": true}],
+//         "night out": [{"night out": false}, {"nights out": false}],
+//         "bike ride": [{"bike ride": true}, {"bicycle tour": true}],
+//         "google conference": [{"google io": false}, {"google conference": true},
+//                             {"google seminar": true}, {"google symposion": true}],
+//         "atlassian conference": [{"atlassian conference": true}, {"atlassian summit": true},
+//                                {"atlassian symposion": true}, {"atlassian seminar": true}],
+//         "dawson dance": [{"dawson dance": true}, {"dawson": true}],
+//         "sailing trip": [{"sailing": true}, {"sailing trip": true}],
+//         "burning man": [{"burning man": true}, {"burning mans": true}, {"the burn": true}],
+//         "family weekend": [{"family weekdend": true}, {"family trip": true}]
+//     }"#;
+//     let aliases: Value = serde_json::from_str(&custom_aliases).expect("error");
+//
+//     get_aliases()
+// }
+//
+// fn get_aliases() {}
 
 pub fn link_types() {
     let types = set_types();
-    set_custom_aliases();
+
 }
