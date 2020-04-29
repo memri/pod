@@ -15,40 +15,101 @@ pub struct Item {
 
 pub fn create_edge_property() -> Vec<String> {
     let edge_prop = [
-        "subtype",
-        "instance",
-        "attends",
-        "parent",
-        "contains",
-        "location",
-        "from",
-        "owns",
-        "diet",
-        "friend",
-        "wife",
-        "husband",
-        "grandparent",
-        "grandmother",
-        "sister",
-        "brother",
-        "father",
-        "mother",
-        "boyfriend",
-        "girlfriend",
-        "daughter",
-        "son",
+        "writtenBy: [uid] .",
+        "sharedWith: [uid] .",
+        "comments: [uid] .",
+        "appliesTo: [uid] .",
+        "file: uid .",
+        "includes: [uid] .",
+        "usedBy: [uid] .",
+        "profilePicture: uid .",
+        "relations: [uid] .",
+        "phoneNumbers: [uid] .",
+        "websites: [uid] .",
+        "companies: [uid] .",
+        "addresses: [uid] .",
+        "publicKeys: [uid] .",
+        "onlineProfiles: [uid] .",
+        "diets: [uid] .",
+        "medicalConditions: [uid] .",
+        "sessions: [uid] .",
+        "currentSession: uid .",
+        "currentView: uid .",
+        "country: uid .",
+        "location: uid .",
+        "flag: uid .",
+        "views: [uid] .",
+        "screenshot: uid .",
+        "selection: [uid] .",
+        "session: uid ."
     ];
     edge_prop.iter().map(|x| x.to_string()).collect()
 }
 
 pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
-    let s_props = vec!["is_type", "name", "confidence", "profile_picture"];
+    let s_props = vec![
+        "title",
+        "content",
+        "genericType",
+        "computeTitle",
+        "name",
+        "comment",
+        "color",
+        "uri",
+        "firstName",
+        "lastName",
+        "gender",
+        "sexualOrientation",
+        "contents",
+        "action",
+        "type",
+        "number",
+        "url",
+        "city",
+        "street",
+        "state",
+        "postalCode",
+        "key",
+        "handle",
+        "rendererName",
+        "subtitle",
+        "backTitle",
+        "icon",
+        "browsingMode",
+        "filterText",
+        "emptyResultText",
+        "_variables"
+    ];
     let mut string_props = s_props
         .into_iter()
-        .map(|x| (x, "string", ["exact"]))
+        .map(|x| (x, "string", ["term"]))
         .collect::<Vec<_>>();
-    string_props.push(("creationdate", "DateTime", [""]));
-    string_props.push(("aliases", "string", [""]));
+
+    let other_props = vec![
+        "width: int @index(int) .",
+        "height: int @index(int) .",
+        "duration: int @index(int) .",
+        "bitrate: int @index(int) .",
+        "birthDate: datetime .",
+        "person_height: float @index(float) .",
+        "shoulderWidth: float @index(float) .",
+        "armLength: float @index(float) .",
+        "age: float @index(float) .",
+        "date: datetime .",
+        "currentSessionIndex: int @index(int) .",
+        "latitude: float @index(float) .",
+        "longitude: float @index(float) .",
+        "additions: [string] @index(term) .",
+        "currentViewIndex: int @index(int) .",
+        "showFilterPanel: bool .",
+        "showContextPane: bool .",
+        "editMode: bool .",
+        "showLabels: bool .",
+        "cascadeOrder: [string] .",
+        "sortFields: [string] .",
+        "activeStates: [string] ."
+    ];
+
     string_props
 }
 
@@ -96,202 +157,186 @@ fn set_types() -> Vec<Vec<String>> {
     let types = r#"
     {
         "note": {
-            "title": null,
-            "content": null,
-            "genericType": "note",
-            "writtenBy": null,
-            "writtenBy": null,
-            "comments": null
+            "title",
+            "content",
+            "genericType",
+            "writtenBy",
+            "writtenBy",
+            "comments"
         },
          "label": {
-            "name": null,
-            "comment": null,
-            "color": null,
-            "genericType": "label",
-            "computeTitle": null,
-            "appliesTo": null
+            "name",
+            "comment",
+            "color",
+            "genericType",
+            "computeTitle",
+            "appliesTo"
         },
         "photo": {
-            "name": null,
-            "file": null,
-            "width": null,
-            "height": null,
-            "genericType": "photo",
-            "computeTitle": null,
-            "includes" = null
+            "name",
+            "file",
+            "width",
+            "height",
+            "genericType",
+            "computeTitle",
+            "includes",
         },
         "video": {
-            "name": null,
-            "file": null,
-            "width": null,
-            "height": null,
-            "duration": null,
-            "genericType": "video",
-            "computeTitle": null,
-            "includes" = null
+            "name",
+            "file",
+            "width",
+            "height",
+            "duration",
+            "genericType",
+            "computeTitle",
+            "includes"
         },
         "audio": {
-            "name": null,
-            "file": null,
-            "bitrate": null,
-            "duration": null,
-            "genericType": "audio",
-            "computeTitle": null,
-            "includes" = null
+            "name",
+            "file",
+            "bitrate",
+            "duration",
+            "genericType",
+            "computeTitle",
+            "includes"
         },
         "file": {
-            "uri": null,
-            "genericType": "file",
-            "usedBy": null
+            "uri",
+            "genericType",
+            "usedBy"
         },
         "person": {
-            "firstName": null,
-            "lastName": null,
-            "birthDate": null,
-            "gender": null,
-            "sexualOrientation": null,
-            "height": null,
-            "shoulderWidth": null,
-            "armLength": null,
-            "age": null,
-            genericType": "person",
-            "profilePicture": null,
-            "relations": null,
-            "phoneNumber": null,
-            "websites": null,
-             "companies": null,
-             "addresses": null,
-             "publicKeys": null,
-             "onlineProfiles": null,
-             "diets": null,
-             "medicalConditions": null,
-             "computeTitle": null
+            "firstName",
+            "lastName",
+            "birthDate",
+            "gender",
+            "sexualOrientation",
+            "height",
+            "shoulderWidth",
+            "armLength",
+            "age",
+            "genericType",
+            "profilePicture",
+            "relations",
+            "phoneNumber",
+            "websites",
+            "companies",
+            "addresses",
+            "publicKeys",
+            "onlineProfiles",
+            "diets",
+            "medicalConditions",
+            "computeTitle"
         },
         "logitem": {
-            "date": null,
-            "contents": null,
-            "action": null,
-            genericType": "logitem",
-            "computeTitle": null,
-            "appliesTo": null
+            "date",
+            "contents",
+            "action",
+            "genericType",
+            "computeTitle",
+            "appliesTo"
         },
         "sessions": {
-            genericType": "sessions",
-            "currentSessionIndex": null,
-            "sessions": null,
-            "currentSession": null,
-            "currentView": null,
-            "rmlTokens": null,
-            "cancellables": null
+            "genericType",
+            "currentSessionIndex",
+            "sessions",
+            "currentSession",
+            "currentView"
         },
         "phonenumber": {
-            genericType": "phonenumber",
-            "type": null,
-            "number": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "number",
+            "computeTitle"
         },
         "website": {
-            genericType": "website",
-            "type": null,
-            "url": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "url",
+            "computeTitle"
         },
         "location": {
-            "genericType": "location",
-            "latitude": null,
-            "longitude": null
+            "genericType",
+            "latitude",
+            "longitude"
         },
         "address": {
-            "genericType": "address",
-            "type": null,
-            "country": null,
-            "city": null,
-            "street": null,
-            "state": null,
-            "postalCode": null,
-            "location": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "country",
+            "city",
+            "street",
+            "state",
+            "postalCode",
+            "location",
+            "computeTitle"
         },
         "country": {
-            "genericType": "country",
-            "name": null,
-            "flag": null,
-            "location": null,
-            "computeTitle": null
+            "genericType",
+            "name",
+            "flag",
+            "location",
+            "computeTitle"
         },
         "company": {
-            "genericType": "company",
-            "type": null,
-            "name": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "name",
+            "computeTitle"
         },
         "publickey": {
-            "genericType": "publickey",
-            "type": null,
-            "name": null,
-            "key": null
+            "genericType",
+            "type",
+            "name",
+            "key"
         },
         "onlineprofile": {
-            "genericType": "onlineprofile",
-            "type": null,
-            "handle": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "handle",
+            "computeTitle"
         },
         "diet": {
-            "genericType": "diet",
-            "type": null,
-            "name": null,
-            "additions": null
+            "genericType",
+            "type",
+            "name",
+            "additions"
         },
         "medicalcondition": {
-            "genericType": "medicalcondition",
-            "type": null,
-            "name": null,
-            "computeTitle": null
+            "genericType",
+            "type",
+            "name",
+            "computeTitle"
         },
         "session": {
-            "genericType": "session",
-            "name": null,
-            "currentViewIndex": null,
-            "views": null,
-            "showFilterPanel": null,
-            "showContextPane": null,
-            "editMode": null,
-            "screenshot": null,
-            "isEditMode": null,
-            "rlmTokens": null,
-            "cancellables": null,
-            "backButton": null,
-            "currentView": null
+            "genericType",
+            "name",
+            "currentViewIndex",
+            "views",
+            "showFilterPanel",
+            "showContextPane",
+            "editMode",
+            "screenshot",
+            "currentView"
         },
         "sessionview": {
-            "genericType": "sessionview",
-            "title": null,
-            "rendererName": null,
-            "subtitle": null,
-            "backTitle": null,
-            "icon": null,
-            "browsingMode": null,
-            "filterText": null,
-            "emptyResultText": null,
-            "showLabels": null,
-            "cascadeOrder": null,
-            "sortFields": null,
-            "selection": null,
-            "editButtons": null,
-            "filterButtons": null,
-            "actionItems": null,
-            "navigateItems": null,
-            "contextButtons": null,
-            "activeStates": null,
-            "queryOptions": null,
-            "renderConfigs": null,
-            "actionButton": null,
-            "editActionButton": null,
-            "session": null,
-            "_variables": null,
-            "variables": null,
-            "computeTitle": null
+            "genericType",
+            "title",
+            "rendererName",
+            "subtitle",
+            "backTitle",
+            "icon",
+            "browsingMode",
+            "filterText",
+            "emptyResultText",
+            "showLabels",
+            "cascadeOrder",
+            "sortFields",
+            "selection",
+            "activeStates",
+            "session",
+            "_variables",
+            "computeTitle"
         },
     }"#;
     let value: Value = serde_json::from_str(&types).expect("error");
@@ -343,5 +388,4 @@ fn deep_keys(value: &Value, current_path: Vec<String>, output: &mut Vec<Vec<Stri
 
 pub fn link_types() {
     let types = set_types();
-
 }
