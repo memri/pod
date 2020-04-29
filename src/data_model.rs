@@ -41,7 +41,9 @@ pub fn create_edge_property() -> Vec<String> {
         "views: [uid] .",
         "screenshot: uid .",
         "selection: [uid] .",
-        "session: uid ."
+        "session: uid .",
+        "changelog: [uid] .",
+        "labels: [uid] .",
     ];
     edge_prop.iter().map(|x| x.to_string()).collect()
 }
@@ -78,7 +80,7 @@ pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str;
         "browsingMode",
         "filterText",
         "emptyResultText",
-        "_variables"
+        "_variables",
     ];
     let mut string_props = s_props
         .into_iter()
@@ -107,7 +109,13 @@ pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str;
         "showLabels: bool .",
         "cascadeOrder: [string] .",
         "sortFields: [string] .",
-        "activeStates: [string] ."
+        "activeStates: [string] .",
+        "deleted: bool .",
+        "starred: bool .",
+        "dateCreated: datetime .",
+        "dateModified: datetime .",
+        "dateAccessed: datetime .",
+        "functions: [string] .",
     ];
 
     string_props
@@ -156,6 +164,16 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
 fn set_types() -> Vec<Vec<String>> {
     let types = r#"
     {
+        "dataitem": {
+            "genericType",
+            "computeTitle",
+            "deleted",
+            "starred",
+            "dateCreated",
+            "dateModified",
+            "dateAccessed",
+            "functions"
+        },
         "note": {
             "title",
             "content",
