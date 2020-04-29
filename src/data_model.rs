@@ -37,7 +37,7 @@ pub fn create_edge_property() -> Vec<String> {
         "changelog: [uid] ",
         "labels: [uid] ",
     ];
-    edge_prop.iter().map(|x| x.to_string()).collect()
+    edge_prop.iter().map(|x| (*x).to_string()).collect()
 }
 
 pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
@@ -67,12 +67,10 @@ pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str;
         "handle",
     ];
 
-    let string_props = s_props
+    s_props
         .into_iter()
         .map(|x| (x, "string", ["term"]))
-        .collect::<Vec<_>>();
-
-    string_props
+        .collect::<Vec<_>>()
 }
 
 fn create_other_property() -> Vec<&'static str> {
@@ -126,10 +124,11 @@ fn format_e_prop(p: &str) -> String {
 }
 
 fn format_n_prop(p: &str, _type: &str, indices: Vec<&str>) -> String {
-    let mut joined = String::from(" .");
-    if *indices.first().unwrap() != "" {
-        joined = String::from("@index(") + &indices.join(",") + ") .";
-    }
+    let joined = if *indices.first().unwrap() != "" {
+        format!("@index({}) .", indices.join(","))
+    } else {
+        String::from(" .")
+    };
 
     p.to_string() + ": " + _type + " " + &joined
 }
@@ -306,11 +305,10 @@ pub fn create_types() -> Vec<String> {
         }",
     ];
 
-    let type_string = types
+    types
         .into_iter()
         .map(|x| (format_type(x)))
-        .collect::<Vec<_>>();
-    type_string
+        .collect::<Vec<_>>()
 }
 
 fn format_type(p: &str) -> String {
