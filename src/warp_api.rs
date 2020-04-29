@@ -15,8 +15,11 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::get())
         .map(internal_api::version);
 
+    let api_version_1 = warp::path("v1");
+
     let dgraph_clone = dgraph.clone();
-    let get_item = warp::path!("items" / u64)
+    let get_item = api_version_1
+        .and(warp::path!("items" / u64))
         .and(warp::path::end())
         .and(warp::get())
         .map(move |id: u64| {
@@ -31,7 +34,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
 
     let dgraph_clone = dgraph.clone();
-    let get_all_item = warp::path!("all")
+    let get_all_item = api_version_1
+        .and(warp::path!("all"))
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
@@ -46,7 +50,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
 
     let dgraph_clone = dgraph.clone();
-    let create_item = warp::path("items")
+    let create_item = api_version_1
+        .and(warp::path("items"))
         .and(warp::path::end())
         .and(warp::post())
         .and(warp::body::json())
@@ -62,7 +67,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
 
     let dgraph_clone = dgraph.clone();
-    let update_item = warp::path!("items" / u64)
+    let update_item = api_version_1
+        .and(warp::path!("items" / u64))
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
@@ -76,7 +82,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
 
     let dgraph_clone = dgraph.clone();
-    let delete_item = warp::path!("items" / u64)
+    let delete_item = api_version_1
+        .and(warp::path!("items" / u64))
         .and(warp::path::end())
         .and(warp::delete())
         .map(move |uid: u64| {
