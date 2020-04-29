@@ -17,12 +17,12 @@ pub fn drop_schema(dgraph: &Dgraph) {
 
 pub fn set_schema(dgraph: &Dgraph) {
     let edge_props = data_model::create_edge_property();
-
     let node_props = data_model::create_node_property();
+    let types = data_model::create_types();
 
-    let op_schema = data_model::add_schema_from_properties(edge_props, node_props);
+    let property_schema = data_model::get_schema_from_properties(edge_props, node_props);
+    let type_schema = data_model::get_schema_from_types(types);
 
-    data_model::add_schema(dgraph, op_schema);
-
-    data_model::link_types();
+    data_model::add_schema(dgraph, property_schema);
+    data_model::add_schema(dgraph, type_schema);
 }
