@@ -94,6 +94,7 @@ fn create_other_property() -> Vec<&'static str> {
         "dateModified: datetime .",
         "dateAccessed: datetime .",
         "functions: [string] .",
+        "version: int .",
     ];
 
     other_props
@@ -157,6 +158,7 @@ pub fn create_types() -> Vec<String> {
             dateModified
             dateAccessed
             functions
+            version
          }",
         "note {
             title
@@ -165,6 +167,8 @@ pub fn create_types() -> Vec<String> {
             writtenBy
             sharedWith
             comments
+            labels
+            version
          }",
         "label {
             name
@@ -173,6 +177,7 @@ pub fn create_types() -> Vec<String> {
             genericType
             computeTitle
             appliesTo
+            version
          }",
         "photo {
             name
@@ -182,6 +187,7 @@ pub fn create_types() -> Vec<String> {
             genericType
             computeTitle
             includes
+            version
          }",
         "video {
             name
@@ -192,6 +198,7 @@ pub fn create_types() -> Vec<String> {
             genericType
             computeTitle
             includes
+            version
          }",
         "audio {
             name
@@ -201,11 +208,13 @@ pub fn create_types() -> Vec<String> {
             genericType
             computeTitle
             includes
+            version
          }",
         "file {
             uri
             genericType
             usedBy
+            version
          }",
         "person {
             firstName
@@ -229,6 +238,7 @@ pub fn create_types() -> Vec<String> {
             diets
             medicalConditions
             computeTitle
+            version
          }",
         "logitem {
             date
@@ -237,23 +247,27 @@ pub fn create_types() -> Vec<String> {
             genericType
             computeTitle
             appliesTo
+            version
          }",
         "phonenumber {
             genericType
             type
             number
             computeTitle
+            version
          }",
         "website {
             genericType
             type
             url
             computeTitle
+            version
          }",
         "location {
             genericType
             latitude
             longitude
+            version
          }",
         "address {
             genericType
@@ -265,6 +279,7 @@ pub fn create_types() -> Vec<String> {
             postalCode
             location
             computeTitle
+            version
          }",
         "country {
             genericType
@@ -272,36 +287,42 @@ pub fn create_types() -> Vec<String> {
             flag
             location
             computeTitle
+            version
          }",
         "company {
             genericType
             type
             name
             computeTitle
+            version
          }",
         "publickey {
             genericType
             type
             name
             key
+            version
          }",
         "onlineprofile {
             genericType
             type
             handle
             computeTitle
+            version
          }",
         "diet {
             genericType
             type
             name
             additions
+            version
          }",
         "medicalcondition {
             genericType
             type
             name
             computeTitle
+            version
         }",
     ];
 
