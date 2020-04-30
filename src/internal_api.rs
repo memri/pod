@@ -18,6 +18,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             uid
+            type : dgraph.type
             expand(_all_)
         }
     }"#;
@@ -35,15 +36,16 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 
 /// Get all items from the dgraph database.
 pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
-    let query = "{{
-            items(func: has(version)) {{
+    let query = r#"{
+            items(func: has(version)) {
                 uid
+                type : dgraph.type
                 expand(_all_)
-                }}
-            }}";
+                }
+            }"#;
 
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
-
+    println!("{:#?}", resp);
     Some(String::from_utf8(resp.json).unwrap())
 }
 
