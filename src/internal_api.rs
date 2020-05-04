@@ -1,4 +1,5 @@
 use crate::data_model;
+use crate::sync_state;
 use dgraph::Dgraph;
 use log::debug;
 use serde_json::Value;
@@ -10,7 +11,6 @@ pub fn version() -> &'static str {
     debug!("Returning API version...");
     env!("CARGO_PKG_VERSION")
 }
-
 /// Get an item from the dgraph database.
 /// None if the `uid` doesn't exist in DB, Some(json) if it does.
 pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
@@ -60,7 +60,9 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     let mut txn = _dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
 
-    mutation.set_set_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
+    mutation.set_set_json(
+        serde_json::to_vec(&sync_state::get_syncstate(_json)).expect("Failed to serialize JSON."),
+    );
     let resp = txn.mutate(mutation).expect("Failed to create data.");
     txn.commit().expect("Failed to commit mutation");
 
