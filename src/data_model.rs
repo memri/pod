@@ -326,15 +326,24 @@ pub fn create_types() -> Vec<String> {
         }",
     ];
 
+    field_count(types.clone());
+
     types
         .into_iter()
         .map(|x| (format_type(x)))
         .collect::<Vec<_>>()
 }
 
+fn field_count(types: Vec<&str>) {
+    for x in types.iter() {
+        println!("{:#?}", x.len());
+    }
+}
+
 fn format_type(p: &str) -> String {
     String::from("type ") + &p.to_string()
 }
+
 pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
     dgraph::Operation {
         schema: types.join("\n"),

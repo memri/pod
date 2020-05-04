@@ -1,6 +1,7 @@
 mod data_model;
 mod dgraph_database;
 mod internal_api;
+mod sync_state;
 mod warp_api;
 
 use chrono::Utc;
