@@ -3,6 +3,7 @@ name = "pod"
 version = "0.0.1"
 authors = [
   "Vasili Novikov (copyright transferred to Polis) <n1dr+cm3513git@ya.ru>",
+  "Bijun Li <bijun.li@polis.global>",
 ]
 edition = "2018"
 

@@ -31,7 +31,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
         .query_with_vars(query, vars)
         .expect("query");
 
-    Some(String::from_utf8(resp.json).unwrap())
+    Some(sync_state::set_syncstate(resp.json))
 }
 
 /// Get all items from the dgraph database.
@@ -45,7 +45,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
             }"#;
 
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
-    println!("{:#?}", resp);
+
     Some(String::from_utf8(resp.json).unwrap())
 }
 
