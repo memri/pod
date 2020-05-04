@@ -34,7 +34,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
 
     let dgraph_clone = dgraph.clone();
-    let get_all_item = api_version_1
+    let get_all_items = api_version_1
         .and(warp::path!("all"))
         .and(warp::path::end())
         .and(warp::get())
@@ -98,7 +98,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     warp::serve(
         version
             .or(get_item)
-            .or(get_all_item)
+            .or(get_all_items)
             .or(create_item)
             .or(update_item)
             .or(delete_item),
