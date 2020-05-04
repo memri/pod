@@ -147,7 +147,7 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
     dgraph.alter(&schema).expect("Failed to set schema.");
 }
 
-pub fn create_types() -> Vec<String> {
+fn get_type_name() -> Vec<&'static str> {
     let type_name = vec![
         "dataitem",
         "note",
@@ -169,8 +169,11 @@ pub fn create_types() -> Vec<String> {
         "diet",
         "medicalcondition",
     ];
+    type_name
+}
 
-    let types_field = vec![
+fn get_type_field() -> Vec<Vec<&'static str>> {
+    let type_field = vec![
         // dataitem
         vec![
             "genericType",
@@ -314,12 +317,18 @@ pub fn create_types() -> Vec<String> {
         // medicalcondition
         vec!["genericType", "type", "name", "computeTitle", "version"],
     ];
+    type_field
+}
+
+pub fn create_types() -> Vec<String> {
+    let type_name = get_type_name();
+    let type_field = get_type_field();
 
     let mut types = Vec::new();
     for i in 0..type_name.len() {
         types.insert(
             i,
-            format_type(type_name.get(i).unwrap(), types_field.get(i).unwrap()),
+            format_type(type_name.get(i).unwrap(), type_field.get(i).unwrap()),
         );
     }
     types
