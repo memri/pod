@@ -148,200 +148,185 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
 }
 
 pub fn create_types() -> Vec<String> {
-    let types = vec![
-        "dataitem {
-            genericType
-            computeTitle
-            deleted
-            starred
-            dateCreated
-            dateModified
-            dateAccessed
-            functions
-            version
-         }",
-        "note {
-            title
-            content
-            genericType
-            writtenBy
-            sharedWith
-            comments
-            labels
-            version
-         }",
-        "label {
-            name
-            comment
-            color
-            genericType
-            computeTitle
-            appliesTo
-            version
-         }",
-        "photo {
-            name
-            file
-            width
-            height
-            genericType
-            computeTitle
-            includes
-            version
-         }",
-        "video {
-            name
-            file
-            width
-            height
-            duration
-            genericType
-            computeTitle
-            includes
-            version
-         }",
-        "audio {
-            name
-            file
-            bitrate
-            duration
-            genericType
-            computeTitle
-            includes
-            version
-         }",
-        "file {
-            uri
-            genericType
-            usedBy
-            version
-         }",
-        "person {
-            firstName
-            lastName
-            birthDate
-            gender
-            sexualOrientation
-            height
-            shoulderWidth
-            armLength
-            age
-            genericType
-            profilePicture
-            relations
-            phoneNumbers
-            websites
-            companies
-            addresses
-            publicKeys
-            onlineProfiles
-            diets
-            medicalConditions
-            computeTitle
-            version
-         }",
-        "logitem {
-            date
-            contents
-            action
-            genericType
-            computeTitle
-            appliesTo
-            version
-         }",
-        "phonenumber {
-            genericType
-            type
-            number
-            computeTitle
-            version
-         }",
-        "website {
-            genericType
-            type
-            url
-            computeTitle
-            version
-         }",
-        "location {
-            genericType
-            latitude
-            longitude
-            version
-         }",
-        "address {
-            genericType
-            type
-            country
-            city
-            street
-            state
-            postalCode
-            location
-            computeTitle
-            version
-         }",
-        "country {
-            genericType
-            name
-            flag
-            location
-            computeTitle
-            version
-         }",
-        "company {
-            genericType
-            type
-            name
-            computeTitle
-            version
-         }",
-        "publickey {
-            genericType
-            type
-            name
-            key
-            version
-         }",
-        "onlineprofile {
-            genericType
-            type
-            handle
-            computeTitle
-            version
-         }",
-        "diet {
-            genericType
-            type
-            name
-            additions
-            version
-         }",
-        "medicalcondition {
-            genericType
-            type
-            name
-            computeTitle
-            version
-        }",
+    let type_name = vec![
+        "dataitem",
+        "note",
+        "label",
+        "photo",
+        "video",
+        "audio",
+        "file",
+        "person",
+        "logitem",
+        "phonenumber",
+        "website",
+        "location",
+        "address",
+        "country",
+        "company",
+        "publickey",
+        "onlineprofile",
+        "diet",
+        "medicalcondition",
     ];
 
-    field_count(types.clone());
+    let types_field = vec![
+        // dataitem
+        vec![
+            "genericType",
+            "computeTitle",
+            "deleted",
+            "starred",
+            "dateCreated",
+            "dateModified",
+            "dateAccessed",
+            "functions",
+            "version",
+        ],
+        // note
+        vec![
+            "title",
+            "content",
+            "genericType",
+            "writtenBy",
+            "sharedWith",
+            "comments",
+            "labels",
+            "version",
+        ],
+        // label
+        vec![
+            "name",
+            "comment",
+            "color",
+            "genericType",
+            "computeTitle",
+            "appliesTo",
+            "version",
+        ],
+        // photo
+        vec![
+            "name",
+            "file",
+            "width",
+            "height",
+            "genericType",
+            "computeTitle",
+            "includes",
+            "version",
+        ],
+        // video
+        vec![
+            "name",
+            "file",
+            "width",
+            "height",
+            "duration",
+            "genericType",
+            "computeTitle",
+            "includes",
+            "version",
+        ],
+        // audio
+        vec![
+            "name",
+            "file",
+            "bitrate",
+            "duration",
+            "genericType",
+            "computeTitle",
+            "includes",
+            "version",
+        ],
+        // file
+        vec!["uri", "genericType", "usedBy", "version"],
+        // person
+        vec![
+            "firstName",
+            "lastName",
+            "birthDate",
+            "gender",
+            "sexualOrientation",
+            "height",
+            "shoulderWidth",
+            "armLength",
+            "age",
+            "genericType",
+            "profilePicture",
+            "relations",
+            "phoneNumbers",
+            "websites",
+            "companies",
+            "addresses",
+            "publicKeys",
+            "onlineProfiles",
+            "diets",
+            "medicalConditions",
+            "computeTitle",
+            "version",
+        ],
+        // logitem
+        vec![
+            "date",
+            "contents",
+            "action",
+            "genericType",
+            "computeTitle",
+            "appliesTo",
+            "version",
+        ],
+        // phonenumber
+        vec!["genericType", "type", "number", "computeTitle", "version"],
+        // website
+        vec!["genericType", "type", "url", "computeTitle", "version"],
+        // location
+        vec!["genericType", "latitude", "longitude", "version"],
+        // address
+        vec![
+            "genericType",
+            "type",
+            "country",
+            "city",
+            "street",
+            "state",
+            "postalCode",
+            "location",
+            "computeTitle",
+            "version",
+        ],
+        // country
+        vec![
+            "genericType",
+            "name",
+            "flag",
+            "location",
+            "computeTitle",
+            "version",
+        ],
+        // company
+        vec!["genericType", "type", "name", "computeTitle", "version"],
+        // publickey
+        vec!["genericType", "type", "name", "key", "version"],
+        // onlineprofile
+        vec!["genericType", "type", "handle", "computeTitle", "version"],
+        // diet
+        vec!["genericType", "type", "name", "additions", "version"],
+        // medicalcondition
+        vec!["genericType", "type", "name", "computeTitle", "version"],
+    ];
 
-    types
-        .into_iter()
-        .map(|x| (format_type(x)))
-        .collect::<Vec<_>>()
-}
-
-fn field_count(types: Vec<&str>) {
-    for x in types.iter() {
-        println!("{:#?}", x.len());
+    let mut types = Vec::new();
+    for i in 0..type_name.len() {
+        types.insert(
+            i,
+            format_type(type_name.get(i).unwrap(), types_field.get(i).unwrap()),
+        );
     }
+    types
 }
 
-fn format_type(p: &str) -> String {
-    String::from("type ") + &p.to_string()
+fn format_type(name: &str, field: &Vec<&str>) -> String {
+    String::from("type ") + &name.to_string() + " {\n" + &field.join("\n") + "\n}"
 }
 
 pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
