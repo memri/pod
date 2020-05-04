@@ -43,9 +43,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
                 expand(_all_)
                 }
             }"#;
-
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
-    println!("{:#?}", resp);
     Some(String::from_utf8(resp.json).unwrap())
 }
 
