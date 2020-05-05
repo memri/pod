@@ -45,7 +45,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
             }"#;
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
-    Some(String::from_utf8(resp.json).unwrap())
+    Some(sync_state::set_syncstate_all(resp.json))
 }
 
 /// Create an item presuming it didn't exist before.
