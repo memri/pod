@@ -1,6 +1,7 @@
 use dgraph::*;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Items {
@@ -343,4 +344,18 @@ pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
         schema: types.join("\n"),
         ..Default::default()
     }
+}
+
+pub fn get_field_count() -> HashMap<String, usize> {
+    let mut field_count = HashMap::new();
+    let type_name = get_type_name();
+    let type_field = get_type_field();
+
+    for i in 0..type_name.len() {
+        field_count.insert(
+            type_name.get(i).unwrap().to_string(),
+            type_field.get(i).unwrap().len() + 2,
+        );
+    }
+    field_count
 }
