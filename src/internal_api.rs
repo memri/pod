@@ -60,7 +60,8 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     let mut mutation = dgraph::Mutation::new();
 
     mutation.set_set_json(
-        serde_json::to_vec(&sync_state::get_syncstate(_json)).expect("Failed to serialize JSON."),
+        serde_json::to_vec(&sync_state::get_syncstate(_json, 1))
+            .expect("Failed to serialize JSON."),
     );
     let resp = txn.mutate(mutation).expect("Failed to create data.");
     txn.commit().expect("Failed to commit mutation");
@@ -108,13 +109,12 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
         // verify uid, version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
         let new_ver = root.items.first().unwrap().version + 1;
-        *_json.get_mut("uid").unwrap() = serde_json::json!(uid);
-        *_json.get_mut("version").unwrap() = serde_json::json!(new_ver);
+        let mut new_json = sync_state::get_syncstate(_json.clone(), new_ver);
 
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
-        mutation.set_set_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));
+        mutation.set_set_json(serde_json::to_vec(&new_json).expect("Failed to serialize JSON."));
         let _resp = txn.mutate(mutation).expect("Failed to create data.");
         txn.commit().expect("Failed to commit mutation");
 
