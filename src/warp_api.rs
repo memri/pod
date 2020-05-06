@@ -10,17 +10,17 @@ use warp::Reply;
 pub async fn run_server(server_name: String, dgraph: Dgraph) {
     info!("Starting {} HTTP server", server_name);
     let dgraph = Arc::new(dgraph);
-    /// Get version of cargo project POD.
+    // Get version of cargo project POD.
     let version = warp::path("version")
         .and(warp::path::end())
         .and(warp::get())
         .map(internal_api::version);
-    /// Set API version
+    // Set API version
     let api_version_1 = warp::path("v1");
-    /// GET API for a single node.
-    /// Parameter:
-    ///     uid: uid of requested node, u64.
-    /// Return an array of nodes with requested uid.
+    // GET API for a single node.
+    // Parameter:
+    //     uid: uid of requested node, u64.
+    // Return an array of nodes with requested uid.
     let dgraph_clone = dgraph.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / u64))
@@ -36,8 +36,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             };
             boxed
         });
-    /// GET API for all nodes.
-    /// Return an array of all nodes.
+    // GET API for all nodes.
+    // Return an array of all nodes.
     let dgraph_clone = dgraph.clone();
     let get_all_items = api_version_1
         .and(warp::path!("all"))
@@ -53,10 +53,10 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             };
             boxed
         });
-    /// POST API for a single node.
-    /// Input: json of created node within the body.
-    /// Return uid of created node if node is unique.
-    /// Return StatusCode::CONFLICT if node already exists.
+    // POST API for a single node.
+    // Input: json of created node within the body.
+    // Return uid of created node if node is unique.
+    // Return StatusCode::CONFLICT if node already exists.
     let dgraph_clone = dgraph.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
@@ -73,12 +73,12 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             };
             boxed
         });
-    /// PUT API for a single node.
-    /// Parameter:
-    ///     uid: uid of the node to be updated.
-    /// Return without body:
-    ///     StatusCode::OK if node has been updated successfully.
-    ///     StatusCode::NOT_FOUND if node is not found in the database.
+    // PUT API for a single node.
+    // Parameter:
+    //     uid: uid of the node to be updated.
+    // Return without body:
+    //     StatusCode::OK if node has been updated successfully.
+    //     StatusCode::NOT_FOUND if node is not found in the database.
     let dgraph_clone = dgraph.clone();
     let update_item = api_version_1
         .and(warp::path!("items" / u64))
@@ -93,12 +93,12 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 StatusCode::NOT_FOUND
             }
         });
-    /// DELETE API for a single node.
-    /// Parameter:
-    ///     uid: uid of the node to be deleted.
-    /// Return without body:
-    ///     StatusCode::OK if node has been deleted successfully.
-    ///     StatusCode::NOT_FOUND if node was not found in the database.
+    // DELETE API for a single node.
+    // Parameter:
+    //     uid: uid of the node to be deleted.
+    // Return without body:
+    //     StatusCode::OK if node has been deleted successfully.
+    //     StatusCode::NOT_FOUND if node was not found in the database.
     let dgraph_clone = dgraph.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / u64))
@@ -112,8 +112,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 StatusCode::NOT_FOUND
             }
         });
-    /// Specify APIs.
-    /// Specify address and port number to listen to.
+    // Specify APIs.
+    // Specify address and port number to listen to.
     warp::serve(
         version
             .or(get_item)

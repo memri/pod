@@ -21,11 +21,11 @@ async fn main() {
             )
         })
         .init();
-    /// Create dgraph-rs instance.
+    // Create dgraph-rs instance.
     let dgraph = dgraph_database::create_dgraph();
-    /// Set up schema.
+    // Set up schema.
     dgraph_database::drop_schema(&dgraph);
     dgraph_database::set_schema(&dgraph);
-    /// Start web framework warp.
+    // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }

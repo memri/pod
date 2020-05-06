@@ -103,23 +103,23 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
-    /// Get response of query with `uid`
+    // Get response of query with `uid`
     let resp = _dgraph
         .new_readonly_txn()
         .query_with_vars(query, vars)
         .expect("query");
-    /// Verify if `uid` exists
+    // Verify if `uid` exists
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
     if items == null_item {
         found = false;
     } else {
-        /// version += 1
+        // version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
         let new_ver = root.items.first().unwrap().version + 1;
         let new_json = sync_state::get_syncstate(_json.clone(), new_ver);
-        /// Update via mutation
+        // Update via mutation
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
@@ -148,12 +148,12 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
 
     let mut vars = HashMap::new();
     vars.insert("$a".to_string(), uid.to_string());
-    /// Get response of query with `uid`
+    // Get response of query with `uid`
     let resp = _dgraph
         .new_readonly_txn()
         .query_with_vars(query, vars)
         .expect("query");
-    /// Verify if `uid` exists
+    // Verify if `uid` exists
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
@@ -162,7 +162,7 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
     } else {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
-        /// Delete item with `uid` via mutation
+        // Delete item with `uid` via mutation
         let _json = serde_json::json!({ "uid": uid });
 
         mutation.set_delete_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));

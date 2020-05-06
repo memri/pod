@@ -7,9 +7,9 @@ use serde_json::Value;
 /// Return the new json object.
 fn create_new_json(json: &Value) -> Value {
     let mut new_json = json.as_object().unwrap().clone();
-    /// Compare the number of returned properties/fields
-    /// with the default number of fields that type contains
-    /// to decide if all properties are included/loaded.
+    // Compare the number of returned properties/fields
+    // with the default number of fields that type contains
+    // to decide if all properties are included/loaded.
     let _fields = new_json.len();
     let type_name = new_json
         .get("type")
@@ -25,7 +25,7 @@ fn create_new_json(json: &Value) -> Value {
     let is_part_loaded = &_fields < field_count;
 
     let version = new_json.get("version").unwrap().as_f64().unwrap() as u64;
-    /// Create `syncState` and insert to new json as a Value.
+    // Create `syncState` and insert to new json as a Value.
     let sync_state = create_sync_state(version, is_part_loaded);
 
     new_json.remove("version").unwrap();

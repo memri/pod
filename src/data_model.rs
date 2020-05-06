@@ -113,15 +113,15 @@ pub fn get_schema_from_properties(
     e_prop: Vec<String>,
     n_prop: Vec<(&str, &str, [&str; 1])>,
 ) -> dgraph::Operation {
-    /// Format edge properties
+    // Format edge properties
     let mut eprops: Vec<String> = vec![];
     eprops.extend(e_prop.iter().map(|x| format_e_prop(x)));
-    /// Format node properties
+    // Format node properties
     let mut nprops: Vec<String> = vec![];
     nprops.extend(n_prop.iter().map(|x| format_n_prop(x.0, x.1, x.2.to_vec())));
     let o_prop = create_other_property();
     nprops.extend(o_prop.iter().map(|x| format_o_prop(x)));
-    /// Combine both
+    // Combine both
     let combine_prop = combine(&mut eprops, &mut nprops);
 
     dgraph::Operation {
