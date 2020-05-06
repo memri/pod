@@ -23,9 +23,19 @@ async fn main() {
         .init();
     // Create dgraph-rs instance.
     let dgraph = dgraph_database::create_dgraph();
-    // Set up schema.
-    dgraph_database::drop_schema(&dgraph);
-    dgraph_database::set_schema(&dgraph);
+    // Drop and set up schema only in DROP mode.
+    // Add "APP_DROP=true" before executable, default is FALSE.
+    let mut settings = config::Config::default();
+    settings
+        .merge(config::File::with_name("Settings"))
+        .unwrap()
+        .merge(config::Environment::with_prefix("SCHEMA"))
+        .unwrap();
+
+    if settings.get_str("drop").unwrap().eq("true") {
+        dgraph_database::drop_schema(&dgraph);
+        dgraph_database::set_schema(&dgraph);
+    }
     // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }
