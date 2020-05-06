@@ -13,6 +13,8 @@ pub struct Item {
     pub version: u64,
 }
 
+/// Create edge properties.
+/// Return a vector of edge properties in String -> `edge_property: type `.
 pub fn create_edge_property() -> Vec<String> {
     let edge_prop = [
         "writtenBy: [uid] ",
@@ -41,6 +43,8 @@ pub fn create_edge_property() -> Vec<String> {
     edge_prop.iter().map(|x| (*x).to_string()).collect()
 }
 
+/// Cretae node properties.
+/// Return a vector of tuples -> (`node_property, type, [index]`).
 pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
     let s_props = vec![
         "title",
@@ -74,6 +78,8 @@ pub fn create_node_property() -> Vec<(&'static str, &'static str, [&'static str;
         .collect::<Vec<_>>()
 }
 
+/// Create other node properties which are not string, e.g. int, float, datetime etc.
+/// Return a vector of &str -> `node_property: type @index .`.
 fn create_other_property() -> Vec<&'static str> {
     let other_props = vec![
         "width: int @index(int) .",
@@ -101,18 +107,21 @@ fn create_other_property() -> Vec<&'static str> {
     other_props
 }
 
+/// Create schema for edge and node properties.
+/// Return a dgraph operation of schema.
 pub fn get_schema_from_properties(
     e_prop: Vec<String>,
     n_prop: Vec<(&str, &str, [&str; 1])>,
 ) -> dgraph::Operation {
+    /// Format edge properties
     let mut eprops: Vec<String> = vec![];
     eprops.extend(e_prop.iter().map(|x| format_e_prop(x)));
-
+    /// Format node properties
     let mut nprops: Vec<String> = vec![];
     nprops.extend(n_prop.iter().map(|x| format_n_prop(x.0, x.1, x.2.to_vec())));
     let o_prop = create_other_property();
     nprops.extend(o_prop.iter().map(|x| format_o_prop(x)));
-
+    /// Combine both
     let combine_prop = combine(&mut eprops, &mut nprops);
 
     dgraph::Operation {
@@ -121,10 +130,14 @@ pub fn get_schema_from_properties(
     }
 }
 
+/// Format edge properties.
+/// Return a string -> `edge_property: type @reverse .`.
 fn format_e_prop(p: &str) -> String {
     p.to_string() + "@reverse ."
 }
 
+/// Format node properties.
+/// Return a string -> `node_property: type @index .`.
 fn format_n_prop(p: &str, _type: &str, indices: Vec<&str>) -> String {
     let joined = if *indices.first().unwrap() != "" {
         format!("@index({}) .", indices.join(","))
@@ -135,19 +148,26 @@ fn format_n_prop(p: &str, _type: &str, indices: Vec<&str>) -> String {
     p.to_string() + ": " + _type + " " + &joined
 }
 
+/// Format other non-string properties.
+/// Return a sting -> `other_property: type @index .`.
 fn format_o_prop(p: &str) -> String {
     p.to_string()
 }
 
+/// Combine edge and node properties.
+/// Return a string of combined properties.
 fn combine(ep: &mut Vec<String>, np: &mut Vec<String>) -> String {
     ep.extend_from_slice(&np);
     ep.join("\n")
 }
 
+/// Add schema by altering dgraph.
 pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
     dgraph.alter(&schema).expect("Failed to set schema.");
 }
 
+/// Create type by name
+/// Return a vector of &str.
 fn get_type_name() -> Vec<&'static str> {
     let type_name = vec![
         "dataitem",
@@ -173,6 +193,8 @@ fn get_type_name() -> Vec<&'static str> {
     type_name
 }
 
+/// Create type fields, indicating which properties a type contains.
+/// Return a vector of &str vector, according to the order of type name.
 fn get_type_field() -> Vec<Vec<&'static str>> {
     let type_field = vec![
         // dataitem
@@ -321,6 +343,8 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
     type_field
 }
 
+/// Create types based on type name and fields.
+/// Return a vector of formatted type string.
 pub fn create_types() -> Vec<String> {
     let type_name = get_type_name();
     let type_field = get_type_field();
@@ -335,10 +359,14 @@ pub fn create_types() -> Vec<String> {
     types
 }
 
+/// Format type.
+/// Return a string -> `type type_name { field1, field2, ... }`.
 fn format_type(name: &str, field: &Vec<&str>) -> String {
     String::from("type ") + &name.to_string() + " {\n" + &field.join("\n") + "\n}"
 }
 
+/// Create schema for types.
+/// Return a dgraph operation of schema.
 pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
     dgraph::Operation {
         schema: types.join("\n"),
@@ -346,6 +374,9 @@ pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
     }
 }
 
+/// Count fields a type contains.
+/// `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
+/// Return a hashmap -> `<type_name, type_field_count>`.
 pub fn get_field_count() -> HashMap<String, usize> {
     let mut field_count = HashMap::new();
     let type_name = get_type_name();
