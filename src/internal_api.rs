@@ -109,7 +109,7 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
         // verify uid, version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
         let new_ver = root.items.first().unwrap().version + 1;
-        let mut new_json = sync_state::get_syncstate(_json.clone(), new_ver);
+        let new_json = sync_state::get_syncstate(_json.clone(), new_ver);
 
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
