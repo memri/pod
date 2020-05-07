@@ -14,7 +14,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     let version = warp::path("version")
         .and(warp::path::end())
         .and(warp::get())
-        .map(internal_api::version);
+        .map(internal_api::get_project_version);
     // Set API version
     let api_version_1 = warp::path("v1");
     // GET API for a single node.

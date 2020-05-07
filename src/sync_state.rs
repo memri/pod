@@ -2,10 +2,10 @@ use crate::data_model;
 use serde_json::Map;
 use serde_json::Value;
 
-/// Create a new json based on client json.
+/// Modify json by adding `syncState`.
 /// Add `syncState`, including `isPartiallyLoaded` and `version`, remove original `version`.
-/// Return the new json object.
-fn create_new_json(json: &Value) -> Value {
+/// Return the modified json object.
+fn add_sync_state(json: &Value) -> Value {
     let mut new_json = json.as_object().unwrap().clone();
     // Compare the number of returned properties/fields
     // with the default number of fields that type contains
@@ -68,7 +68,7 @@ pub fn set_syncstate(_json: Vec<u8>) -> String {
         .first()
         .unwrap();
 
-    let new_json = vec![create_new_json(&json)];
+    let new_json = vec![add_sync_state(&json)];
     Value::Array(new_json).to_string()
 }
 
@@ -86,7 +86,7 @@ pub fn set_syncstate_all(_json: Vec<u8>) -> String {
 
     let mut new_json = Vec::new();
     for i in 0..items.len() {
-        let item = create_new_json(items.get(i).unwrap());
+        let item = add_sync_state(items.get(i).unwrap());
         new_json.insert(i, item);
     }
     Value::Array(new_json).to_string()
