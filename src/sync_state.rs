@@ -20,8 +20,7 @@ fn add_sync_state(json: &Value) -> Value {
         .unwrap()
         .as_str()
         .unwrap();
-    let type_count = data_model::get_field_count();
-    let field_count = type_count.get(type_name).unwrap();
+    let field_count = &data_model::FIELD_COUNT.get(type_name).unwrap();
     let is_part_loaded = &_fields < field_count;
 
     let version = new_json.get("version").unwrap().as_f64().unwrap() as u64;

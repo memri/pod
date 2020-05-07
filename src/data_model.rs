@@ -1,4 +1,5 @@
 use dgraph::*;
+use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -11,6 +12,25 @@ pub struct Items {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Item {
     pub version: u64,
+}
+
+// Count fields a type contains.
+// `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
+// Return a hashmap -> `<type_name, type_field_count>`.
+lazy_static! {
+    pub static ref FIELD_COUNT: HashMap<String, usize> = {
+        let mut field_count = HashMap::new();
+        let type_name = get_type_name();
+        let type_field = get_type_field();
+
+        for i in 0..type_name.len() {
+            field_count.insert(
+                type_name.get(i).unwrap().to_string(),
+                type_field.get(i).unwrap().len() + 2,
+            );
+        }
+        field_count
+    };
 }
 
 /// Create edge properties of all types.
@@ -374,21 +394,4 @@ pub fn get_schema_from_types(types: Vec<String>) -> dgraph::Operation {
         schema: types.join("\n"),
         ..Default::default()
     }
-}
-
-/// Count fields a type contains.
-/// `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
-/// Return a hashmap -> `<type_name, type_field_count>`.
-pub fn get_field_count() -> HashMap<String, usize> {
-    let mut field_count = HashMap::new();
-    let type_name = get_type_name();
-    let type_field = get_type_field();
-
-    for i in 0..type_name.len() {
-        field_count.insert(
-            type_name.get(i).unwrap().to_string(),
-            type_field.get(i).unwrap().len() + 2,
-        );
-    }
-    field_count
 }
