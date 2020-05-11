@@ -383,7 +383,7 @@ pub fn create_types() -> Vec<String> {
 
 /// Format type.
 /// Return a string -> `type type_name { field1, field2, ... }`.
-fn format_type(name: &str, fields: &Vec<&str>) -> String {
+fn format_type(name: &str, fields: &[&str]) -> String {
     String::from("type ") + &name.to_string() + " {\n" + &fields.join("\n") + "\n}"
 }
 

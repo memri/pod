@@ -47,7 +47,7 @@ fn create_sync_state(version: u64, is_part_loaded: bool) -> Map<String, Value> {
 /// Add `version` to the original json to be stored in dgraph.
 /// Return the new json as a Value.
 pub fn get_syncstate(_json: Value, version: u64) -> Value {
-    let mut new_json: Map<String, Value> = _json.get("set").unwrap().as_object().unwrap().clone();
+    let mut new_json: Map<String, Value> = _json.as_object().unwrap().clone();
     new_json.remove("syncState").unwrap();
     new_json.insert("version".to_string(), serde_json::json!(version));
     Value::Object(new_json)
