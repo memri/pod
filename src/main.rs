@@ -23,18 +23,20 @@ async fn main() {
         .init();
 
     let dgraph = dgraph_database::create_dgraph();
-    // Drop and set up schema only in DROP mode.
-    // Add "APP_DROP=true" before executable, default is FALSE.
+
     let mut settings = config::Config::default();
     settings
         .merge(config::File::with_name("Settings"))
         .unwrap()
         .merge(config::Environment::with_prefix("SCHEMA"))
         .unwrap();
-
+    // Drop schema only in DROP mode.
+    // Add "SCHEMA_DROP=true" before executable, default is FALSE.
     if settings.get_str("drop").unwrap().eq("true") {
         dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
     }
+    // Set schema only in SET mode.
+    // Add "SCHEMA_SET=true" before executable, default is FALSE.
     if settings.get_str("set").unwrap().eq("true") {
         dgraph_database::set_schema(&dgraph);
     }
