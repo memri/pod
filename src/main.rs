@@ -34,6 +34,8 @@ async fn main() {
 
     if settings.get_str("drop").unwrap().eq("true") {
         dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
+    }
+    if settings.get_str("set").unwrap().eq("true") {
         dgraph_database::set_schema(&dgraph);
     }
     // Start web framework warp.
