@@ -2,10 +2,22 @@ use crate::data_model;
 use crate::sync_state;
 use dgraph::Dgraph;
 use log::debug;
+use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
 use std::sync::Arc;
+
+/// Check if the `uid` exists in DB, or if DB contains any items
+fn item_not_found(result: &Value) -> bool {
+    let result = result.get("items").unwrap().as_array().unwrap();
+    let empty = result.len() == 0 || result.first().unwrap().get("type") == Option::None;
+    if empty {
+        true
+    } else {
+        false
+    }
+}
 
 /// Get project version as seen by Cargo.
 pub fn get_project_version() -> &'static str {
@@ -35,7 +47,12 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
         .query_with_vars(query, vars)
         .expect("query");
 
-    Some(sync_state::set_syncstate(resp.json))
+    let result: Value = serde_json::from_slice(&resp.json).unwrap();
+    if item_not_found(&result) {
+        None
+    } else {
+        Some(sync_state::set_syncstate(result))
+    }
 }
 
 /// Get an array all items from the dgraph database.
@@ -51,7 +68,12 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
             }"#;
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
-    Some(sync_state::set_syncstate_all(resp.json))
+    let result: Value = serde_json::from_slice(&resp.json).unwrap();
+    if item_not_found(&result) {
+        None
+    } else {
+        Some(sync_state::set_syncstate_all(result))
+    }
 }
 
 /// Create an item presuming it didn't exist before.
@@ -65,22 +87,27 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
 /// The new item will be created with `version = 1`.
 pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     debug!("Creating item {}", _json);
-    let mut txn = _dgraph.new_txn();
-    let mut mutation = dgraph::Mutation::new();
+    let new_uid: Map<String, Value> = _json.clone().as_object().unwrap().clone();
+    let new_uid = new_uid.get("uid").unwrap();
+    if new_uid.is_string() {
+        let mut txn = _dgraph.new_txn();
+        let mut mutation = dgraph::Mutation::new();
 
-    let version = 1;
-    mutation.set_set_json(
-        serde_json::to_vec(&sync_state::get_syncstate(_json, version))
-            .expect("Failed to serialize JSON."),
-    );
-    let resp = txn.mutate(mutation).expect("Failed to create data.");
-    txn.commit().expect("Failed to commit mutation");
+        let version = 1;
+        mutation.set_set_json(
+            serde_json::to_vec(&sync_state::get_syncstate(_json, version))
+                .expect("Failed to serialize JSON."),
+        );
+        let resp = txn.mutate(mutation).expect("Failed to create data.");
+        txn.commit().expect("Failed to commit mutation");
 
-    let hex_uids = resp.uids.values().next().unwrap();
-    let without_pre = hex_uids.trim_start_matches("0x");
-    let uid = u64::from_str_radix(without_pre, 16).unwrap();
-
-    Some(uid)
+        let hex_uids = resp.uids.values().next().unwrap();
+        let without_pre = hex_uids.trim_start_matches("0x");
+        let uid = u64::from_str_radix(without_pre, 16).unwrap();
+        Some(uid)
+    } else {
+        None
+    }
 }
 
 /// First verify if `uid` exists, if so, then update the already existing item.

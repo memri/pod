@@ -55,8 +55,7 @@ pub fn get_syncstate(_json: Value, version: u64) -> Value {
 
 /// Create a vector of new json as response to get_item().
 /// Return a string of the vector.
-pub fn set_syncstate(_json: Vec<u8>) -> String {
-    let json_value: Value = serde_json::from_slice(&_json).unwrap();
+pub fn set_syncstate(json_value: Value) -> String {
     let json = json_value
         .as_object()
         .unwrap()
@@ -73,9 +72,8 @@ pub fn set_syncstate(_json: Vec<u8>) -> String {
 
 /// Create a vector of new json as response to get_all_items().
 /// Return a string of the vector.
-pub fn set_syncstate_all(_json: Vec<u8>) -> String {
-    let json: Value = serde_json::from_slice(&_json).unwrap();
-    let items = json
+pub fn set_syncstate_all(json_value: Value) -> String {
+    let items = json_value
         .as_object()
         .unwrap()
         .get("items")
