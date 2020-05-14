@@ -1,0 +1,31 @@
+# ------------------------------------------------------------------------------
+# Cargo Build Stage
+# ------------------------------------------------------------------------------
+FROM rust:latest as cargo-build
+
+RUN apt-get update
+RUN apt-get install -y musl-tools cmake golang
+RUN ln -s /usr/bin/musl-gcc /usr/bin/musl-g++
+RUN rustup target add x86_64-unknown-linux-musl
+
+WORKDIR /usr/src/pod
+
+COPY Cargo.toml Cargo.toml
+COPY Cargo.lock Cargo.lock
+
+RUN mkdir src \
+    && echo "fn main() {print!(\"Dummy main\");} // dummy file" > src/main.rs
+RUN cargo build --release --target=x86_64-unknown-linux-musl
+RUN rm -f target/x86_64-unknown-linux-musl/release/deps/pod*
+
+COPY . .
+RUN RUSTFLAGS="-C linker=musl-gcc -C link-arg=-L/usr/local/musl/lib" cargo build --release --target=x86_64-unknown-linux-musl
+
+# ------------------------------------------------------------------------------
+# Final Stage
+# ------------------------------------------------------------------------------
+
+FROM alpine:latest
+COPY --from=cargo-build /usr/src/myapp/target/x86_64-unknown-linux-musl/release/pod /usr/local/bin/pod
+CMD ["pod"]
+

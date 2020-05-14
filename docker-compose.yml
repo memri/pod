@@ -1,0 +1,25 @@
+version: '3.0'
+services:
+    dgraph:
+      image: dgraph/standalone:latest
+      ports:
+        - "8000:8000"
+        - "5080:5080"
+        - "6080:6080"
+        - "8080:8080"
+        - "9080:9080"
+      network_mode: "host"
+
+    pod:
+      build:
+        context: .
+        args:
+          SCHEMA_DROP: 'false'
+          SCHEMA_SET: 'true'
+      image: pod:latest
+      ports:
+        - "3030:3030"
+      depends_on:
+        - dgraph
+      network_mode: "host"
+
