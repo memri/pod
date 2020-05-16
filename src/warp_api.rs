@@ -122,6 +122,6 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             .or(update_item)
             .or(delete_item),
     )
-    .run(([127, 0, 0, 1], 3030))
+    .run(([0, 0, 0, 0], 3030))
     .await;
 }

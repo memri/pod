@@ -1,9 +1,11 @@
 use crate::data_model;
+use config::Config;
 use dgraph::*;
 
 /// Create dgraph gRPC connection.
-pub fn create_dgraph() -> Dgraph {
-    let dgraph_client = dgraph::new_dgraph_client("localhost:9080");
+pub fn create_dgraph(settings: &Config) -> Dgraph {
+    let dgraph_host = settings.get_str("dgraph_host").unwrap();
+    let dgraph_client = dgraph::new_dgraph_client((dgraph_host + ":9080").as_str());
     Dgraph::new(vec![dgraph_client])
 }
 

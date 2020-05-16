@@ -3,7 +3,7 @@ FROM ubuntu:latest
 WORKDIR /usr/src/pod
 
 COPY Settings.toml Settings.toml
-COPY target/debug/pod pod
+COPY target/release/pod pod
 
 EXPOSE 3030
 

@@ -22,22 +22,22 @@ async fn main() {
         })
         .init();
 
-    let dgraph = dgraph_database::create_dgraph();
-
     let mut settings = config::Config::default();
     settings
         .merge(config::File::with_name("Settings"))
         .unwrap()
-        .merge(config::Environment::with_prefix("SCHEMA"))
+        .merge(config::Environment::new())
         .unwrap();
+
+    let dgraph = dgraph_database::create_dgraph(&settings);
     // Drop schema only in DROP mode.
     // Add "SCHEMA_DROP=true" before executable, default is FALSE.
-    if settings.get_str("drop").unwrap().eq("true") {
+    if settings.get_bool("schema_drop").unwrap() {
         dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
     }
     // Set schema only in SET mode.
     // Add "SCHEMA_SET=true" before executable, default is FALSE.
-    if settings.get_str("set").unwrap().eq("true") {
+    if settings.get_bool("schema_set").unwrap() {
         dgraph_database::set_schema(&dgraph);
     }
     // Start web framework warp.

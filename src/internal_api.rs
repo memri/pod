@@ -8,15 +8,13 @@ use std::collections::HashMap;
 use std::str;
 use std::sync::Arc;
 
-/// Check if the `uid` exists in DB, or if DB contains any items
-fn item_not_found(result: &Value) -> bool {
+/// Verify if the response contains the content of the requested node.
+/// Return `true` if response doesn't contain any content.
+/// Return `false` if the node is found and its content is included in the response.
+fn response_is_empty(result: &Value) -> bool {
     let result = result.get("items").unwrap().as_array().unwrap();
     let empty = result.len() == 0 || result.first().unwrap().get("type") == Option::None;
-    if empty {
-        true
-    } else {
-        false
-    }
+    empty
 }
 
 /// Get project version as seen by Cargo.
@@ -48,7 +46,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
         .expect("query");
 
     let result: Value = serde_json::from_slice(&resp.json).unwrap();
-    if item_not_found(&result) {
+    if response_is_empty(&result) {
         None
     } else {
         Some(sync_state::set_syncstate(result))
@@ -69,7 +67,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let resp = _dgraph.new_readonly_txn().query(query).expect("query");
 
     let result: Value = serde_json::from_slice(&resp.json).unwrap();
-    if item_not_found(&result) {
+    if response_is_empty(&result) {
         None
     } else {
         Some(sync_state::set_syncstate_all(result))

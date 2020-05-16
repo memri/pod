@@ -15,8 +15,8 @@ COPY Cargo.toml Cargo.toml
 COPY Settings.toml Settings.toml
 COPY src src
 
-RUN cargo build
+RUN cargo build --release
 
 EXPOSE 3030
 
-CMD ["./target/debug/pod"]
+CMD ["./target/release/pod"]
