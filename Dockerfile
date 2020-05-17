@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:latest as cargo-build
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
@@ -17,6 +17,9 @@ COPY src src
 
 RUN cargo build --release
 
-EXPOSE 3030
 
-CMD ["./target/release/pod"]
+FROM ubuntu:latest
+COPY --from=cargo-build /usr/src/pod/target/release/pod pod
+COPY Settings.toml Settings.toml
+EXPOSE 3030
+CMD ["./pod"]
