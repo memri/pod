@@ -86,8 +86,9 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
 pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     debug!("Creating item {}", _json);
     let new_uid: Map<String, Value> = _json.clone().as_object().unwrap().clone();
-    let new_uid = new_uid.get("uid").unwrap();
-    if new_uid.is_string() {
+    // Check for blank node labels
+    let has_blank_label = new_uid.contains_key("uid");
+    if !has_blank_label || (has_blank_label && new_uid.get("uid").unwrap().is_string()) {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
