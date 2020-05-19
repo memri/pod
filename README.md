@@ -40,6 +40,12 @@ or use the script
 
 `./tools/start-dgraph.sh`
 
+* To add testing data of `note` type
+
+`cd tools`
+
+`./add-notes.sh`
+
 **Note:**
 
 Option `--network` indicates the dgraph container belongs to the network `my-net` with a name `pod_dgraph_1` specified by `--name`. 
