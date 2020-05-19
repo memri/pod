@@ -7,6 +7,10 @@ Can't wait? Reach out to us via our [Slack](https://app.slack.com/client/TSSDHE1
 
 ## How to build and run backend pod with dgraph?
 
+### Preparation:
+
+Make sure you have `docker` installed on your local machine. 
+
 ### On local machine:
 
 
@@ -22,9 +26,11 @@ Can't wait? Reach out to us via our [Slack](https://app.slack.com/client/TSSDHE1
 
 ### With docker:
 
-
 * ####  Dgraph
 
+* To create a custom network
+
+`docker network create my-net`
 
 *  To run a dgraph instance in a docker container
 
@@ -43,7 +49,7 @@ Option `--network` indicates the dgraph container belongs to the network `my-net
 
 
 
-*  To build a docker image of the pod
+*  To build a `docker` image of the pod
 
 `docker build -f Dockerfile -t pod .`
 
@@ -68,6 +74,7 @@ Available environment variables:
 *  `DGRAPH_HOST`, the hostname of dgraph container, by default `pod_dgraph_1`.
 *  `SCHEMA_SET`, set up schema, by default `false`, set it to `true` when start running the pod.
 *  `SCHEMA_DROP`, drop schema, by default `false`.
+*  `RUST_LOG=debug`, show all logs at `debug` level, default level is `info`.
 
 
 ### With docker-compose:
