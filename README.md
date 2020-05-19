@@ -40,6 +40,10 @@ or use the script
 
 `./tools/start-dgraph.sh`
 
+**Note:**
+
+Option `--network` indicates the dgraph container belongs to the network `my-net` with a name `pod_dgraph_1` specified by `--name`. 
+
 * To add testing data of `note` type
 
 `cd tools`
@@ -48,8 +52,19 @@ or use the script
 
 **Note:**
 
-Option `--network` indicates the dgraph container belongs to the network `my-net` with a name `pod_dgraph_1` specified by `--name`. 
+To have an overview of added data, in the dgraph web UI, use the following query
 
+`{
+  q(func: type(note)) {
+    uid
+    dgraph.type
+    expand(_all_) {
+      uid
+      dgraph.type
+      expand(_all_)
+    }
+  }
+}`
 
 * ####  pod
 
