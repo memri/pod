@@ -1,5 +1,6 @@
 use crate::internal_api;
 use dgraph::Dgraph;
+use log::debug;
 use log::info;
 use std::sync::Arc;
 use warp::http::StatusCode;
@@ -30,6 +31,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             let string = internal_api::get_item(&dgraph_clone, uid);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
+                debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
                 Box::new(StatusCode::NOT_FOUND)
@@ -47,6 +49,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             let string = internal_api::get_all_items(&dgraph_clone);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
+                debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
                 Box::new(StatusCode::NOT_FOUND)
@@ -67,6 +70,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             let uid = internal_api::create_item(&dgraph_clone, body);
             let boxed: Box<dyn Reply> = if let Some(uid) = uid {
                 let json = serde_json::json!(uid);
+                debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
                 Box::new(StatusCode::CONFLICT)
