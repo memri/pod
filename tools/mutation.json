@@ -1,0 +1,54 @@
+{
+  "set": [
+    {
+    		"uid": "_:shoplist4",
+    		"dgraph.type": "note",
+        "title": "Shopping list 4",
+        "content": "- tomatoes\n- icecream",
+        "starred": false,
+        "version": 1,
+        "syncState": {
+          "isPartiallyLoaded": true
+        },
+        "labels": [
+            { "uid":"_:dailtylog", "version": 1, "dgraph.type": "label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}},
+            { "uid":"_:work", "version": 1, "dgraph.type": "label","name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}},
+            { "uid": "_:home", "dgraph.type": "label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+        ],
+        "dateModified": "2020-04-10T11:11:11Z"
+  },
+        {
+    		"uid": "_:shoplist5",
+    		"dgraph.type": "note", 
+        "version": 1,
+        "title": "Shopping list 5",
+        "content": "- tomatoes\n- icecream",
+        "starred": true,
+        "syncState": {
+          "isPartiallyLoaded": true
+        },
+        "labels": [
+            { "uid":"_:dailtylog", "version": 1, "dgraph.type": "label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}},
+            { "uid": "_:home", "dgraph.type": "label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+        ],
+        "dateModified": "2020-04-10T11:11:11Z"
+  },
+        {
+    		"uid": "_:shoplist6",
+    		"dgraph.type": "note",
+        "version": 1,
+        "title": "Shopping list 6",
+        "content": "- tomatoes\n- icecream",
+        "starred": true,
+        "syncState": {
+          "isPartiallyLoaded": true
+        },
+        "labels": [
+            { "uid":"_:dailtylog", "version": 1, "dgraph.type": "label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}},
+ 	          { "uid":"_:work", "version": 1, "dgraph.type": "label", "name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}},
+            { "uid": "_:soccerteam", "dgraph.type": "label", "version": 1,"name": "Soccer Team","color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+        ],
+        "dateModified": "2020-04-10T11:11:11Z"
+        }
+    ]
+}
