@@ -23,25 +23,21 @@ fn add_sync_state(json: &Value) -> Value {
     let field_count = &data_model::FIELD_COUNT.get(type_name).unwrap();
     let is_part_loaded = &_fields < field_count;
 
-    let version = new_json.get("version").unwrap().as_f64().unwrap() as u64;
     // Create `syncState` and insert to new json as a Value.
-    let sync_state = create_sync_state(version, is_part_loaded);
+    let sync_state = create_sync_state(is_part_loaded);
 
-    new_json.remove("version").unwrap();
     new_json.remove("type").unwrap();
     new_json.insert("syncState".to_string(), Value::from(sync_state));
     new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
 }
 
-/// Create `syncState` with `version` and `isPartiallyLoaded`.
-/// Return a hashmap -> `<isPartiallyLoaded: bool, version: int>`.
-fn create_sync_state(version: u64, is_part_loaded: bool) -> Map<String, Value> {
+/// Create `syncState` with `isPartiallyLoaded`.
+/// Return a hashmap -> `<isPartiallyLoaded: bool>`.
+fn create_sync_state(is_part_loaded: bool) -> Map<String, Value> {
     let mut sync_state = serde_json::Map::new();
     let is_partially_loaded = Value::Bool(is_part_loaded);
-    let new_version = serde_json::json!(version);
     sync_state.insert("isPartiallyLoaded".to_string(), is_partially_loaded);
-    sync_state.insert("version".to_string(), new_version);
     sync_state
 }
 
@@ -50,7 +46,7 @@ fn create_sync_state(version: u64, is_part_loaded: bool) -> Map<String, Value> {
 /// Return the new json as a Value.
 pub fn get_syncstate(_json: Value, version: u64) -> Value {
     let mut new_json: Map<String, Value> = _json.as_object().unwrap().clone();
-    new_json.remove("syncState").unwrap();
+    new_json.remove("version").unwrap();
     new_json.insert("version".to_string(), serde_json::json!(version));
     Value::Object(new_json)
 }
