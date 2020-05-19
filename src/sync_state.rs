@@ -10,8 +10,8 @@ fn add_sync_state(json: &Value) -> Value {
     // Compare the number of returned properties/fields
     // with the default number of fields that type contains
     // to decide if all properties are included/loaded.
-    let _fields = new_json.len();
-    let type_name = new_json
+    let _fields = json.as_object().unwrap().len();
+    let type_name = json
         .get("type")
         .unwrap()
         .as_array()
@@ -28,7 +28,9 @@ fn add_sync_state(json: &Value) -> Value {
     let sync_state = create_sync_state(version, is_part_loaded);
 
     new_json.remove("version").unwrap();
+    new_json.remove("type").unwrap();
     new_json.insert("syncState".to_string(), Value::from(sync_state));
+    new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
 }
 
