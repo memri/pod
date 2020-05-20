@@ -18,7 +18,7 @@ services:
         - SCHEMA_DROP=false
         - SCHEMA_SET=true
         - DGRAPH_HOST=pod_dgraph_1
-        - RUST_LOG=debug
+        - RUST_LOG=trace
       image: pod:latest
       ports:
         - "3030:3030"

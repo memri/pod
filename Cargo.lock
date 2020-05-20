@@ -869,6 +869,7 @@ checksum = "05da548ad6865900e60eaba7f589cc0783590a92e940c26953ff81ddbab2d677"
 name = "pod"
 version = "0.0.1"
 dependencies = [
+ "bytes 0.5.4",
  "chrono",
  "config",
  "dgraph",

@@ -1,4 +1,5 @@
 use crate::internal_api;
+use bytes::Bytes;
 use dgraph::Dgraph;
 use log::debug;
 use log::info;
@@ -22,6 +23,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     // Parameter:
     //     uid: uid of requested node, u64.
     // Return an array of nodes with requested uid.
+    // Return StatusCode::NOT_FOUND if node does not exist.
     let dgraph_clone = dgraph.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / u64))
@@ -40,6 +42,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
     // GET API for all nodes.
     // Return an array of all nodes.
+    // Return StatusCode::NOT_FOUND if nodes not exist.
     let dgraph_clone = dgraph.clone();
     let get_all_items = api_version_1
         .and(warp::path!("all"))
@@ -116,6 +119,27 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 StatusCode::NOT_FOUND
             }
         });
+    // QUERY API for a subset of nodes.
+    // Input: json of query within the body.
+    // Return an array of nodes.
+    // Return StatusCode::NOT_FOUND if nodes not exist.
+    let dgraph_clone = dgraph.clone();
+    let query = api_version_1
+        .and(warp::path("all"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(warp::body::bytes())
+        .map(move |body: Bytes| {
+            let string = internal_api::query(&dgraph_clone, body);
+            let boxed: Box<dyn Reply> = if let Some(string) = string {
+                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
+                debug!("Response: {}", &json);
+                Box::new(warp::reply::json(&json))
+            } else {
+                Box::new(StatusCode::NOT_FOUND)
+            };
+            boxed
+        });
     // Specify APIs.
     // Specify address and port number to listen to.
     warp::serve(
@@ -124,7 +148,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             .or(get_all_items)
             .or(create_item)
             .or(update_item)
-            .or(delete_item),
+            .or(delete_item)
+            .or(query),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;

@@ -1,10 +1,12 @@
 use crate::data_model;
 use crate::sync_state;
+use bytes::Bytes;
 use dgraph::Dgraph;
 use log::debug;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::str;
 use std::sync::Arc;
 
@@ -201,4 +203,20 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
     }
 
     deleted
+}
+
+/// Query a subset of items.
+/// Return `None` if response doesn't contain any items, Some(json) if it does.
+/// `syncState` is added to the returned json for the root-level items.
+pub fn query(_dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
+    let query = std::str::from_utf8(body.deref()).unwrap();
+    debug!("Query {}", query);
+
+    let resp = _dgraph.new_readonly_txn().query(query).expect("query");
+    let result: Value = serde_json::from_slice(&resp.json).unwrap();
+    if response_is_empty(&result) {
+        None
+    } else {
+        Some(sync_state::set_syncstate_all(result))
+    }
 }
