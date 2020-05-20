@@ -110,11 +110,17 @@ Available environment variables:
 
 `docker-compose up`
 
+* To stop both containers
+
+`docker-compose stop`
+
+* To restart both containers
+
+`docker-compose restart`
 
 *  To remove all containers
 
 `docker-compose down`
-
 
 *  To rebuild the pod image
 
