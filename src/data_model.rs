@@ -14,6 +14,11 @@ pub struct Item {
     pub version: u64,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct UID {
+    pub uid: String,
+}
+
 // Count fields a type contains.
 // `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
 // Return a hashmap -> `<type_name, type_field_count>`.

@@ -10,23 +10,30 @@ fn add_sync_state(json: &Value) -> Value {
     // Compare the number of returned properties/fields
     // with the default number of fields that type contains
     // to decide if all properties are included/loaded.
-    let _fields = json.as_object().unwrap().len();
+    let _fields = json.as_object().unwrap();
     let type_name = json
-        .get("type")
+        .get("dgraph.type")
         .unwrap()
         .as_array()
         .unwrap()
         .first()
         .unwrap()
         .as_str()
-        .unwrap();
+        .unwrap()
+        .clone();
     let field_count = &data_model::FIELD_COUNT.get(type_name).unwrap();
-    let is_part_loaded = &_fields < field_count;
+    let is_part_loaded = &_fields.len() < field_count;
+
+    let hex_uid: data_model::UID = serde_json::from_value(json.clone()).unwrap();
+    let without_pre = hex_uid.uid.trim_start_matches("0x");
+    let uid = u64::from_str_radix(without_pre, 16).unwrap();
 
     // Create `syncState` and insert to new json as a Value.
     let sync_state = create_sync_state(is_part_loaded);
 
-    new_json.remove("type").unwrap();
+    new_json.remove("uid").unwrap();
+    new_json.insert("uid".to_string(), Value::from(uid));
+    new_json.remove("dgraph.type").unwrap();
     new_json.insert("syncState".to_string(), Value::from(sync_state));
     new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
