@@ -14,10 +14,15 @@ Make sure you have `docker` installed on your local machine.
 ### On local machine:
 
 
+* To run a dgraph instance in a docker container
+
+`docker network create my-net`
+
+`./tools/start-dgraph.sh`
+
 *  To build the backend on local mahine
 
 `cargo build --release` 
-
 
 *  To run the backend
 
