@@ -4,6 +4,8 @@ mod internal_api;
 mod sync_state;
 mod warp_api;
 
+mod importers;
+
 use chrono::Utc;
 use env_logger::Env;
 use std::io::Write;
@@ -35,11 +37,17 @@ async fn main() {
     if settings.get_str("drop").unwrap().eq("true") {
         dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
     }
+
     // Set schema only in SET mode.
     // Add "SCHEMA_SET=true" before executable, default is FALSE.
     if settings.get_str("set").unwrap().eq("true") {
         dgraph_database::set_schema(&dgraph);
     }
+
+    importers::note_importer::import_notes(&dgraph);
+    importers::note_importer::query_notes(&dgraph);
+    //importers::note_importer::simple_example(&dgraph);
+
     // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }
