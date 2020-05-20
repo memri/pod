@@ -15,7 +15,7 @@ use std::sync::Arc;
 /// Return `false` if the node is found and its content is included in the response.
 fn response_is_empty(result: &Value) -> bool {
     let result = result.get("items").unwrap().as_array().unwrap();
-    let empty = result.len() == 0 || result.first().unwrap().get("dgraph.type") == Option::None;
+    let empty = result.len() == 0 || result.first().unwrap().get("type") == Option::None;
     empty
 }
 
@@ -34,7 +34,7 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
     let query = r#"query all($a: string){
         items(func: uid($a)) {
             uid
-            dgraph.type
+            type : dgraph.type
             expand(_all_)
         }
     }"#;
@@ -62,7 +62,7 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = r#"{
             items(func: has(version)) {
                 uid
-                dgraph.type
+                type : dgraph.type
                 expand(_all_)
                 }
             }"#;

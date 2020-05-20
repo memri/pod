@@ -12,7 +12,7 @@ fn add_sync_state(json: &Value) -> Value {
     // to decide if all properties are included/loaded.
     let _fields = json.as_object().unwrap();
     let type_name = json
-        .get("dgraph.type")
+        .get("type")
         .unwrap()
         .as_array()
         .unwrap()
@@ -33,7 +33,7 @@ fn add_sync_state(json: &Value) -> Value {
 
     new_json.remove("uid").unwrap();
     new_json.insert("uid".to_string(), Value::from(uid));
-    new_json.remove("dgraph.type").unwrap();
+    new_json.remove("type").unwrap();
     new_json.insert("syncState".to_string(), Value::from(sync_state));
     new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
