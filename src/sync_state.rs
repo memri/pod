@@ -3,13 +3,14 @@ use serde_json::Map;
 use serde_json::Value;
 
 /// Modify json by adding `syncState`.
-/// Add `syncState`, including `isPartiallyLoaded` and `version`, remove original `version`.
+/// Add `syncState`, including `isPartiallyLoaded`.
+/// Change `type` from an array to a string.
+/// Change `uid` from a string to an integer.
 /// Return the modified json object.
 fn add_sync_state(json: &Value) -> Value {
     let mut new_json = json.as_object().unwrap().clone();
     // Compare the number of returned properties/fields
-    // with the default number of fields that type contains
-    // to decide if all properties are included/loaded.
+    // with if only `memriID` and `type` are returned.
     let _fields = json.as_object().unwrap();
     let type_name = json
         .get("type")
@@ -21,8 +22,8 @@ fn add_sync_state(json: &Value) -> Value {
         .as_str()
         .unwrap()
         .clone();
-    let field_count = &data_model::FIELD_COUNT.get(type_name).unwrap();
-    let is_part_loaded = &_fields.len() < field_count;
+    let min_fields = &data_model::FIELD_COUNT.len();
+    let is_part_loaded = &_fields.len() <= min_fields;
 
     let hex_uid: data_model::UID = serde_json::from_value(json.clone()).unwrap();
     let without_pre = hex_uid.uid.trim_start_matches("0x");

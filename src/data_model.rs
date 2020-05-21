@@ -22,19 +22,12 @@ pub struct UID {
 
 lazy_static! {
     // Count fields a type contains.
-    // `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
-    // Return a hashmap -> `<type_name, type_field_count>`.
-    pub static ref FIELD_COUNT: HashMap<String, usize> = {
+    // `memriID` and `dgraph.type` are the default response.
+    // Return the size of default response.
+    pub static ref FIELD_COUNT: HashMap<u64, String> = {
         let mut field_count = HashMap::new();
-        let type_name = get_type_name();
-        let type_field = get_type_field();
-
-        for i in 0..type_name.len() {
-            field_count.insert(
-                type_name.get(i).unwrap().to_string(),
-                type_field.get(i).unwrap().len() + 2,
-            );
-        }
+        field_count.insert(0, "memriID".to_string());
+        field_count.insert(1, "dgraph.type".to_string());
         field_count
     };
     // Get names of edge properties.
