@@ -30,12 +30,14 @@ fn add_sync_state(json: &Value) -> Value {
     let uid = u64::from_str_radix(without_pre, 16).unwrap();
 
     // Create `syncState` and insert to new json as a Value.
-    let sync_state = create_sync_state(is_part_loaded);
+    if is_part_loaded == true {
+        let sync_state = create_sync_state(is_part_loaded);
+        new_json.insert("syncState".to_string(), Value::from(sync_state));
+    }
 
     new_json.remove("uid").unwrap();
     new_json.insert("uid".to_string(), Value::from(uid));
     new_json.remove("type").unwrap();
-    new_json.insert("syncState".to_string(), Value::from(sync_state));
     new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
 }
@@ -99,21 +101,30 @@ pub fn set_syncstate_all(json_value: Value) -> String {
     let mut new_json = Vec::new();
     for i in 0..items.len() {
         let item = add_sync_state(items.get(i).unwrap());
-        let mut new_item = item.as_object().unwrap().clone();
 
         // Adjust sub-objects
-        let edges = data_model::has_edge(item.as_object().unwrap().keys());
-        for edge in edges.iter() {
-            let mut new_edge = Vec::new();
-            let subs = item.get(edge).unwrap().as_array().unwrap();
-            for j in 0..subs.len() {
-                let new_sub = add_sync_state(subs.get(j).unwrap());
-                new_edge.insert(j, new_sub);
-            }
-            new_item.remove(edge).unwrap();
-            new_item.insert(edge.to_string(), Value::Array(new_edge));
-        }
-        new_json.insert(i, Value::Object(new_item));
+        let new_item = adjust_sub_object(item);
+        new_json.insert(i, new_item);
     }
     Value::Array(new_json).to_string()
+}
+
+/// Adjust all sub-objects for `syncState` recursively.
+/// Return an adjusted value.
+fn adjust_sub_object(item: Value) -> Value {
+    let mut new_item = item.as_object().unwrap().clone();
+
+    let edges = data_model::has_edge(item.as_object().unwrap().keys());
+    for edge in edges.iter() {
+        let mut new_edge = Vec::new();
+        let sub_objects = item.get(edge).unwrap().as_array().unwrap();
+        for j in 0..sub_objects.len() {
+            let new_object = add_sync_state(sub_objects.get(j).unwrap());
+            let result = adjust_sub_object(new_object);
+            new_edge.insert(j, result);
+        }
+        new_item.remove(edge).unwrap();
+        new_item.insert(edge.to_string(), Value::Array(new_edge));
+    }
+    Value::Object(new_item)
 }

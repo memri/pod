@@ -28,6 +28,7 @@ lazy_static! {
         let mut field_count = HashMap::new();
         field_count.insert(0, "memriID".to_string());
         field_count.insert(1, "dgraph.type".to_string());
+        field_count.insert(2, "version".to_string());
         field_count
     };
     // Get names of edge properties.
