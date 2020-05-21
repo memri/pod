@@ -26,21 +26,20 @@ pub fn get_project_version() -> &'static str {
 }
 
 /// Get an item from the dgraph database.
-/// None if the `uid` doesn't exist in DB, Some(json) if it does.
+/// None if the `memriID` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
-    debug!("Getting item {}", uid);
+pub fn get_item(_dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
+    debug!("Getting item {}", mid);
     let query = r#"query all($a: string){
-        items(func: uid($a)) {
-            uid
+        items(func: eq(memriID, $a)) {
             type : dgraph.type
             expand(_all_)
         }
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), uid.to_string());
+    vars.insert("$a".to_string(), mid.to_string());
 
     let resp = _dgraph
         .new_readonly_txn()
@@ -61,7 +60,6 @@ pub fn get_item(_dgraph: &Arc<Dgraph>, uid: u64) -> Option<String> {
 pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
     let query = r#"{
             items(func: has(version)) {
-                uid
                 type : dgraph.type
                 expand(_all_)
                 }
@@ -77,9 +75,9 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
 }
 
 /// Create an item presuming it didn't exist before.
-/// Return Some(uid) if the data item did not have a `uid` field,
+/// Return Some(uid) if the data item's `memriID` cannot be found in the DB,
 /// and was successfully created in DB.
-/// Return None if the data item had `uid` field, indicating it already exists,
+/// Return None if the data item had `memriID` field, indicating it already exists,
 /// should use `update` for changing the item.
 /// Dgraph returns `uid` in hexadecimal and should be converted to decimal.
 /// `syncState` field of the json from client is processed and removed,
@@ -87,16 +85,24 @@ pub fn get_all_items(_dgraph: &Arc<Dgraph>) -> Option<String> {
 /// The new item will be created with `version = 1`.
 pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     debug!("Creating item {}", _json);
-    let new_uid: Map<String, Value> = _json.clone().as_object().unwrap().clone();
+    let new_json: Map<String, Value> = _json.clone().as_object().unwrap().clone();
     // Check for blank node labels
-    let has_blank_label = new_uid.contains_key("uid");
-    if !has_blank_label || (has_blank_label && new_uid.get("uid").unwrap().is_string()) {
+    let has_blank_label = new_json.contains_key("uid");
+    if !has_blank_label
+        || (has_blank_label
+            && new_json
+                .get("uid")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .starts_with("_:"))
+    {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
         let version = 1;
         mutation.set_set_json(
-            serde_json::to_vec(&sync_state::get_syncstate(_json, version))
+            serde_json::to_vec(&sync_state::get_syncstate(_json, version, Value::Null))
                 .expect("Failed to serialize JSON."),
         );
         let resp = txn.mutate(mutation).expect("Failed to create data.");
@@ -111,29 +117,30 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     }
 }
 
-/// First verify if `uid` exists, if so, then update the already existing item.
+/// First verify if `mid` exists, if so, then update the already existing item.
 /// Parameters:
-///     - `uid`: uid of the item to be updated.
+///     - `mid`: memriID of the item to be updated.
 ///     - `_json`: the json sent by client.
-/// Return `false` if dgraph didn't have a node with this `uid`.
-/// Return `true` if dgraph had a node with this `uid` and it was successfully updated.
+/// Return `false` if dgraph didn't have a node with this `mid`.
+/// Return `true` if dgraph had a node with this `mid` and it was successfully updated.
 /// The `version` that is sent to us by the client should be completely ignored.
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
-    debug!("Updating item {} with {}", uid, _json);
+pub fn update_item(_dgraph: &Arc<Dgraph>, mid: u64, mut _json: Value) -> bool {
+    debug!("Updating item {} with {}", mid, _json);
     let found;
 
     let query = r#"query all($a: string){
-        items(func: uid($a)) {
+        items(func: eq(memriID, $a)) {
+            uid
             expand(_all_)
         }
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), uid.to_string());
-    // Get response of query with `uid`
+    vars.insert("$a".to_string(), mid.to_string());
+
     let resp = _dgraph
         .new_readonly_txn()
         .query_with_vars(query, vars)
@@ -141,14 +148,26 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
-    // Check if the returned item for the `uid` is an empty item.
+
     if items == null_item {
         found = false;
     } else {
         // version += 1
         let root: data_model::Items = serde_json::from_slice(&resp.json).unwrap();
         let new_ver = root.items.first().unwrap().version + 1;
-        let _json = sync_state::get_syncstate(_json, new_ver);
+        let uid = items
+            .as_object()
+            .unwrap()
+            .get("items")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .first()
+            .unwrap()
+            .get("uid")
+            .unwrap();
+        let _json = sync_state::get_syncstate(_json, new_ver, uid.clone());
+
         // Update via mutation
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
@@ -159,31 +178,31 @@ pub fn update_item(_dgraph: &Arc<Dgraph>, uid: u64, mut _json: Value) -> bool {
 
         found = true;
     }
-
     found
 }
 
 /// Delete an already existing item.
-/// Return `false` if dgraph didn't have a node with this `uid`.
-/// Return `true` if dgraph had a node with this `uid` and it was successfully deleted.
-pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
-    debug!("Deleting item {}", uid);
+/// Return `false` if dgraph didn't have a node with this memriID.
+/// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
+pub fn delete_item(_dgraph: &Arc<Dgraph>, mid: u64) -> bool {
+    debug!("Deleting item {}", mid);
     let deleted;
 
     let query = r#"query all($a: string){
-        items(func: uid($a)) {
+        items(func: eq(memriID, $a)) {
+            uid
             expand(_all_)
         }
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), uid.to_string());
-    // Get response of query with `uid`
+    vars.insert("$a".to_string(), mid.to_string());
+
     let resp = _dgraph
         .new_readonly_txn()
         .query_with_vars(query, vars)
         .expect("query");
-    // Verify if `uid` exists
+
     let items: Value = serde_json::from_slice(&resp.json).unwrap();
     let null_item: Value = serde_json::from_str(r#"{"items": []}"#).unwrap();
 
@@ -193,6 +212,17 @@ pub fn delete_item(_dgraph: &Arc<Dgraph>, uid: u64) -> bool {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
 
+        let uid = items
+            .as_object()
+            .unwrap()
+            .get("items")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .first()
+            .unwrap()
+            .get("uid")
+            .unwrap();
         let _json = serde_json::json!({ "uid": uid });
 
         mutation.set_delete_json(serde_json::to_vec(&_json).expect("Failed to serialize JSON."));

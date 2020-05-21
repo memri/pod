@@ -21,16 +21,16 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     let api_version_1 = warp::path("v1");
     // GET API for a single node.
     // Parameter:
-    //     uid: uid of requested node, u64.
-    // Return an array of nodes with requested uid.
+    //     mid: memriID of requested node, u64.
+    // Return an array of nodes with requested memriID.
     // Return StatusCode::NOT_FOUND if node does not exist.
     let dgraph_clone = dgraph.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / u64))
         .and(warp::path::end())
         .and(warp::get())
-        .map(move |uid: u64| {
-            let string = internal_api::get_item(&dgraph_clone, uid);
+        .map(move |mid: u64| {
+            let string = internal_api::get_item(&dgraph_clone, mid);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 debug!("Response: {}", &json);
@@ -82,7 +82,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
     // PUT API for a single node.
     // Parameter:
-    //     uid: uid of the node to be updated.
+    //     mid: memriID of the node to be updated.
     // Return without body:
     //     StatusCode::OK if node has been updated successfully.
     //     StatusCode::NOT_FOUND if node is not found in the database.
@@ -92,8 +92,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
-        .map(move |uid: u64, body: serde_json::Value| {
-            let result = internal_api::update_item(&dgraph_clone, uid, body);
+        .map(move |mid: u64, body: serde_json::Value| {
+            let result = internal_api::update_item(&dgraph_clone, mid, body);
             if result {
                 StatusCode::OK
             } else {
@@ -102,7 +102,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         });
     // DELETE API for a single node.
     // Parameter:
-    //     uid: uid of the node to be deleted.
+    //     mid: memriID of the node to be deleted.
     // Return without body:
     //     StatusCode::OK if node has been deleted successfully.
     //     StatusCode::NOT_FOUND if node was not found in the database.
@@ -111,8 +111,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .and(warp::path!("items" / u64))
         .and(warp::path::end())
         .and(warp::delete())
-        .map(move |uid: u64| {
-            let result = internal_api::delete_item(&dgraph_clone, uid);
+        .map(move |mid: u64| {
+            let result = internal_api::delete_item(&dgraph_clone, mid);
             if result {
                 StatusCode::OK
             } else {

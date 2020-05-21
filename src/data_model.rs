@@ -15,11 +15,6 @@ pub struct Item {
     pub version: u64,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct UID {
-    pub uid: String,
-}
-
 lazy_static! {
     // Count fields a type contains.
     // `memriID` and `dgraph.type` are the default response.
@@ -147,7 +142,8 @@ fn create_node_other_property() -> Vec<&'static str> {
         "dateModified: datetime .",
         "dateAccessed: datetime .",
         "functions: [string] .",
-        "version: int .",
+        "version: int @index(int).",
+        "memriID: int @index(int).",
     ];
 
     other_props
@@ -258,6 +254,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "functions",
             "version",
             "changelog",
+            "memriID",
         ],
         // note
         vec![
@@ -277,6 +274,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // label
         vec![
@@ -294,6 +292,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // photo
         vec![
@@ -312,6 +311,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // video
         vec![
@@ -331,6 +331,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // audio
         vec![
@@ -349,6 +350,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // file
         vec![
@@ -364,6 +366,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // person
         vec![
@@ -396,6 +399,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // logitem
         vec![
@@ -413,6 +417,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // phonenumber
         vec![
@@ -428,6 +433,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // website
         vec![
@@ -443,6 +449,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // location
         vec![
@@ -458,6 +465,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // address
         vec![
@@ -478,6 +486,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // country
         vec![
@@ -494,6 +503,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // company
         vec![
@@ -509,6 +519,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // publickey
         vec![
@@ -525,6 +536,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // onlineprofile
         vec![
@@ -540,6 +552,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // diet
         vec![
@@ -556,6 +569,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
         // medicalcondition
         vec![
@@ -571,6 +585,7 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "dateAccessed",
             "functions",
             "changelog",
+            "memriID",
         ],
     ];
     type_field
