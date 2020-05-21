@@ -98,7 +98,21 @@ pub fn set_syncstate_all(json_value: Value) -> String {
     let mut new_json = Vec::new();
     for i in 0..items.len() {
         let item = add_sync_state(items.get(i).unwrap());
-        new_json.insert(i, item);
+        let mut new_item = item.as_object().unwrap().clone();
+
+        // Adjust sub-objects
+        let edges = data_model::has_edge(item.as_object().unwrap().keys());
+        for edge in edges.iter() {
+            let mut new_edge = Vec::new();
+            let subs = item.get(edge).unwrap().as_array().unwrap();
+            for j in 0..subs.len() {
+                let new_sub = add_sync_state(subs.get(j).unwrap());
+                new_edge.insert(j, new_sub);
+            }
+            new_item.remove(edge).unwrap();
+            new_item.insert(edge.to_string(), Value::Array(new_edge));
+        }
+        new_json.insert(i, Value::Object(new_item));
     }
     Value::Array(new_json).to_string()
 }

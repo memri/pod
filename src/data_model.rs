@@ -2,6 +2,7 @@ use dgraph::*;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::map::Keys;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -19,10 +20,10 @@ pub struct UID {
     pub uid: String,
 }
 
-// Count fields a type contains.
-// `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
-// Return a hashmap -> `<type_name, type_field_count>`.
 lazy_static! {
+    // Count fields a type contains.
+    // `uid` and `dgraph.type` are by default not included in type fields, therefore the number of fields should + 2.
+    // Return a hashmap -> `<type_name, type_field_count>`.
     pub static ref FIELD_COUNT: HashMap<String, usize> = {
         let mut field_count = HashMap::new();
         let type_name = get_type_name();
@@ -36,6 +37,31 @@ lazy_static! {
         }
         field_count
     };
+    // Get names of edge properties.
+    // Return a vector -> `<edge_name>`.
+    pub static ref GET_EDGES: Vec<String> = {
+        let edge_props = create_edge_property();
+        let mut edges = vec![];
+        for i in 0..edge_props.len() {
+            let strings: Vec<_> = edge_props[i].split(":").collect();
+            let edge: String = strings.as_slice().first().unwrap().to_string();
+            edges.insert(i, edge);
+        }
+        edges
+    };
+}
+
+pub fn has_edge(fields: Keys) -> Vec<String> {
+    let mut edges = vec![];
+    let mut cnt = 0;
+    for field in fields.into_iter() {
+        if GET_EDGES.contains(field) {
+            let edge = String::from(field);
+            edges.insert(cnt, edge);
+            cnt += 1;
+        }
+    }
+    edges
 }
 
 /// Create edge properties of all types.
