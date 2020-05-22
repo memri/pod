@@ -1,6 +1,7 @@
 mod data_model;
 mod dgraph_database;
 mod internal_api;
+mod sync_state;
 mod warp_api;
 
 use chrono::Utc;
@@ -21,10 +22,24 @@ async fn main() {
         })
         .init();
 
-    let dgraph = dgraph_database::create_dgraph();
+    let mut settings = config::Config::default();
+    settings
+        .merge(config::File::with_name("Settings"))
+        .unwrap()
+        .merge(config::Environment::new())
+        .unwrap();
 
-    dgraph_database::drop_schema(&dgraph);
-    dgraph_database::set_schema(&dgraph);
+    let dgraph = dgraph_database::create_dgraph(&settings);
 
+    // Drop the old Dgraph schema and all its data, if asked to
+    if settings.get_bool("drop_schema_and_all_data").unwrap() {
+        dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
+    }
+
+    // Add Dgraph schema, if asked to
+    if settings.get_bool("add_schema_on_start").unwrap() {
+        dgraph_database::add_schema(&dgraph);
+    }
+    // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
 }
