@@ -255,8 +255,8 @@ pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
 
 fn _write_access_audit_log(dgraph: &Arc<Dgraph>, underlying_uid: UID) {
     let audit = AuditAccessLog {
-        accessed_uid: underlying_uid,
-        created_at: Utc::now(),
+        audit_target: underlying_uid,
+        date_created: Utc::now(),
     };
     let mut mutation = dgraph::Mutation::new();
     mutation.set_set_json(serde_json::to_vec(&audit).expect("Failed to serialize to JSON"));

@@ -25,8 +25,10 @@ pub type UID = u64;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(tag = "type")] // Add a "type" field during serialization to JSON object
 pub struct AuditAccessLog {
-    pub accessed_uid: UID,
-    pub created_at: DateTime<Utc>,
+    #[serde(rename = "auditTarget")]
+    pub audit_target: UID,
+    #[serde(rename = "dateCreated")]
+    pub date_created: DateTime<Utc>,
 }
 
 /// TODO: add docs what that means. I've no clue yet. But certainly needs a clean-up.
@@ -56,6 +58,7 @@ pub fn dgraph_edge_properties() -> Vec<String> {
     let edge_props = [
         "addresses: [uid] ",
         "appliesTo: [uid] ",
+        "auditTarget: uid ",
         "changelog: [uid] ",
         "comments: [uid] ",
         "companies: [uid] ",
