@@ -30,15 +30,15 @@ async fn main() {
         .unwrap();
 
     let dgraph = dgraph_database::create_dgraph(&settings);
-    // Drop schema only in DROP mode.
-    // Add "SCHEMA_DROP=true" before executable, default is FALSE.
-    if settings.get_bool("schema_drop").unwrap() {
+
+    // Drop the old Dgraph schema and all its data, if asked to
+    if settings.get_bool("drop_schema_and_all_data").unwrap() {
         dgraph_database::drop_schema_and_all_data_irreversibly(&dgraph);
     }
-    // Set schema only in SET mode.
-    // Add "SCHEMA_SET=true" before executable, default is FALSE.
-    if settings.get_bool("schema_set").unwrap() {
-        dgraph_database::set_schema(&dgraph);
+
+    // Add Dgraph schema, if asked to
+    if settings.get_bool("add_schema_on_start").unwrap() {
+        dgraph_database::add_schema(&dgraph);
     }
     // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;

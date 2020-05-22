@@ -1,6 +1,6 @@
 # Config option for dropping schema
-schema_drop = false
+drop_schema_and_all_data = false
 # Config option for adding schema to dgraph
-schema_set = false
+add_schema_on_start = false
 # dgraph host
 dgraph_host = "localhost"

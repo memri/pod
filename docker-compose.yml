@@ -15,8 +15,8 @@ services:
         dockerfile: Dockerfile
       restart: always
       environment:
-        - SCHEMA_DROP=false
-        - SCHEMA_SET=true
+        - DROP_SCHEMA_AND_ALL_DATA=false
+        - ADD_SCHEMA_ON_START=true
         - DGRAPH_HOST=pod_dgraph_1
         - RUST_LOG=trace
       image: pod:latest
