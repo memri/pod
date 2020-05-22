@@ -19,13 +19,12 @@ fn add_sync_state(json: &Value) -> Value {
         .first()
         .unwrap()
         .as_str()
-        .unwrap()
-        .clone();
+        .unwrap();
     let min_fields = &data_model::FIELD_COUNT.len();
     let is_part_loaded = &_fields.len() <= min_fields;
 
     // Create `syncState` and insert to new json as a Value.
-    if is_part_loaded == true {
+    if is_part_loaded {
         let sync_state = create_sync_state(is_part_loaded);
         new_json.insert("syncState".to_string(), Value::from(sync_state));
     }

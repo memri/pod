@@ -15,8 +15,7 @@ use std::sync::Arc;
 /// Return `false` if the node is found and its content is included in the response.
 fn response_is_empty(result: &Value) -> bool {
     let result = result.get("items").unwrap().as_array().unwrap();
-    let empty = result.len() == 0 || result.first().unwrap().get("type") == Option::None;
-    empty
+    result.is_empty() || result.first().unwrap().get("type").is_none()
 }
 
 /// Get project version as seen by Cargo.
@@ -89,13 +88,12 @@ pub fn create_item(_dgraph: &Arc<Dgraph>, _json: Value) -> Option<u64> {
     // Check for blank node labels
     let has_blank_label = new_json.contains_key("uid");
     if !has_blank_label
-        || (has_blank_label
-            && new_json
-                .get("uid")
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .starts_with("_:"))
+        || new_json
+            .get("uid")
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .starts_with("_:")
     {
         let mut txn = _dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();

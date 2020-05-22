@@ -32,8 +32,8 @@ lazy_static! {
         let edge_props = create_edge_property();
         let mut edges = vec![];
         for i in 0..edge_props.len() {
-            let strings: Vec<_> = edge_props[i].split(":").collect();
-            let edge: String = strings.as_slice().first().unwrap().to_string();
+            let strings: Vec<_> = edge_props[i].split(':').collect();
+            let edge: String = (*strings.as_slice().first().unwrap()).to_string();
             edges.insert(i, edge);
         }
         edges
@@ -597,12 +597,11 @@ pub fn create_types() -> Vec<String> {
     let type_name = get_type_name();
     let type_field = get_type_field();
 
-    let types = type_name
+    type_name
         .iter()
         .zip(type_field)
         .map(|(name, field)| format_type(name, &field))
-        .collect();
-    types
+        .collect()
 }
 
 /// Format type.
