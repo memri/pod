@@ -125,7 +125,7 @@ pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, mut json: Value) -> bool {
+pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
     debug!("Updating item {} with {}", mid, json);
     let found;
 
