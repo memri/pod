@@ -45,9 +45,9 @@ fn create_sync_state(is_part_loaded: bool) -> Map<String, Value> {
 /// Remove `syncState` from client json.
 /// Add `version` to the original json to be stored in dgraph.
 /// Return the new json as a Value.
-pub fn get_syncstate(_json: Value, version: u64, uid: Value) -> Value {
-    let mut new_json: Map<String, Value> = _json.as_object().unwrap().clone();
-    let type_name = _json
+pub fn get_syncstate(json: Value, version: u64, uid: Value) -> Value {
+    let mut new_json: Map<String, Value> = json.as_object().unwrap().clone();
+    let type_name = json
         .as_object()
         .unwrap()
         .get("type")
