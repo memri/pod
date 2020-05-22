@@ -118,7 +118,7 @@ pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
 /// First verify if `mid` exists, if so, then update the already existing item.
 /// Parameters:
 ///     - `mid`: memriID of the item to be updated.
-///     - `_json`: the json sent by client.
+///     - `json`: the json sent by client.
 /// Return `false` if dgraph didn't have a node with this `mid`.
 /// Return `true` if dgraph had a node with this `mid` and it was successfully updated.
 /// The `version` that is sent to us by the client should be completely ignored.
