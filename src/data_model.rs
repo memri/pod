@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::map::Keys;
+use std::collections::HashSet;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Items {
@@ -15,16 +16,15 @@ pub struct Item {
 }
 
 /// TODO: add docs what that means. I've no clue yet. But certainly needs a clean-up.
-/// As was written in older code, this fields are meant as minimum required:
+/// As was written in older code, these fields are meant as minimum required:
 // * memriID
 // * dgraph.type
 // * version
 pub static MINIMUM_FIELD_COUNT: usize = 3;
 
 lazy_static! {
-    // Get names of edge properties.
-    // Return a vector -> `<edge_name>`.
-    pub static ref GET_EDGES: Vec<String> = {
+    /// A set of possible dgraph edges
+    static ref VALID_EDGES: HashSet<String> = {
         create_edge_property().into_iter().map(|item|
             item.split(':').next().unwrap().to_string()
         ).collect()
@@ -32,16 +32,8 @@ lazy_static! {
 }
 
 pub fn has_edge(fields: Keys) -> Vec<String> {
-    let mut edges = vec![];
-    let mut cnt = 0;
-    for field in fields.into_iter() {
-        if GET_EDGES.contains(field) {
-            let edge = String::from(field);
-            edges.insert(cnt, edge);
-            cnt += 1;
-        }
-    }
-    edges
+    let filtered = fields.filter(|field| VALID_EDGES.contains(*field));
+    filtered.map(|f| f.to_string()).collect()
 }
 
 /// Create edge properties of all types.
