@@ -29,14 +29,9 @@ lazy_static! {
     // Get names of edge properties.
     // Return a vector -> `<edge_name>`.
     pub static ref GET_EDGES: Vec<String> = {
-        let edge_props = create_edge_property();
-        let mut edges = vec![];
-        for i in 0..edge_props.len() {
-            let strings: Vec<_> = edge_props[i].split(':').collect();
-            let edge: String = (*strings.as_slice().first().unwrap()).to_string();
-            edges.insert(i, edge);
-        }
-        edges
+        create_edge_property().into_iter().map(|item|
+            item.split(':').next().unwrap().to_string()
+        ).collect()
     };
 }
 
