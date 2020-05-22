@@ -23,8 +23,8 @@ pub fn drop_schema_and_all_data_irreversibly(dgraph: &Dgraph) {
 /// Create schema for all properties and types.
 /// Add schema to dgraph.
 pub fn add_schema(dgraph: &Dgraph) {
-    let edge_props = data_model::create_edge_property();
-    let node_props = data_model::create_node_string_property();
+    let edge_props = data_model::dgraph_edge_properties();
+    let node_props = data_model::dgraph_node_string_properties();
     let types = data_model::create_types();
 
     let property_schema = data_model::get_schema_from_properties(edge_props, node_props);

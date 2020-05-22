@@ -39,7 +39,7 @@ pub static MINIMUM_FIELD_COUNT: usize = 3;
 lazy_static! {
     /// A set of possible dgraph edges
     static ref VALID_EDGES: HashSet<String> = {
-        create_edge_property().into_iter().map(|item|
+        dgraph_edge_properties().into_iter().map(|item|
             item.split(':').next().unwrap().to_string()
         ).collect()
     };
@@ -52,61 +52,61 @@ pub fn has_edge(fields: Keys) -> Vec<String> {
 
 /// Create edge properties of all types.
 /// Return a vector of edge properties in String -> `edge_property: type `.
-pub fn create_edge_property() -> Vec<String> {
+pub fn dgraph_edge_properties() -> Vec<String> {
     let edge_props = [
-        "writtenBy: [uid] ",
-        "sharedWith: [uid] ",
-        "comments: [uid] ",
-        "appliesTo: [uid] ",
-        "file: uid ",
-        "includes: [uid] ",
-        "usedBy: [uid] ",
-        "profilePicture: uid ",
-        "relations: [uid] ",
-        "phoneNumbers: [uid] ",
-        "websites: [uid] ",
-        "companies: [uid] ",
         "addresses: [uid] ",
-        "publicKeys: [uid] ",
-        "onlineProfiles: [uid] ",
-        "diets: [uid] ",
-        "medicalConditions: [uid] ",
-        "country: uid ",
-        "location: uid ",
-        "flag: uid ",
+        "appliesTo: [uid] ",
         "changelog: [uid] ",
+        "comments: [uid] ",
+        "companies: [uid] ",
+        "country: uid ",
+        "diets: [uid] ",
+        "file: uid ",
+        "flag: uid ",
+        "includes: [uid] ",
         "labels: [uid] ",
+        "location: uid ",
+        "medicalConditions: [uid] ",
+        "onlineProfiles: [uid] ",
+        "phoneNumbers: [uid] ",
+        "profilePicture: uid ",
+        "publicKeys: [uid] ",
+        "relations: [uid] ",
+        "sharedWith: [uid] ",
+        "usedBy: [uid] ",
+        "websites: [uid] ",
+        "writtenBy: [uid] ",
     ];
     edge_props.iter().map(|x| (*x).to_string()).collect()
 }
 
 /// Create node properties of `string` type.
 /// Return a vector of tuples -> (`node_property, type, [index]`).
-pub fn create_node_string_property() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
+pub fn dgraph_node_string_properties() -> Vec<(&'static str, &'static str, [&'static str; 1])> {
     let string_props = vec![
-        "title",
-        "content",
-        "genericType",
-        "computeTitle",
-        "name",
-        "comment",
-        "color",
-        "uri",
-        "firstName",
-        "lastName",
-        "gender",
-        "sexualOrientation",
-        "contents",
         "action",
-        "type",
-        "number",
-        "url",
         "city",
-        "street",
-        "state",
-        "postalCode",
-        "key",
+        "color",
+        "comment",
+        "computeTitle",
+        "content",
+        "contents",
+        "firstName",
+        "gender",
+        "genericType",
         "handle",
+        "key",
+        "lastName",
+        "name",
+        "number",
+        "postalCode",
+        "sexualOrientation",
+        "state",
+        "street",
+        "title",
+        "type",
+        "uri",
+        "url",
     ];
 
     string_props
@@ -118,29 +118,29 @@ pub fn create_node_string_property() -> Vec<(&'static str, &'static str, [&'stat
 /// Create other node properties which are not `string` typed,
 /// e.g. int, float, datetime etc.
 /// Return a vector of &str -> `node_property: type @index .`.
-fn create_node_other_property() -> Vec<&'static str> {
+fn dgraph_node_nonstring_properties() -> Vec<&'static str> {
     let other_props = vec![
-        "width: int @index(int) .",
-        "height: int @index(int) .",
-        "duration: int @index(int) .",
-        "bitrate: int @index(int) .",
-        "birthDate: datetime .",
-        "person_height: float @index(float) .",
-        "shoulderWidth: float @index(float) .",
-        "armLength: float @index(float) .",
-        "age: float @index(float) .",
-        "date: datetime .",
-        "latitude: float @index(float) .",
-        "longitude: float @index(float) .",
         "additions: [string] @index(term) .",
-        "deleted: bool .",
-        "starred: bool .",
+        "age: float @index(float) .",
+        "armLength: float @index(float) .",
+        "birthDate: datetime .",
+        "bitrate: int @index(int) .",
+        "date: datetime .",
+        "dateAccessed: datetime .",
         "dateCreated: datetime .",
         "dateModified: datetime .",
-        "dateAccessed: datetime .",
+        "deleted: bool .",
+        "duration: int @index(int) .",
         "functions: [string] .",
-        "version: int @index(int).",
+        "height: int @index(int) .",
+        "latitude: float @index(float) .",
+        "longitude: float @index(float) .",
         "memriID: int @index(int).",
+        "person_height: float @index(float) .",
+        "shoulderWidth: float @index(float) .",
+        "starred: bool .",
+        "version: int @index(int).",
+        "width: int @index(int) .",
     ];
 
     other_props
@@ -162,7 +162,7 @@ pub fn get_schema_from_properties(
             .iter()
             .map(|x| format_node_string_prop(x.0, x.1, x.2.to_vec())),
     );
-    let o_prop = create_node_other_property();
+    let o_prop = dgraph_node_nonstring_properties();
     nprops.extend(o_prop.iter().map(|x| format_node_other_prop(x)));
     // Combine both
     let combine_prop = combine(&mut eprops, &mut nprops);
