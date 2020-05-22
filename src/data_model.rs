@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::map::Keys;
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -211,38 +212,12 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
     dgraph.alter(&schema).expect("Failed to add schema.");
 }
 
-/// Create type by name
-/// Return a vector of &str.
-fn get_type_name() -> Vec<&'static str> {
-    let type_name = vec![
+/// Generate type definitions based on type name and fields.
+/// Return a vector of formatted type string.
+pub fn generate_dgraph_type_definitions() -> Vec<String> {
+    let mut all_types = HashMap::new();
+    all_types.insert(
         "dataitem",
-        "note",
-        "label",
-        "photo",
-        "video",
-        "audio",
-        "file",
-        "person",
-        "logitem",
-        "phonenumber",
-        "website",
-        "location",
-        "address",
-        "country",
-        "company",
-        "publickey",
-        "onlineprofile",
-        "diet",
-        "medicalcondition",
-    ];
-    type_name
-}
-
-/// Create type fields, indicating which properties a type contains.
-/// Return a vector of &str vector, according to the order of type name.
-fn get_type_field() -> Vec<Vec<&'static str>> {
-    let type_field = vec![
-        // dataitem
         vec![
             "genericType",
             "computeTitle",
@@ -256,7 +231,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // note
+    );
+    all_types.insert(
+        "note",
         vec![
             "title",
             "content",
@@ -276,7 +253,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // label
+    );
+    all_types.insert(
+        "label",
         vec![
             "name",
             "comment",
@@ -294,7 +273,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // photo
+    );
+    all_types.insert(
+        "photo",
         vec![
             "name",
             "file",
@@ -313,7 +294,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // video
+    );
+    all_types.insert(
+        "video",
         vec![
             "name",
             "file",
@@ -333,7 +316,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // audio
+    );
+    all_types.insert(
+        "audio",
         vec![
             "name",
             "file",
@@ -352,7 +337,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // file
+    );
+    all_types.insert(
+        "file",
         vec![
             "uri",
             "genericType",
@@ -368,7 +355,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // person
+    );
+    all_types.insert(
+        "person",
         vec![
             "firstName",
             "lastName",
@@ -401,7 +390,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // logitem
+    );
+    all_types.insert(
+        "logitem",
         vec![
             "date",
             "contents",
@@ -419,7 +410,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // phonenumber
+    );
+    all_types.insert(
+        "phonenumber",
         vec![
             "genericType",
             "type",
@@ -435,7 +428,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // website
+    );
+    all_types.insert(
+        "website",
         vec![
             "genericType",
             "type",
@@ -451,7 +446,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // location
+    );
+    all_types.insert(
+        "location",
         vec![
             "genericType",
             "latitude",
@@ -467,7 +464,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // address
+    );
+    all_types.insert(
+        "address",
         vec![
             "genericType",
             "type",
@@ -488,7 +487,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // country
+    );
+    all_types.insert(
+        "country",
         vec![
             "genericType",
             "name",
@@ -505,7 +506,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // company
+    );
+    all_types.insert(
+        "company",
         vec![
             "genericType",
             "type",
@@ -521,7 +524,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // publickey
+    );
+    all_types.insert(
+        "publickey",
         vec![
             "genericType",
             "type",
@@ -538,7 +543,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // onlineprofile
+    );
+    all_types.insert(
+        "onlineprofile",
         vec![
             "genericType",
             "type",
@@ -554,7 +561,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // diet
+    );
+    all_types.insert(
+        "diet",
         vec![
             "genericType",
             "type",
@@ -571,7 +580,9 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-        // medicalcondition
+    );
+    all_types.insert(
+        "medicalcondition",
         vec![
             "genericType",
             "type",
@@ -587,21 +598,8 @@ fn get_type_field() -> Vec<Vec<&'static str>> {
             "changelog",
             "memriID",
         ],
-    ];
-    type_field
-}
-
-/// Create types based on type name and fields.
-/// Return a vector of formatted type string.
-pub fn create_types() -> Vec<String> {
-    let type_name = get_type_name();
-    let type_field = get_type_field();
-
-    type_name
-        .iter()
-        .zip(type_field)
-        .map(|(name, field)| format_type(name, &field))
-        .collect()
+    );
+    all_types.into_iter().map(|(_type, fields)| format_type(_type, &fields)).collect()
 }
 
 /// Format type.

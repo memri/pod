@@ -28,7 +28,7 @@ pub fn add_schema(dgraph: &Dgraph) {
     info!("Adding full Dgraph schema.");
     let edge_props = data_model::dgraph_edge_properties();
     let node_props = data_model::dgraph_node_string_properties();
-    let types = data_model::create_types();
+    let types = data_model::generate_dgraph_type_definitions();
 
     let property_schema = data_model::get_schema_from_properties(edge_props, node_props);
     let type_schema = data_model::get_schema_from_types(types);
