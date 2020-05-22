@@ -20,8 +20,7 @@ fn add_sync_state(json: &Value) -> Value {
         .unwrap()
         .as_str()
         .unwrap();
-    let min_fields = &data_model::FIELD_COUNT.len();
-    let is_part_loaded = &_fields.len() <= min_fields;
+    let is_part_loaded = _fields.len() <= data_model::MINIMUM_FIELD_COUNT;
 
     // Create `syncState` and insert to new json as a Value.
     if is_part_loaded {

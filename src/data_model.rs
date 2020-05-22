@@ -3,7 +3,6 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::map::Keys;
-use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Items {
@@ -15,17 +14,14 @@ pub struct Item {
     pub version: u64,
 }
 
+/// TODO: add docs what that means. I've no clue yet. But certainly needs a clean-up.
+/// As was written in older code, this fields are meant as minimum required:
+// * memriID
+// * dgraph.type
+// * version
+pub static MINIMUM_FIELD_COUNT: usize = 3;
+
 lazy_static! {
-    // Count fields a type contains.
-    // `memriID` and `dgraph.type` are the default response.
-    // Return the size of default response.
-    pub static ref FIELD_COUNT: HashMap<u64, String> = {
-        let mut field_count = HashMap::new();
-        field_count.insert(0, "memriID".to_string());
-        field_count.insert(1, "dgraph.type".to_string());
-        field_count.insert(2, "version".to_string());
-        field_count
-    };
     // Get names of edge properties.
     // Return a vector -> `<edge_name>`.
     pub static ref GET_EDGES: Vec<String> = {
