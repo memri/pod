@@ -1,3 +1,5 @@
+use chrono::DateTime;
+use chrono::Utc;
 use dgraph::*;
 use lazy_static::lazy_static;
 use serde::Deserialize;
@@ -13,6 +15,18 @@ pub struct Items {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Item {
     pub version: u64,
+}
+
+/// dgraph uid.
+/// It works as a reference to a dgraph node and
+/// is guaranteed to be unique for a node by dgraph.
+pub type UID = u64;
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(tag = "type")] // Add a "type" field during serialization to JSON object
+pub struct AuditAccessLog {
+    pub accessed_uid: UID,
+    pub created_at: DateTime<Utc>,
 }
 
 /// TODO: add docs what that means. I've no clue yet. But certainly needs a clean-up.

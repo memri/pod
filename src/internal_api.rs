@@ -1,6 +1,10 @@
 use crate::data_model;
+use crate::data_model::AuditAccessLog;
+use crate::data_model::UID;
 use crate::sync_state;
 use bytes::Bytes;
+use chrono::DateTime;
+use chrono::Utc;
 use dgraph::Dgraph;
 use log::debug;
 use serde_json::Map;
@@ -247,4 +251,41 @@ pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
     } else {
         Some(sync_state::set_syncstate_all(result))
     }
+}
+
+fn _write_access_audit_log(dgraph: &Arc<Dgraph>, underlying_uid: UID) {
+    let audit = AuditAccessLog {
+        accessed_uid: underlying_uid,
+        created_at: Utc::now(),
+    };
+    let mut mutation = dgraph::Mutation::new();
+    mutation.set_set_json(serde_json::to_vec(&audit).expect("Failed to serialize to JSON"));
+
+    dgraph
+        .new_txn()
+        .mutate(mutation)
+        .expect("Failed to create audit log");
+}
+
+/// Given a node "type" and a date,
+/// find all nodes of the specified "type"
+/// that were accessed by the user after the specified date.
+/// Return the specified fields only (parameter `fields`).
+///
+/// User access is defined in terms of access log entries.
+pub fn _get_updates(
+    _dgraph: &Arc<Dgraph>,
+    node_type: &str,
+    date_from: DateTime<Utc>,
+    fields: &[&str],
+) -> bool {
+    debug!(
+        "Getting updates for node type {} starting from {} and limiting the result fields to {:?}",
+        node_type, date_from, fields
+    );
+    // research what it means to write in dgraph
+    // research how to filter audit logs by "audit" type and date
+    // research how, given all audit logs, get all uid-s
+
+    panic!()
 }
