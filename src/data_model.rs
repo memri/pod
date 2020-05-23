@@ -23,12 +23,11 @@ pub struct Item {
 /// is guaranteed to be unique for a node by dgraph.
 pub type UID = u64;
 
+// tag="type" adds a "type" field during JSON serialization
 #[derive(Deserialize, Serialize, Debug)]
-#[serde(tag = "type")] // Add a "type" field during serialization to JSON object
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct AuditAccessLog {
-    #[serde(rename = "auditTarget")]
     pub audit_target: UID,
-    #[serde(rename = "dateCreated")]
     pub date_created: DateTime<Utc>,
 }
 
@@ -599,7 +598,10 @@ pub fn generate_dgraph_type_definitions() -> Vec<String> {
             "memriID",
         ],
     );
-    all_types.into_iter().map(|(_type, fields)| format_type(_type, &fields)).collect()
+    all_types
+        .into_iter()
+        .map(|(_type, fields)| format_type(_type, &fields))
+        .collect()
 }
 
 /// Format type.
