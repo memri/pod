@@ -1,5 +1,6 @@
 use crate::data_model;
 use crate::data_model::AuditAccessLog;
+use crate::data_model::NodeReference;
 use crate::data_model::UID;
 use crate::sync_state;
 use bytes::Bytes;
@@ -7,6 +8,8 @@ use chrono::DateTime;
 use chrono::Utc;
 use dgraph::Dgraph;
 use log::debug;
+use log::trace;
+use serde_json::to_string_pretty;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -252,18 +255,20 @@ pub fn query(dgraph: &Dgraph, body: Bytes) -> Option<String> {
     }
 }
 
-fn _write_access_audit_log(dgraph: &Dgraph, underlying_uid: UID) {
+pub fn _write_access_audit_log(dgraph: &Dgraph, underlying_uid: UID) {
     let audit = AuditAccessLog {
-        audit_target: underlying_uid,
+        audit_target: NodeReference {
+            uid: underlying_uid,
+        },
         date_created: Utc::now(),
     };
+    trace!("Adding audit entry: {}", to_string_pretty(&audit).unwrap());
     let mut mutation = dgraph::Mutation::new();
     mutation.set_set_json(serde_json::to_vec(&audit).expect("Failed to serialize to JSON"));
 
-    dgraph
-        .new_txn()
-        .mutate(mutation)
-        .expect("Failed to create audit log");
+    let mut tx = dgraph.new_txn();
+    tx.mutate(mutation).expect("Failed to create audit log");
+    tx.commit().expect("Failed to commit mutation");
 }
 
 /// Given a node "type" and a date,

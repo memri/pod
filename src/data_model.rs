@@ -27,8 +27,13 @@ pub type UID = u64;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct AuditAccessLog {
-    pub audit_target: UID,
+    pub audit_target: NodeReference,
     pub date_created: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct NodeReference {
+    pub uid: UID,
 }
 
 /// TODO: add docs what that means. I've no clue yet. But certainly needs a clean-up.
@@ -259,6 +264,7 @@ pub fn generate_dgraph_type_definitions() -> Vec<String> {
             "memriID",
         ],
     );
+    all_types.insert("AuditAccessLog", vec!["auditTarget", "dateCreated"]);
     all_types.insert(
         "company",
         vec![
