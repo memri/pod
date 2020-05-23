@@ -31,8 +31,8 @@ pub fn get_project_version() -> &'static str {
 /// None if the `memriID` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_item(dgraph: &Dgraph, mid: u64) -> Option<String> {
-    debug!("Getting item {}", mid);
+pub fn get_item(dgraph: &Dgraph, memri_id: u64) -> Option<String> {
+    debug!("Getting item {}", memri_id);
     let query = r#"query all($a: string){
         items(func: eq(memriID, $a)) {
             type : dgraph.type
@@ -41,7 +41,7 @@ pub fn get_item(dgraph: &Dgraph, mid: u64) -> Option<String> {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
@@ -128,8 +128,8 @@ pub fn create_item(dgraph: &Dgraph, json: Value) -> Option<u64> {
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(dgraph: &Dgraph, mid: u64, json: Value) -> bool {
-    debug!("Updating item {} with {}", mid, json);
+pub fn update_item(dgraph: &Dgraph, memri_id: u64, json: Value) -> bool {
+    debug!("Updating item {} with {}", memri_id, json);
     let found;
 
     let query = r#"query all($a: string){
@@ -140,7 +140,7 @@ pub fn update_item(dgraph: &Dgraph, mid: u64, json: Value) -> bool {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
@@ -185,8 +185,8 @@ pub fn update_item(dgraph: &Dgraph, mid: u64, json: Value) -> bool {
 /// Delete an already existing item.
 /// Return `false` if dgraph didn't have a node with this memriID.
 /// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
-pub fn delete_item(dgraph: &Dgraph, mid: u64) -> bool {
-    debug!("Deleting item {}", mid);
+pub fn delete_item(dgraph: &Dgraph, memri_id: u64) -> bool {
+    debug!("Deleting item {}", memri_id);
     let deleted;
 
     let query = r#"query all($a: string){
@@ -197,7 +197,7 @@ pub fn delete_item(dgraph: &Dgraph, mid: u64) -> bool {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
