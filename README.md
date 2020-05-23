@@ -85,7 +85,7 @@ or use script
 
 *  To run the pod image in a container
 
-`docker run --rm -it -p 3030:3030 -e ADD_SCHEMA_ON_START=true -e DGRAPH_HOST=pod_dgraph_1 --network my-net --name pod_pod_1 pod:latest`
+`docker run --rm -it -p 3030:3030 -e ADD_SCHEMA_ON_START=true -e DGRAPH_HOST=pod_dgraph_1:9080 --network my-net --name pod_pod_1 pod:latest`
 
 or use script
 
@@ -96,7 +96,7 @@ or use script
 The pod container belongs to the same `my-net` network as the dgraph container and connects to the latter one via its internal hostname.
 
 Available environment variables:
-*  `DGRAPH_HOST`, the hostname of dgraph container, by default `pod_dgraph_1`.
+*  `DGRAPH_HOST`, the hostname of dgraph container, defaults to `pod_dgraph_1:9080`.
 *  `ADD_SCHEMA_ON_START`, add Dgraph schema when starting the server. Defaults to `false`.
 *  `DROP_SCHEMA_AND_ALL_DATA`, drop Dgraph schema and ALL underlying data, defaults to `false`.
 *  `RUST_LOG=debug`, show all logs at `debug` level, default level is `info`.
