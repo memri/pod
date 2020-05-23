@@ -12,7 +12,6 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::str;
-use std::sync::Arc;
 
 /// Verify if the response contains the content of the requested node.
 /// Return `true` if response doesn't contain any content.
@@ -32,7 +31,7 @@ pub fn get_project_version() -> &'static str {
 /// None if the `memriID` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_item(dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
+pub fn get_item(dgraph: &Dgraph, mid: u64) -> Option<String> {
     debug!("Getting item {}", mid);
     let query = r#"query all($a: string){
         items(func: eq(memriID, $a)) {
@@ -60,7 +59,7 @@ pub fn get_item(dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
 /// Get an array all items from the dgraph database.
 /// `syncState` is added to the returned json for each item,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_all_items(dgraph: &Arc<Dgraph>) -> Option<String> {
+pub fn get_all_items(dgraph: &Dgraph) -> Option<String> {
     let query = r#"{
             items(func: has(version)) {
                 type : dgraph.type
@@ -86,7 +85,7 @@ pub fn get_all_items(dgraph: &Arc<Dgraph>) -> Option<String> {
 /// `syncState` field of the json from client is processed and removed,
 /// before the json is inserted into dgraph.
 /// The new item will be created with `version = 1`.
-pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
+pub fn create_item(dgraph: &Dgraph, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     let new_json: Map<String, Value> = json.clone().as_object().unwrap().clone();
     // Check for blank node labels
@@ -129,7 +128,7 @@ pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
+pub fn update_item(dgraph: &Dgraph, mid: u64, json: Value) -> bool {
     debug!("Updating item {} with {}", mid, json);
     let found;
 
@@ -186,7 +185,7 @@ pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
 /// Delete an already existing item.
 /// Return `false` if dgraph didn't have a node with this memriID.
 /// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
-pub fn delete_item(dgraph: &Arc<Dgraph>, mid: u64) -> bool {
+pub fn delete_item(dgraph: &Dgraph, mid: u64) -> bool {
     debug!("Deleting item {}", mid);
     let deleted;
 
@@ -240,7 +239,7 @@ pub fn delete_item(dgraph: &Arc<Dgraph>, mid: u64) -> bool {
 /// Query a subset of items.
 /// Return `None` if response doesn't contain any items, Some(json) if it does.
 /// `syncState` is added to the returned json for the root-level items.
-pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
+pub fn query(dgraph: &Dgraph, body: Bytes) -> Option<String> {
     let query = std::str::from_utf8(body.deref()).unwrap();
     debug!("Query {}", query);
 
@@ -253,7 +252,7 @@ pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
     }
 }
 
-fn _write_access_audit_log(dgraph: &Arc<Dgraph>, underlying_uid: UID) {
+fn _write_access_audit_log(dgraph: &Dgraph, underlying_uid: UID) {
     let audit = AuditAccessLog {
         accessed_uid: underlying_uid,
         created_at: Utc::now(),
@@ -274,7 +273,7 @@ fn _write_access_audit_log(dgraph: &Arc<Dgraph>, underlying_uid: UID) {
 ///
 /// User access is defined in terms of access log entries.
 pub fn _get_updates(
-    _dgraph: &Arc<Dgraph>,
+    _dgraph: &Dgraph,
     node_type: &str,
     date_from: DateTime<Utc>,
     fields: &[&str],
