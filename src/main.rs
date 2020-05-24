@@ -1,6 +1,6 @@
 mod data_model;
-mod dgraph_database;
-mod internal_api;
+pub mod dgraph_database;
+pub mod internal_api;
 mod sync_state;
 mod warp_api;
 
