@@ -141,3 +141,10 @@ Available environment variables:
 Use http://localhost:8000 to access dgraph web UI
 
 Use http://0.0.0.0:3030/v1 to access pod APIs
+
+
+## How to run tests?
+
+1. Start a dgraph container without adding schema or data
+
+2. At command line, run `cargo test -- --test-threads 1`
