@@ -4,3 +4,7 @@ drop_schema_and_all_data = true
 add_schema_on_start = true
 # dgraph host
 dgraph_host = "localhost"
+# import notes from Evernote folder
+import_notes_evernote = true
+# import notes from Evernote folder
+import_notes_icloud = false

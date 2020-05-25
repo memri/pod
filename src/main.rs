@@ -43,9 +43,16 @@ async fn main() {
         dgraph_database::add_schema(&dgraph);
     }
 
-    importers::note_importer::import_notes(&dgraph);
-    importers::note_importer::query_notes(&dgraph);
+    if settings.get_bool("import_notes_evernote").unwrap() {
+        println!("Importing notes from Evernote folder");
+        importers::note_importer::import_notes(&dgraph, "data/Evernote".to_string());
+        //importers::note_importer::query_notes(&dgraph);
+    }
     //importers::note_importer::simple_example(&dgraph);
+
+    if settings.get_bool("import_notes_icloud").unwrap() {
+        println!("Importing notes from iCloud folder");
+    }
 
     // Start web framework warp.
     warp_api::run_server(env!("CARGO_PKG_NAME").to_uppercase(), dgraph).await;
