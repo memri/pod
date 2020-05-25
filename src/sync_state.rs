@@ -56,7 +56,9 @@ pub fn get_syncstate(json: Value, version: u64, uid: Value) -> Value {
         .unwrap();
 
     if uid != Value::Null {
-        new_json.remove("uid").unwrap();
+        if new_json.contains_key("uid") {
+            new_json.remove("uid").unwrap();
+        }
         new_json.insert("uid".to_string(), uid);
     }
     new_json.remove("type").unwrap();
