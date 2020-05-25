@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::collections::hash_map::RandomState;
 
 pub fn get_edge_props() -> [&'static str; 23] {
     let edge_props: [&str; 23] = [
@@ -86,8 +85,8 @@ pub fn get_other_props() -> Vec<&'static str> {
     other_props
 }
 
-pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>, RandomState> {
-    let mut all_types: HashMap<&str, Vec<&str>, RandomState> = HashMap::new();
+pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
+    let mut all_types: HashMap<&str, Vec<&str>> = HashMap::new();
     all_types.insert(
         "address",
         vec![

@@ -5,8 +5,8 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::map::Keys;
-use std::collections::{HashSet, HashMap};
-use std::collections::hash_map::RandomState;
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 mod schema_definition;
 
@@ -149,7 +149,7 @@ pub fn add_schema(dgraph: &Dgraph, schema: dgraph::Operation) {
 /// Generate type definitions based on type name and fields.
 /// Return a vector of formatted type string.
 pub fn generate_dgraph_type_definitions() -> Vec<String> {
-    let all_types: HashMap<&str, Vec<&str>, RandomState> = schema_definition::get_all_types();
+    let all_types: HashMap<&str, Vec<&str>> = schema_definition::get_all_types();
     all_types
         .into_iter()
         .map(|(_type, fields)| format_type(_type, &fields))
