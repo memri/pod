@@ -1,7 +1,8 @@
 extern crate glob;
 use glob::glob;
 
-use dgraph::{Dgraph,make_dgraph};
+//use dgraph::{Dgraph,make_dgraph};
+use dgraph::{Dgraph};
 use std::str;
 use std::collections::HashMap;
 
@@ -42,7 +43,8 @@ pub struct Note {
     date_accessed: u64,
     functions: Vec<String>,
     changelog: Vec<u64>,
-    memriID: i64,
+    #[serde(rename = "memriID")]
+    memri_id: i64,
 }
 
 impl Default for Note {
@@ -64,17 +66,35 @@ impl Default for Note {
             date_accessed: 0,
             functions: vec![],
             changelog: vec![],
-            memriID: -1,
+            memri_id: -1,
         }
     }
 }
 
 pub fn import_notes(dgraph: &Dgraph, directory: String) {
+    // First we insert all the tags from tags.json
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Tags {
+        #[serde(flatten)]
+        tags: HashMap<String, String>
+    }
+
+    let tags_directory = directory.clone() + "/tags.json";
+    let content = fs::read_to_string(tags_directory).unwrap();
+    let mut tags: Tags = serde_json::from_str(&content).unwrap();
+
+    for tag in &mut tags.tags {
+        let assigned_id = insert_tag(dgraph, tag.1.clone());
+        println!("Imported ({}) tag : {}", assigned_id, tag.1);
+        *tag.1 = assigned_id;
+    }
+
+    // Then we read all the note-JSONs
     let note_directory = directory.clone() + "/notes/*.json";
     for file in glob(&note_directory).expect("Failed to read glob pattern") {
         let content = fs::read_to_string(file.unwrap()).unwrap();
         let deserialized: Note = serde_json::from_str(&content).unwrap();
-        println!("The resulting note : {:?}", deserialized);
+        //println!("The resulting note : {:?}", deserialized);
 
         let assigned_id = insert_note(&dgraph, &deserialized);
         println!("Imported ({}) note : {}", assigned_id, deserialized.title);
@@ -84,6 +104,27 @@ pub fn import_notes(dgraph: &Dgraph, directory: String) {
     for resource in glob(&resources_directory).expect("Failed to read glob pattern") {
         println!("Found resource : {:?}", resource.unwrap().display());
     }
+}
+
+pub fn insert_tag(dgraph: &Dgraph, tag_name: String) -> String {
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Tag {
+        name: String
+    }
+
+    let tag = Tag {
+        name: tag_name
+    };
+
+    let mut txn = dgraph.new_txn();
+    let mut mutation = dgraph::Mutation::new();
+    mutation.set_set_json(serde_json::to_vec(&tag).unwrap());
+    let response = txn.mutate(mutation).unwrap();
+
+    let result = txn.commit();
+    assert_eq!(result.is_ok(), true);
+
+    response.uids.values().next().unwrap().to_string()
 }
 
 pub fn insert_note(dgraph: &Dgraph, note: &Note) -> String {
@@ -99,7 +140,7 @@ pub fn insert_note(dgraph: &Dgraph, note: &Note) -> String {
     response.uids.values().next().unwrap().to_string()
 }
 
-pub fn query_notes(dgraph: &Dgraph) {
+pub fn _query_notes(dgraph: &Dgraph) {
     let q = r#"{
       all(func: type(Note)) {
         title
@@ -131,7 +172,7 @@ struct Person {
     phone: Option<String>,
 }
 
-pub fn simple_example(dgraph: &Dgraph) {
+pub fn _simple_example(dgraph: &Dgraph) {
     let mut txn = dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
 
@@ -187,7 +228,6 @@ pub fn simple_example(dgraph: &Dgraph) {
 /// Test simple query for get_item()
 #[test]
 fn it_runs_simple_query() {
-    //let dgraph = make_dgraph!(dgraph::new_dgraph_client(common::DGRAPH_URL));
     let dgraph = make_dgraph!(dgraph::new_dgraph_client("localhost:9080"));
 
     let note: Note = Note {

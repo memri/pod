@@ -52,6 +52,7 @@ async fn main() {
 
     if settings.get_bool("import_notes_icloud").unwrap() {
         println!("Importing notes from iCloud folder");
+        importers::note_importer::import_notes(&dgraph, "data/iCloud".to_string());
     }
 
     // Start web framework warp.
