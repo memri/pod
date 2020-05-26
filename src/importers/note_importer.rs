@@ -1,5 +1,4 @@
 use dgraph::Dgraph;
-use dgraph::make_dgraph;
 use glob::glob;
 use log::info;
 use serde::Deserialize;
