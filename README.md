@@ -69,7 +69,7 @@ Option `--network` indicates the dgraph container belongs to the network `my-net
 To have an overview of added data, in the dgraph web UI, use the following query
 
 `{
-  q(func: type(note)) {
+  q(func: type(Note)) {
     uid
     dgraph.type
     expand(_all_) {
@@ -110,6 +110,8 @@ Available environment variables:
 *  `ADD_SCHEMA_ON_START`, add Dgraph schema when starting the server. Defaults to `false`.
 *  `DROP_SCHEMA_AND_ALL_DATA`, drop Dgraph schema and ALL underlying data, defaults to `false`.
 *  `RUST_LOG=debug`, show all logs at `debug` level, default level is `info`.
+*  `IMPORT_NOTES_EVERNOTE`, import notes from Evernote, default to `false`.
+*  `IMPORT_NOTES_ICLOUD`, import notes from iCloud, defautl to `false`.
 
 
 ### With docker-compose:
