@@ -28,6 +28,21 @@ fn add_sync_state(json: &Value) -> Value {
         new_json.insert("syncState".to_string(), Value::from(sync_state));
     }
 
+    // Convert `uid` from String to u64 if it exists.
+    let has_uid = json.as_object().unwrap().contains_key("uid");
+    if has_uid {
+        let hex_uid = json
+            .as_object()
+            .unwrap()
+            .get("uid")
+            .unwrap()
+            .as_str()
+            .unwrap();
+        let uid = u64::from_str_radix(hex_uid.to_string().trim_start_matches("0x"), 16).unwrap();
+        new_json.remove("uid").unwrap();
+        new_json.insert("uid".to_string(), Value::from(uid));
+    }
+
     new_json.remove("type").unwrap();
     new_json.insert("type".to_string(), Value::from(type_name));
     Value::Object(new_json)
