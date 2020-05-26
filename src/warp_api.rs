@@ -141,7 +141,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             };
             boxed
         });
-    // CALL API to start importing notes
+    // IMPORT API to start importing notes.
     let dgraph_clone = dgraph.clone();
     let import_notes = api_version_1
         .and(warp::path("import"))
@@ -152,8 +152,12 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
         .map(move |import_service: String, import_type: String| {
             info!("trying to import {} from {}", import_type, import_service);
             match (import_service.as_str(), import_type.as_str()) {
-                ("Evernote", "notes") => note_importer::import_notes(&dgraph_clone, "data/Evernote".to_string()),
-                ("iCloud", "notes") => note_importer::import_notes(&dgraph_clone, "data/iCloud".to_string()),
+                ("Evernote", "notes") => {
+                    note_importer::import_notes(&dgraph_clone, "data/Evernote".to_string())
+                }
+                ("iCloud", "notes") => {
+                    note_importer::import_notes(&dgraph_clone, "data/iCloud".to_string())
+                }
                 (_, "notes") => info!("UNKNOWN SERVICE : {}", import_service),
                 (_, _) => info!("UNKNOWN TYPE : {}", import_type),
             }
