@@ -1,6 +1,6 @@
 mod data_model;
-mod dgraph_database;
-mod internal_api;
+pub mod dgraph_database;
+pub mod internal_api;
 mod sync_state;
 mod warp_api;
 
@@ -31,7 +31,7 @@ async fn main() {
         .merge(config::Environment::new())
         .unwrap();
 
-    let dgraph = dgraph_database::create_dgraph(&settings);
+    let dgraph = dgraph_database::create_dgraph(&settings.get_str("dgraph_host").unwrap());
 
     // Drop the old Dgraph schema and all its data, if asked to
     if settings.get_bool("drop_schema_and_all_data").unwrap() {

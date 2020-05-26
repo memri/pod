@@ -1,31 +1,17 @@
 extern crate glob;
+
+use dgraph::Dgraph;
 use glob::glob;
-
-//use dgraph::{Dgraph,make_dgraph};
-use dgraph::{Dgraph};
-use std::str;
+use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
-
-use serde::{Serialize, Deserialize};
-
 use std::fs;
+use std::str;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "dgraph.type")]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-// struct Note {
-//     //notebooks: Vec<String>,
-//     creator: String,
-//     id: String,
-//     title: String,
-//     content: String,
-//     created: Option<u64>,
-//     modified: Option<u64>,
-//     deleted: Option<u64>,
-//     tags: Vec<String>,
-//     resources: Vec<String>
-// }
 pub struct Note {
     title: String,
     content: String,
@@ -67,10 +53,11 @@ impl Default for Note {
             functions: vec![],
             changelog: vec![],
             memri_id: -1,
-        }
+        };
     }
 }
 
+/// Import all the tags and notes from the file system
 pub fn import_notes(dgraph: &Dgraph, directory: String) {
     // First we insert all the tags from tags.json
     #[derive(Serialize, Deserialize, Debug)]
@@ -106,6 +93,7 @@ pub fn import_notes(dgraph: &Dgraph, directory: String) {
     }
 }
 
+/// Insert a single tag into the database and return the resulting ID as a String
 pub fn insert_tag(dgraph: &Dgraph, tag_name: String) -> String {
     #[derive(Serialize, Deserialize, Debug)]
     struct Tag {
@@ -127,6 +115,7 @@ pub fn insert_tag(dgraph: &Dgraph, tag_name: String) -> String {
     response.uids.values().next().unwrap().to_string()
 }
 
+/// Insert a single note into the database and return the resulting ID as a String
 pub fn insert_note(dgraph: &Dgraph, note: &Note) -> String {
     let mut txn = dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
@@ -140,6 +129,7 @@ pub fn insert_note(dgraph: &Dgraph, note: &Note) -> String {
     response.uids.values().next().unwrap().to_string()
 }
 
+/// Simple example querying all notes
 pub fn _query_notes(dgraph: &Dgraph) {
     let q = r#"{
       all(func: type(Note)) {
@@ -154,7 +144,7 @@ pub fn _query_notes(dgraph: &Dgraph) {
     }
 
     let resp = dgraph.new_readonly_txn().query(q).expect("query");
-    let response : Root = serde_json::from_slice(&resp.json).unwrap();
+    let response: Root = serde_json::from_slice(&resp.json).unwrap();
     for note in &response.all {
         println!("{:?}", &note);
     }
@@ -172,12 +162,13 @@ struct Person {
     phone: Option<String>,
 }
 
+/// Simple example writing and querying a person
 pub fn _simple_example(dgraph: &Dgraph) {
     let mut txn = dgraph.new_txn();
     let mut mutation = dgraph::Mutation::new();
 
     // Create Klaas from struct > JSON
-    let person_klaas = Person {name: "klaas".to_string(), phone: Some("456".to_string())};
+    let person_klaas = Person { name: "klaas".to_string(), phone: Some("456".to_string()) };
     let json_klaas = serde_json::to_vec(&person_klaas).unwrap();
     println!("json_klaas is : {}", serde_json::to_string(&person_klaas).unwrap());
     mutation.set_set_json(json_klaas);

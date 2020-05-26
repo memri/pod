@@ -1,14 +1,20 @@
 use crate::data_model;
+use crate::data_model::AuditAccessLog;
+use crate::data_model::NodeReference;
+use crate::data_model::UID;
 use crate::sync_state;
 use bytes::Bytes;
+use chrono::DateTime;
+use chrono::Utc;
 use dgraph::Dgraph;
 use log::debug;
+use log::trace;
+use serde_json::to_string_pretty;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::str;
-use std::sync::Arc;
 
 /// Verify if the response contains the content of the requested node.
 /// Return `true` if response doesn't contain any content.
@@ -28,8 +34,8 @@ pub fn get_project_version() -> &'static str {
 /// None if the `memriID` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_item(dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
-    debug!("Getting item {}", mid);
+pub fn get_item(dgraph: &Dgraph, memri_id: u64) -> Option<String> {
+    debug!("Getting item {}", memri_id);
     let query = r#"query all($a: string){
         items(func: eq(memriID, $a)) {
             type : dgraph.type
@@ -38,7 +44,7 @@ pub fn get_item(dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
@@ -56,7 +62,7 @@ pub fn get_item(dgraph: &Arc<Dgraph>, mid: u64) -> Option<String> {
 /// Get an array all items from the dgraph database.
 /// `syncState` is added to the returned json for each item,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_all_items(dgraph: &Arc<Dgraph>) -> Option<String> {
+pub fn get_all_items(dgraph: &Dgraph) -> Option<String> {
     let query = r#"{
             items(func: has(version)) {
                 type : dgraph.type
@@ -82,7 +88,7 @@ pub fn get_all_items(dgraph: &Arc<Dgraph>) -> Option<String> {
 /// `syncState` field of the json from client is processed and removed,
 /// before the json is inserted into dgraph.
 /// The new item will be created with `version = 1`.
-pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
+pub fn create_item(dgraph: &Dgraph, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     let new_json: Map<String, Value> = json.clone().as_object().unwrap().clone();
     // Check for blank node labels
@@ -125,8 +131,8 @@ pub fn create_item(dgraph: &Arc<Dgraph>, json: Value) -> Option<u64> {
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
-    debug!("Updating item {} with {}", mid, json);
+pub fn update_item(dgraph: &Dgraph, memri_id: u64, json: Value) -> bool {
+    debug!("Updating item {} with {}", memri_id, json);
     let found;
 
     let query = r#"query all($a: string){
@@ -137,7 +143,7 @@ pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
@@ -182,8 +188,8 @@ pub fn update_item(dgraph: &Arc<Dgraph>, mid: u64, json: Value) -> bool {
 /// Delete an already existing item.
 /// Return `false` if dgraph didn't have a node with this memriID.
 /// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
-pub fn delete_item(dgraph: &Arc<Dgraph>, mid: u64) -> bool {
-    debug!("Deleting item {}", mid);
+pub fn delete_item(dgraph: &Dgraph, memri_id: u64) -> bool {
+    debug!("Deleting item {}", memri_id);
     let deleted;
 
     let query = r#"query all($a: string){
@@ -194,7 +200,7 @@ pub fn delete_item(dgraph: &Arc<Dgraph>, mid: u64) -> bool {
     }"#;
 
     let mut vars = HashMap::new();
-    vars.insert("$a".to_string(), mid.to_string());
+    vars.insert("$a".to_string(), memri_id.to_string());
 
     let resp = dgraph
         .new_readonly_txn()
@@ -236,7 +242,7 @@ pub fn delete_item(dgraph: &Arc<Dgraph>, mid: u64) -> bool {
 /// Query a subset of items.
 /// Return `None` if response doesn't contain any items, Some(json) if it does.
 /// `syncState` is added to the returned json for the root-level items.
-pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
+pub fn query(dgraph: &Dgraph, body: Bytes) -> Option<String> {
     let query = std::str::from_utf8(body.deref()).unwrap();
     debug!("Query {}", query);
 
@@ -247,4 +253,43 @@ pub fn query(dgraph: &Arc<Dgraph>, body: Bytes) -> Option<String> {
     } else {
         Some(sync_state::set_syncstate_all(result))
     }
+}
+
+pub fn _write_access_audit_log(dgraph: &Dgraph, underlying_uid: UID) {
+    let audit = AuditAccessLog {
+        audit_target: NodeReference {
+            uid: underlying_uid,
+        },
+        date_created: Utc::now(),
+    };
+    trace!("Adding audit entry: {}", to_string_pretty(&audit).unwrap());
+    let mut mutation = dgraph::Mutation::new();
+    mutation.set_set_json(serde_json::to_vec(&audit).expect("Failed to serialize to JSON"));
+
+    let mut tx = dgraph.new_txn();
+    tx.mutate(mutation).expect("Failed to create audit log");
+    tx.commit().expect("Failed to commit mutation");
+}
+
+/// Given a node "type" and a date,
+/// find all nodes of the specified "type"
+/// that were accessed by the user after the specified date.
+/// Return the specified fields only (parameter `fields`).
+///
+/// User access is defined in terms of access log entries.
+pub fn _get_updates(
+    _dgraph: &Dgraph,
+    node_type: &str,
+    date_from: DateTime<Utc>,
+    fields: &[&str],
+) -> bool {
+    debug!(
+        "Getting updates for node type {} starting from {} and limiting the result fields to {:?}",
+        node_type, date_from, fields
+    );
+    // research what it means to write in dgraph
+    // research how to filter audit logs by "audit" type and date
+    // research how, given all audit logs, get all uid-s
+
+    panic!()
 }

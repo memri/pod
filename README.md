@@ -1,9 +1,8 @@
-# pod
+# About
 
-Backend for Memri project.
-
-Thanks for checking this, we are currently in the process of enabling the community to join in and co-create with us.
-Can't wait? Reach out to us via our [Slack](https://app.slack.com/client/TSSDHE1JN/CT4PAP7FE)
+Pod is the backend for Memri project.
+It's written in Rust, communicates with `dgraph` internally and
+provides an HTTP interface for use by the clients.
 
 ## How to build and run backend pod with dgraph?
 
@@ -39,15 +38,25 @@ Make sure you have `docker` installed on your local machine.
 
 *  To run a dgraph instance in a docker container
 
-`docker run --rm -it -p 8000:8000 -p 8080:8080 -p 9080:9080 --network my-net --name pod_dgraph_1 dgraph/standalone:latest`
+`docker run -it -p 8000:8000 -p 8080:8080 -p 9080:9080 --network my-net --name pod_dgraph_1 dgraph/standalone:latest`
 
 or use the script
 
 `./tools/start-dgraph.sh`
 
+* To restart a stopped dgraph container
+
+`docker restart pod_dgraph_1`
+
+* To remove the stopped containers
+
+`docker container prune`
+
 **Note:**
 
 Option `--network` indicates the dgraph container belongs to the network `my-net` with a name `pod_dgraph_1` specified by `--name`. 
+
+`--rm` option can be added to `docker run` to directly remove the container once it is stopped. However, for a dgraph container, all data and schema will get lost at stop.
 
 * To add testing data of `note` type
 
@@ -86,7 +95,7 @@ or use script
 
 *  To run the pod image in a container
 
-`docker run --rm -it -p 3030:3030 -e ADD_SCHEMA_ON_START=true -e DGRAPH_HOST=pod_dgraph_1 --network my-net --name pod_pod_1 pod:latest`
+`docker run --rm -it -p 3030:3030 -e ADD_SCHEMA_ON_START=true -e DGRAPH_HOST=pod_dgraph_1:9080 --network my-net --name pod_pod_1 pod:latest`
 
 or use script
 
@@ -97,7 +106,7 @@ or use script
 The pod container belongs to the same `my-net` network as the dgraph container and connects to the latter one via its internal hostname.
 
 Available environment variables:
-*  `DGRAPH_HOST`, the hostname of dgraph container, by default `pod_dgraph_1`.
+*  `DGRAPH_HOST`, the hostname of dgraph container, defaults to `pod_dgraph_1:9080`.
 *  `ADD_SCHEMA_ON_START`, add Dgraph schema when starting the server. Defaults to `false`.
 *  `DROP_SCHEMA_AND_ALL_DATA`, drop Dgraph schema and ALL underlying data, defaults to `false`.
 *  `RUST_LOG=debug`, show all logs at `debug` level, default level is `info`.
@@ -132,3 +141,10 @@ Available environment variables:
 Use http://localhost:8000 to access dgraph web UI
 
 Use http://0.0.0.0:3030/v1 to access pod APIs
+
+
+## How to run tests?
+
+1. Start a dgraph container without adding schema or data
+
+2. At command line, run `cargo test -- --test-threads 1`
