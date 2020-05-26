@@ -23,7 +23,7 @@ fn it_alters_schema() {
     let dgraph = &common::DGRAPH;
 
     let result = dgraph.alter(&Operation {
-        schema: "firstName: string .\nmemriID: int @index(int) .\nversion: int .\ntype person {\nfirstName\nmemriID\nversion\n}\n"
+        schema: "firstName: string @index(term) .\nmemriID: string @index(term) .\nversion: int .\ntype person {\nfirstName\nmemriID\nversion\n}\n"
             .to_string(),
         ..Default::default()
     });

@@ -26,7 +26,7 @@ pub struct Note {
     pub date_accessed: u64,
     pub functions: Vec<String>,
     pub changelog: Vec<u64>,
-    pub memri_id: i64,
+    pub memri_id: String,
 }
 
 impl Default for Note {
@@ -48,7 +48,7 @@ impl Default for Note {
             date_accessed: 0,
             functions: vec![],
             changelog: vec![],
-            memri_id: -1,
+            memri_id: "-1".to_string(),
         };
     }
 }
@@ -203,20 +203,4 @@ pub fn _simple_example(dgraph: &Dgraph) {
         "When we turn the JSON-response into structs : {:#?}",
         root.all
     );
-
-    // Request all things called "klaas" from DGraph, this does not work yet as
-    // "Predicate name is not indexed"
-
-    // let q = r#"query all($a: string) {
-    //     all(func: eq(name, $a)) {
-    //       name
-    //       phone
-    //     }
-    //   }"#.to_string();
-    // let mut vars = HashMap::new();
-    // vars.insert("$a".to_string(), "klaas".to_string());
-    //
-    // let resp = dgraph.new_readonly_txn().query_with_vars(q, vars).expect("query");
-    // let root: Root = serde_json::from_slice(&resp.json).expect("parsing");
-    // println!("When we turn the JSON-response into structs : {:#?}", root.all);
 }
