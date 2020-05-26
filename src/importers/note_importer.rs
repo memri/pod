@@ -2,6 +2,7 @@ extern crate glob;
 
 use dgraph::Dgraph;
 use glob::glob;
+use log::info;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -72,7 +73,7 @@ pub fn import_notes(dgraph: &Dgraph, directory: String) {
 
     for tag in &mut tags.tags {
         let assigned_id = insert_tag(dgraph, tag.1.clone());
-        println!("Imported ({}) tag : {}", assigned_id, tag.1);
+        info!("Imported ({}) tag : {}", assigned_id, tag.1);
         *tag.1 = assigned_id;
     }
 
@@ -84,12 +85,12 @@ pub fn import_notes(dgraph: &Dgraph, directory: String) {
         //println!("The resulting note : {:?}", deserialized);
 
         let assigned_id = insert_note(&dgraph, &deserialized);
-        println!("Imported ({}) note : {}", assigned_id, deserialized.title);
+        info!("Imported ({}) note : {}", assigned_id, deserialized.title);
     }
 
     let resources_directory = directory.clone() + "/resources/*";
     for resource in glob(&resources_directory).expect("Failed to read glob pattern") {
-        println!("Found resource : {:?}", resource.unwrap().display());
+        info!("Found resource : {:?}", resource.unwrap().display());
     }
 }
 
