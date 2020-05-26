@@ -1,7 +1,7 @@
 # Config option for dropping schema
-drop_schema_and_all_data = true
+drop_schema_and_all_data = false
 # Config option for adding schema to dgraph
-add_schema_on_start = true
+add_schema_on_start = false
 # dgraph host
 dgraph_host = "localhost:9080"
 # import notes from Evernote folder
