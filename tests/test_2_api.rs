@@ -14,7 +14,7 @@ mod common;
 fn get_item_returns_none() {
     let dgraph = &common::DGRAPH;
 
-    let memri_id = 1;
+    let memri_id = "10".to_string();
     let result = get_item(&dgraph, memri_id);
 
     assert_eq!(result, None);
@@ -28,7 +28,7 @@ fn it_commits_a_mutation() {
 
     let json = json!(
         {
-        "memriID": 1,
+        "memriID": "1",
         "firstName": "Alice",
         "type": "person",
         "version": 1
@@ -47,8 +47,8 @@ fn it_commits_a_mutation() {
 fn it_gets_an_item() {
     let dgraph = &common::DGRAPH;
 
-    let memri_id = 1;
-    let result = get_item(&dgraph, memri_id);
+    let memri_id = "1".to_string();
+    let result = get_item(&dgraph, memri_id.clone());
     let json: Value = serde_json::from_str(&result.unwrap()).unwrap();
     assert_eq!(
         json.as_array()
@@ -58,6 +58,8 @@ fn it_gets_an_item() {
             .as_object()
             .unwrap()
             .get("memriID")
+            .unwrap()
+            .as_str()
             .unwrap(),
         memri_id
     );
@@ -69,10 +71,10 @@ fn it_gets_an_item() {
 fn it_puts_an_update() {
     let dgraph = &common::DGRAPH;
 
-    let memri_id = 1;
+    let memri_id = "1".to_string();
     let json = json!(
         {
-        "memriID": 1,
+        "memriID": "1",
         "firstName": "Bob",
         "type": "person",
         "version": 2
@@ -89,7 +91,7 @@ fn it_puts_an_update() {
 fn it_removes_an_item() {
     let dgraph = &common::DGRAPH;
 
-    let memri_id = 1;
+    let memri_id = "1".to_string();
     let result = delete_item(&dgraph, memri_id);
 
     assert_eq!(result, true);

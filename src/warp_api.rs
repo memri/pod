@@ -1,3 +1,4 @@
+use crate::importers::note_importer;
 use crate::internal_api;
 use bytes::Bytes;
 use dgraph::Dgraph;
@@ -140,6 +141,29 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             };
             boxed
         });
+    // IMPORT API to start importing notes.
+    let dgraph_clone = dgraph.clone();
+    let import_notes = api_version_1
+        .and(warp::path("import"))
+        .and(warp::path::param())
+        .and(warp::path::param())
+        .and(warp::path::end())
+        .and(warp::get())
+        .map(move |import_service: String, import_type: String| {
+            info!("trying to import {} from {}", import_type, import_service);
+            match (import_service.as_str(), import_type.as_str()) {
+                ("Evernote", "notes") => {
+                    note_importer::import_notes(&dgraph_clone, "data/Evernote".to_string())
+                }
+                ("iCloud", "notes") => {
+                    note_importer::import_notes(&dgraph_clone, "data/iCloud".to_string())
+                }
+                (_, "notes") => info!("UNKNOWN SERVICE : {}", import_service),
+                (_, _) => info!("UNKNOWN TYPE : {}", import_type),
+            }
+            format!("trying to import {} from {}", import_type, import_service)
+        });
+
     // Specify APIs.
     // Specify address and port number to listen to.
     warp::serve(
@@ -149,7 +173,8 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             .or(create_item)
             .or(update_item)
             .or(delete_item)
-            .or(query),
+            .or(query)
+            .or(import_notes),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
