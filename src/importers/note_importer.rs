@@ -1,6 +1,7 @@
 extern crate glob;
 
 use dgraph::Dgraph;
+use dgraph::make_dgraph;
 use glob::glob;
 use log::info;
 use serde::Deserialize;
@@ -68,13 +69,14 @@ pub fn import_notes(dgraph: &Dgraph, directory: String) {
     }
 
     let tags_directory = directory.clone() + "/tags.json";
-    let content = fs::read_to_string(tags_directory).unwrap();
-    let mut tags: Tags = serde_json::from_str(&content).unwrap();
+    if let Ok(content) = fs::read_to_string(tags_directory) {
+        let mut tags: Tags = serde_json::from_str(&content).unwrap();
 
-    for tag in &mut tags.tags {
-        let assigned_id = insert_tag(dgraph, tag.1.clone());
-        info!("Imported ({}) tag : {}", assigned_id, tag.1);
-        *tag.1 = assigned_id;
+        for tag in &mut tags.tags {
+            let assigned_id = insert_tag(dgraph, tag.1.clone());
+            info!("Imported ({}) tag : {}", assigned_id, tag.1);
+            *tag.1 = assigned_id;
+        }
     }
 
     // Then we read all the note-JSONs
