@@ -82,7 +82,7 @@ pub fn get_all_items(dgraph: &Dgraph) -> Option<String> {
 /// Create an item presuming it didn't exist before.
 /// Return Some(uid) if the data item's `memriID` cannot be found in the DB,
 /// and was successfully created in DB.
-/// Return None if the data item had `memriID` field, indicating it already exists,
+/// Return None if the data item had `uid` field, indicating it already exists,
 /// should use `update` for changing the item.
 /// Dgraph returns `uid` in hexadecimal and should be converted to decimal.
 /// `syncState` field of the json from client is processed and removed,
@@ -92,14 +92,15 @@ pub fn create_item(dgraph: &Dgraph, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     let new_json: Map<String, Value> = json.clone().as_object().unwrap().clone();
     // Check for blank node labels
-    let has_blank_label = new_json.contains_key("uid");
-    if !has_blank_label
-        || new_json
-            .get("uid")
-            .unwrap()
-            .as_str()
-            .unwrap()
-            .starts_with("_:")
+    let has_uid = new_json.contains_key("uid");
+    if !has_uid
+        || new_json.get("uid").unwrap().is_string()
+            && new_json
+                .get("uid")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .starts_with("_:")
     {
         let mut txn = dgraph.new_txn();
         let mut mutation = dgraph::Mutation::new();
