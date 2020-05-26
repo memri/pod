@@ -36,7 +36,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NOT_FOUND)
+                Box::new(StatusCode::NO_CONTENT)
             };
             boxed
         });
@@ -55,7 +55,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NOT_FOUND)
+                Box::new(StatusCode::NO_CONTENT)
             };
             boxed
         });
@@ -76,7 +76,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::CONFLICT)
+                Box::new(warp::reply::with_status(format!("Item contains an uid that already exists in the database, use update() instead."), StatusCode::CONFLICT))
             };
             boxed
         });
@@ -97,7 +97,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             if result {
                 StatusCode::OK
             } else {
-                StatusCode::NOT_FOUND
+                StatusCode::NO_CONTENT
             }
         });
     // DELETE API for a single node.
@@ -116,7 +116,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
             if result {
                 StatusCode::OK
             } else {
-                StatusCode::NOT_FOUND
+                StatusCode::NO_CONTENT
             }
         });
     // QUERY API for a subset of nodes.
@@ -136,7 +136,7 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NOT_FOUND)
+                Box::new(StatusCode::NO_CONTENT)
             };
             boxed
         });
