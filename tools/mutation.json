@@ -1,57 +1,114 @@
 {
-  "set": [
-    {
-        "uid": "_:shoplist4",
-        "memriID": "1",
-    	"dgraph.type": "Note",
-        "title": "Shopping list 4",
-        "content": "- tomatoes\n- icecream",
-        "starred": false,
-        "version": 1,
-        "syncState": {
-          "isPartiallyLoaded": true
-        },
-        "labels": [
-            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid":"_:work", "memriID": "4", "version": 1, "dgraph.type": "Label","name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": "5", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:home", "memriID": "6", "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
-        ],
-        "dateModified": "2020-04-10T11:11:11Z"
-  },
+    "set": [
         {
-    	"uid": "_:shoplist5",
-        "memriID": "7",
-    	"dgraph.type": "Note",
-        "version": 1,
-        "title": "Shopping list 5",
-        "content": "- tomatoes\n- icecream",
-        "starred": true,
-        "syncState": {
-          "isPartiallyLoaded": true
+            "memriID": "0x01",
+            "uid": "_:shoplist",
+            "dgraph.type": "Note",
+            "title": "Shopping list",
+            "content": "- potatoes\n- mayonaise",
+            "starred": true,
+            "labels": [
+                {
+                    "memriID": "0x101",
+                    "uid": "_:dailylog",
+                    "dgraph.type": "Label",
+                    "name": "Daily Log",
+                    "color": "#83AC06",
+                    "comment": "Stuff I write about daily",
+                    "version": 1
+                },
+                {
+                    "memriID": "0x102",
+                    "uid": "_:polis",
+                    "dgraph.type": "Label",
+                    "name": "Polis",
+                    "color": "#FFD966",
+                    "comment": "Everything about polis",
+                    "version": 1
+                },
+                {
+                    "name": "Soccer team",
+                    "uid": "_:soccerteam",
+                    "dgraph.type": "Label",
+                    "color": "#83AC06",
+                    "memriID": "0x0124",
+                    "version": 1
+                }
+            ],
+            "dateModified": "2020-04-10T11:11:11Z",
+            "syncState": {
+                "isPartiallyLoaded": true
+            },
+            "version": 1
         },
-        "labels": [
-            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:home", "memriID": "6", "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
-        ],
-        "dateModified": "2020-04-10T11:11:11Z"
-  },
         {
-    	"uid": "_:shoplist6",
-        "memriID": "8",
-        "dgraph.type": "Note",
-        "version": 1,
-        "title": "Shopping list 6",
-        "content": "- tomatoes\n- icecream",
-        "starred": true,
-        "syncState": {
-          "isPartiallyLoaded": true
+            "memriID": "0x02",
+            "uid": "_:toreadlist",
+            "dgraph.type": "Note",
+            "title": "To read list",
+            "content": "Age of surveillance capitalism",
+            "labels": [
+                {
+                    "memriID": "0x101",
+                    "uid": "_:dailylog",
+                    "dgraph.type": "Label",
+                    "name": "Daily Log",
+                    "color": "#83AC06",
+                    "comment": "Stuff I write about daily",
+                    "version": 1
+                },
+                {
+                    "memriID": "0x102",
+                    "uid": "_:polis",
+                    "dgraph.type": "Label",
+                    "name": "Polis",
+                    "color": "#FFD966",
+                    "comment": "Everything about polis",
+                    "version": 1
+                }
+            ],
+            "dateModified": "2020-04-14T03:10:11Z",
+            "syncState": {
+                "isPartiallyLoaded": true
+            },
+            "version": 1
         },
-        "labels": [
-            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid":"_:work", "memriID": "4", "version": 1, "dgraph.type": "Label", "name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": "5", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:soccerteam", "memriID": "9", "dgraph.type": "Label", "version": 1,"name": "Soccer Team","color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
-        ],
-        "dateModified": "2020-04-10T11:11:11Z"
+        {
+            "memriID": "0x03",
+            "dgraph.type": "Note",
+            "uid": "_:ideasformemri",
+            "title": "Ideas for memri",
+            "content": "privacy by design, digital memory",
+            "starred": true,
+            "dateModified": "2020-04-10T11:11:11Z",
+            "syncState": {
+                "isPartiallyLoaded": true
+            },
+            "version": 1
+        },
+        {
+            "memriID": "0x04",
+            "uid": "_:loveletter",
+            "dgraph.type": "Note",
+            "title": "Love letter",
+            "content": "Roses are red, violets are blue",
+            "dateModified": "2020-04-10T11:11:11Z",
+            "syncState": {
+                "isPartiallyLoaded": true
+            },
+            "version": 1
+        },
+        {
+            "memriID": "0x05",
+            "dgraph.type": "Note",
+            "uid": "_:notestoself",
+            "title": "Notes to self",
+            "content": "Be in time with hour administration",
+            "dateModified": "2011-11-11T11:11:11Z",
+            "syncState": {
+                "isPartiallyLoaded": true
+            },
+            "version": 1
         }
     ]
 }
