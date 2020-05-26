@@ -43,7 +43,8 @@ pub struct NodeReference {
 // * memriID
 // * dgraph.type
 // * version
-pub static MINIMUM_FIELD_COUNT: usize = 3;
+// * uid
+pub static MINIMUM_FIELD_COUNT: usize = 4;
 
 lazy_static! {
     /// A set of possible dgraph edges
