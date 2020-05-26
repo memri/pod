@@ -88,7 +88,7 @@ pub fn get_other_props() -> Vec<&'static str> {
 pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
     let mut all_types: HashMap<&str, Vec<&str>> = HashMap::new();
     all_types.insert(
-        "address",
+        "Address",
         vec![
             "genericType",
             "type",
@@ -111,7 +111,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "audio",
+        "Audio",
         vec![
             "name",
             "file",
@@ -131,9 +131,29 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
             "memriID",
         ],
     );
+    all_types.insert(
+        "AuditItem",
+        vec![
+            "date",
+            "contents",
+            "action",
+            "genericType",
+            "computeTitle",
+            "appliesTo",
+            "version",
+            "deleted",
+            "starred",
+            "dateCreated",
+            "dateModified",
+            "dateAccessed",
+            "functions",
+            "changelog",
+            "memriID",
+        ],
+    );
     all_types.insert("AuditAccessLog", vec!["auditTarget", "dateCreated"]);
     all_types.insert(
-        "company",
+        "Company",
         vec![
             "genericType",
             "type",
@@ -151,7 +171,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "country",
+        "Country",
         vec![
             "genericType",
             "name",
@@ -170,7 +190,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "dataitem",
+        "DataItem",
         vec![
             "genericType",
             "computeTitle",
@@ -186,7 +206,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "diet",
+        "Diet",
         vec![
             "genericType",
             "type",
@@ -205,7 +225,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "file",
+        "File",
         vec![
             "uri",
             "genericType",
@@ -223,7 +243,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "label",
+        "Label",
         vec![
             "name",
             "comment",
@@ -243,7 +263,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "location",
+        "Location",
         vec![
             "genericType",
             "latitude",
@@ -261,27 +281,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "logitem",
-        vec![
-            "date",
-            "contents",
-            "action",
-            "genericType",
-            "computeTitle",
-            "appliesTo",
-            "version",
-            "deleted",
-            "starred",
-            "dateCreated",
-            "dateModified",
-            "dateAccessed",
-            "functions",
-            "changelog",
-            "memriID",
-        ],
-    );
-    all_types.insert(
-        "medicalcondition",
+        "MedicalCondition",
         vec![
             "genericType",
             "type",
@@ -299,7 +299,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "note",
+        "Note",
         vec![
             "title",
             "content",
@@ -321,7 +321,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "onlineprofile",
+        "OnlineProfile",
         vec![
             "genericType",
             "type",
@@ -339,7 +339,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "person",
+        "Person",
         vec![
             "firstName",
             "lastName",
@@ -374,7 +374,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "phonenumber",
+        "PhoneNumber",
         vec![
             "genericType",
             "type",
@@ -392,7 +392,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "photo",
+        "Photo",
         vec![
             "name",
             "file",
@@ -413,7 +413,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "publickey",
+        "PublicKey",
         vec![
             "genericType",
             "type",
@@ -432,7 +432,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "video",
+        "Video",
         vec![
             "name",
             "file",
@@ -454,7 +454,7 @@ pub fn get_all_types() -> HashMap<&'static str, Vec<&'static str>> {
         ],
     );
     all_types.insert(
-        "website",
+        "Website",
         vec![
             "genericType",
             "type",
