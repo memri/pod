@@ -21,15 +21,15 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     let api_version_1 = warp::path("v1");
     // GET API for a single node.
     // Parameter:
-    //     mid: memriID of requested node, u64.
+    //     mid: memriID of requested node, String.
     // Return an array of nodes with requested memriID.
     // Return StatusCode::NOT_FOUND if node does not exist.
     let dgraph_clone = dgraph.clone();
     let get_item = api_version_1
-        .and(warp::path!("items" / u64))
+        .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::get())
-        .map(move |mid: u64| {
+        .map(move |mid: String| {
             let string = internal_api::get_item(&dgraph_clone, mid);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
@@ -88,11 +88,11 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     //     StatusCode::NOT_FOUND if node is not found in the database.
     let dgraph_clone = dgraph.clone();
     let update_item = api_version_1
-        .and(warp::path!("items" / u64))
+        .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
-        .map(move |mid: u64, body: serde_json::Value| {
+        .map(move |mid: String, body: serde_json::Value| {
             let result = internal_api::update_item(&dgraph_clone, mid, body);
             if result {
                 StatusCode::OK
@@ -108,10 +108,10 @@ pub async fn run_server(server_name: String, dgraph: Dgraph) {
     //     StatusCode::NOT_FOUND if node was not found in the database.
     let dgraph_clone = dgraph.clone();
     let delete_item = api_version_1
-        .and(warp::path!("items" / u64))
+        .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::delete())
-        .map(move |mid: u64| {
+        .map(move |mid: String| {
             let result = internal_api::delete_item(&dgraph_clone, mid);
             if result {
                 StatusCode::OK

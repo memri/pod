@@ -2,7 +2,7 @@
   "set": [
     {
         "uid": "_:shoplist4",
-        "memriID": 1,
+        "memriID": "1",
     	"dgraph.type": "Note",
         "title": "Shopping list 4",
         "content": "- tomatoes\n- icecream",
@@ -12,15 +12,15 @@
           "isPartiallyLoaded": true
         },
         "labels": [
-            { "uid":"_:dailtylog", "memriID": 2, "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": 3, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid":"_:work", "memriID": 4, "version": 1, "dgraph.type": "Label","name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": 3, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": 5, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:home", "memriID": 6, "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
+            { "uid":"_:work", "memriID": "4", "version": 1, "dgraph.type": "Label","name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": "5", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
+            { "uid": "_:home", "memriID": "6", "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
         ],
         "dateModified": "2020-04-10T11:11:11Z"
   },
         {
     	"uid": "_:shoplist5",
-        "memriID": 7,
+        "memriID": "7",
     	"dgraph.type": "Note",
         "version": 1,
         "title": "Shopping list 5",
@@ -30,14 +30,14 @@
           "isPartiallyLoaded": true
         },
         "labels": [
-            { "uid":"_:dailtylog", "memriID": 2, "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": 3, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:home", "memriID": 6, "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
+            { "uid": "_:home", "memriID": "6", "dgraph.type": "Label", "version": 1, "name": "Home", "color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
         ],
         "dateModified": "2020-04-10T11:11:11Z"
   },
         {
     	"uid": "_:shoplist6",
-        "memriID": 8,
+        "memriID": "8",
         "dgraph.type": "Note",
         "version": 1,
         "title": "Shopping list 6",
@@ -47,9 +47,9 @@
           "isPartiallyLoaded": true
         },
         "labels": [
-            { "uid":"_:dailtylog", "memriID": 2, "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": 3, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid":"_:work", "memriID": 4, "version": 1, "dgraph.type": "Label", "name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": 3, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": 5, "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
-            { "uid": "_:soccerteam", "memriID": 9, "dgraph.type": "Label", "version": 1,"name": "Soccer Team","color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
+            { "uid":"_:dailtylog", "memriID": "2", "version": 1, "dgraph.type": "Label", "name": "Daily Log", "color": "#83ac06", "comment": "Stuff I write about daily", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}]},
+            { "uid":"_:work", "memriID": "4", "version": 1, "dgraph.type": "Label", "name": "Work", "color": "#ffd966", "comment": "Everything about work.", "syncState": {"isPartiallyLoaded": true}, "appliesTo": [{ "uid":"_:log", "memriID": "3", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["logging"], "syncState": {"isPartiallyLoaded": true}}, { "uid":"_:job", "memriID": "5", "version": 1, "dgraph.type": "DataItem", "starred": false, "functions": ["working", "logging"], "syncState": {"isPartiallyLoaded": true}}]},
+            { "uid": "_:soccerteam", "memriID": "9", "dgraph.type": "Label", "version": 1,"name": "Soccer Team","color": "#83ac06", "syncState": {"isPartiallyLoaded": true}}
         ],
         "dateModified": "2020-04-10T11:11:11Z"
         }
