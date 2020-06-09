@@ -26,5 +26,12 @@ services:
         - dgraph
       networks:
         - my-net
+      volumes:
+        - download-volume:/data
+
+volumes:
+  download-volume:
+
 networks:
   my-net:
+
