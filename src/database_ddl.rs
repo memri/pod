@@ -3,52 +3,38 @@ use std::string::String;
 pub fn create_mandatory_tables() {
     let items = String::from(
         "CREATE TABLE IF NOT EXISTS items (
-        id integer PRIMARY KEY,
-        type text NOT NULL,
-        created_at text NOT NULL,
-        modified_at text NOT NULL,
-        read_at text,
-        version integer NOT NULL,
-        memri_id text
+        id INTEGER NOT NULL PRIMARY KEY,
+        type TEXT NOT NULL,
+        created_at REAL NOT NULL,
+        modified_at REAL NOT NULL,
+        read_at REAL,
+        version INTEGER NOT NULL
         )",
     );
 
     let items_indexes = String::from(
-        "CREATE UNIQUE INDEX idx_items_id
-        ON items (id);
-        CREATE INDEX idx_items_memri_type
-        ON items (type);
-        CREATE INDEX idx_items_memri_created_at
-        ON items (created_at);
-        CREATE INDEX idx_items_memri_modified_at
-        ON items (modified_at);
-        CREATE INDEX idx_items_memri_read_at
-        ON items (read_at);
-        CREATE UNIQUE INDEX idx_items_memri_id
-        ON items (memri_id);",
+        "CREATE INDEX IF NOT EXISTS idx_items_memri_type ON items (type);
+        CREATE INDEX IF NOT EXISTS idx_items_memri_created_at ON items (created_at);
+        CREATE INDEX IF NOT EXISTS idx_items_memri_modified_at ON items (modified_at);
+        CREATE INDEX IF NOT EXISTS idx_items_memri_read_at ON items (read_at) WHERE read_at IS NOT NULL;",
     );
 
     let relations = String::from(
-        "CREATE TABLE IF NOT EXISTS edges (
-        source integer NOT NULL,
-        target integer NOT NULL,
-        type text NOT NULL,
-        created_at text NOT NULL,
-        modified_at text NOT NULL,
-        read_at text
+        "CREATE TABLE IF NOT EXISTS relations (
+        source INTEGER NOT NULL,
+        FOREIGN KEY (source) REFERENCES items (id);
+        target INTEGER NOT NULL,
+        FOREIGN KEY (target) REFERENCES items (id);
+        type TEXT NOT NULL,
+        created_at REAL NOT NULL,
+        modified_at REAL NOT NULL,
+        read_at REAL,
+        UNIQUE(source, target, type)
         )",
     );
 
     let relations_indexes = String::from(
-        "CREATE UNIQUE INDEX idx_relations_source
-        ON relations (source);
-        CREATE UNIQUE INDEX idx_relations_target
-        ON relations (target);
-        CREATE UNIQUE INDEX idx_relations_type
-        ON relations (type);
-        CREATE INDEX idx_relations_direct
-        ON relations (source, type);
-        CREATE INDEX idx_relations_reverse
-        ON relations (target, type);",
+        "CREATE INDEX IF NOT EXISTS idx_relations_direct ON relations (source, type);
+        CREATE INDEX IF NOT EXISTS idx_relations_reverse ON relations (target, type);",
     );
 }
