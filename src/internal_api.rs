@@ -94,11 +94,7 @@ pub fn _write_access_audit_log(underlying_uid: UID) {
 /// Return the specified fields only (parameter `fields`).
 ///
 /// User access is defined in terms of access log entries.
-pub fn _get_updates(
-    node_type: &str,
-    date_from: DateTime<Utc>,
-    fields: &[&str],
-) -> bool {
+pub fn _get_updates(node_type: &str, date_from: DateTime<Utc>, fields: &[&str]) -> bool {
     debug!(
         "Getting updates for node type {} starting from {} and limiting the result fields to {:?}",
         node_type, date_from, fields
