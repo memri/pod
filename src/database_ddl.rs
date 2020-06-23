@@ -13,10 +13,10 @@ pub fn create_mandatory_tables() {
     );
 
     let items_indexes = String::from(
-        "CREATE INDEX IF NOT EXISTS idx_items_memri_type ON items (type);
-        CREATE INDEX IF NOT EXISTS idx_items_memri_created_at ON items (created_at);
-        CREATE INDEX IF NOT EXISTS idx_items_memri_modified_at ON items (modified_at);
-        CREATE INDEX IF NOT EXISTS idx_items_memri_read_at ON items (read_at) WHERE read_at IS NOT NULL;",
+        "CREATE INDEX IF NOT EXISTS idx_items_type ON items (type);
+        CREATE INDEX IF NOT EXISTS idx_items_created_at ON items (created_at);
+        CREATE INDEX IF NOT EXISTS idx_items_modified_at ON items (modified_at);
+        CREATE INDEX IF NOT EXISTS idx_items_read_at ON items (read_at) WHERE read_at IS NOT NULL;",
     );
 
     let relations = String::from(
