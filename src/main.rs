@@ -1,7 +1,5 @@
 mod data_model;
-mod database_generated_schema;
-mod database_schema_struct;
-pub mod internal_api;
+mod internal_api;
 mod warp_api;
 
 use chrono::Utc;
@@ -21,13 +19,6 @@ async fn main() {
             )
         })
         .init();
-
-    let mut settings = config::Config::default();
-    settings
-        .merge(config::File::with_name("Settings"))
-        .unwrap()
-        .merge(config::Environment::new())
-        .unwrap();
 
     // Start web framework
     warp_api::run_server().await;
