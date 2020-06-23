@@ -1,4 +1,5 @@
 mod data_model;
+mod database_schema_generator;
 mod internal_api;
 mod warp_api;
 
