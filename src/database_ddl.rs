@@ -15,12 +15,12 @@ pub fn create_mandatory_tables() {
 
     let edges = String::from(
         "CREATE TABLE IF NOT EXISTS edges (
-        id integer PRIMARY KEY,
+        source integer NOT NULL,
+        target integer NOT NULL,
         type text NOT NULL,
         created_at text,
         modified_at text,
-        read_by_user_at text,
-        memri_id NOT NULL UNIQUE
+        read_at text
         )",
     );
 }
