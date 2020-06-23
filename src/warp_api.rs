@@ -9,7 +9,10 @@ use warp::Reply;
 
 /// Start web framework with specified APIs.
 pub async fn run_server() {
-    info!("Starting {} HTTP server", env!("CARGO_PKG_NAME").to_uppercase());
+    info!(
+        "Starting {} HTTP server",
+        env!("CARGO_PKG_NAME").to_uppercase()
+    );
     // Get version of cargo project POD.
     let version = warp::path("version")
         .and(warp::path::end())
@@ -142,11 +145,8 @@ pub async fn run_server() {
         .map(move |import_service: String, import_type: String| {
             info!("trying to import {} from {}", import_type, import_service);
             match (import_service.as_str(), import_type.as_str()) {
-                ("Evernote", "notes") => {
-                    unimplemented!()
-                }
-                ("iCloud", "notes") => {
-                }
+                ("Evernote", "notes") => unimplemented!(),
+                ("iCloud", "notes") => {}
                 (_, "notes") => warn!("UNKNOWN SERVICE : {}", import_service),
                 (_, _) => warn!("UNKNOWN TYPE : {}", import_type),
             }
