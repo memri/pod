@@ -167,15 +167,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cmake"
-version = "0.1.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fb25b677f8bf1eb325017cb6bb8452f87969db0fedb4f757b297bee78a7c62"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "config"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -189,19 +180,6 @@ dependencies = [
  "serde_json",
  "toml",
  "yaml-rust",
-]
-
-[[package]]
-name = "dgraph"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c85dad135549756ae463d7011e265ffd25cf8e11666960a71398de17d43038f9"
-dependencies = [
- "cfg-if",
- "futures 0.1.29",
- "grpcio",
- "protobuf",
- "rand 0.6.5",
 ]
 
 [[package]]
@@ -265,12 +243,6 @@ name = "fuchsia-zircon-sys"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
-
-[[package]]
-name = "futures"
-version = "0.1.29"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b980f2816d6ee8673b6517b52cb0e808a180efc92e5c19d02cdda79066703ef"
 
 [[package]]
 name = "futures"
@@ -357,31 +329,6 @@ name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
-
-[[package]]
-name = "grpcio"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ac757a85603e4f8c40a9f94be06a5ad412acab80b39b4e8895ca931b6619910"
-dependencies = [
- "futures 0.1.29",
- "grpcio-sys",
- "libc",
- "log 0.4.8",
- "protobuf",
-]
-
-[[package]]
-name = "grpcio-sys"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b2f22fb0327f153acccedbe91894dd0fb15bb6f202d8195665cd206af0402b0"
-dependencies = [
- "cc",
- "cmake",
- "libc",
- "pkg-config",
-]
 
 [[package]]
 name = "h2"
@@ -900,19 +847,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 
 [[package]]
-name = "pkg-config"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05da548ad6865900e60eaba7f589cc0783590a92e940c26953ff81ddbab2d677"
-
-[[package]]
 name = "pod"
 version = "0.0.1"
 dependencies = [
  "bytes 0.5.4",
  "chrono",
  "config",
- "dgraph",
  "env_logger",
  "glob",
  "lazy_static",
@@ -938,12 +878,6 @@ checksum = "df246d292ff63439fea9bc8c0a270bed0e390d5ebd4db4ba15aba81111b5abe3"
 dependencies = [
  "unicode-xid",
 ]
-
-[[package]]
-name = "protobuf"
-version = "2.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e86d370532557ae7573551a1ec8235a0f8d6cb276c7c9e6aa490b511c447485"
 
 [[package]]
 name = "quick-error"
@@ -1628,7 +1562,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce153bc4ad61ed81c255cad4f1bf2474a1d284b482b20eecaefb152d0675fb1b"
 dependencies = [
  "bytes 0.5.4",
- "futures 0.3.4",
+ "futures",
  "headers",
  "http 0.2.1",
  "hyper",
