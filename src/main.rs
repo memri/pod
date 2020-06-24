@@ -9,8 +9,8 @@ mod warp_api;
 
 use chrono::Utc;
 use env_logger::Env;
-use std::io::Write;
 use r2d2_sqlite::SqliteConnectionManager;
+use std::io::Write;
 
 #[tokio::main]
 async fn main() {

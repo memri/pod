@@ -8,7 +8,10 @@ use log::debug;
 use log::trace;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::types::ValueRef;
+use rusqlite::Rows;
 use serde_json::to_string_pretty;
+use serde_json::Map;
 use serde_json::Value;
 use std::str;
 
@@ -18,14 +21,43 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Get an item from the dgraph database.
-/// None if the `memriID` doesn't exist in DB, Some(json) if it does.
+fn sqlite_value_to_json(value: ValueRef) -> Value {
+    match value {
+        ValueRef::Null => Value::Null,
+        ValueRef::Integer(i) => Value::from(i),
+        ValueRef::Real(f) => Value::from(f),
+        ValueRef::Text(t) => Value::from(str::from_utf8(t).unwrap()),
+        ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
+    }
+}
+
+/// Convert an SQLite result set into array of JSON objects
+fn sqlite_rows_to_json(mut rows: Rows) -> Vec<Value> {
+    let mut result = Vec::new();
+    while let Some(row) = rows.next().unwrap() {
+        let mut json_object = Map::new();
+        for i in 0..row.column_count() {
+            let name = row.column_name(i).unwrap().to_string();
+            json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
+        }
+        result.push(Value::from(json_object));
+    }
+    result
+}
+
+/// Get an item from the SQLite database.
+/// None if the `id` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
-/// based on the version in dgraph and if properties are all included.
-pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, memri_id: String) -> Option<String> {
-    debug!("Getting item {}", memri_id);
-    let _conn = sqlite.get().expect("Failed to obtain connection");
-    unimplemented!()
+/// based on the version in DB and if properties are all included.
+pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value> {
+    debug!("Getting item {}", id);
+    let conn = sqlite.get().expect("Failed to obtain connection");
+
+    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE id = :id").unwrap();
+    let rows = stmt.query_named(&[(":id", &id)]).unwrap();
+
+    let serialized = sqlite_rows_to_json(rows);
+    Some(Value::from(serialized))
 }
 
 /// Get an array all items from the dgraph database.

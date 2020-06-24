@@ -3,16 +3,6 @@ use chrono::Utc;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Items {
-    pub items: Vec<Item>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Item {
-    pub version: u64,
-}
-
 /// dgraph uid.
 /// It works as a reference to a dgraph node and
 /// is guaranteed to be unique for a node by dgraph.
