@@ -21,24 +21,28 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Convert all rows to a list of items in JSON.
-fn row_to_json(mut rows: Rows) -> Value {
-    let mut json = vec![];
+fn sqlite_value_to_json(value: ValueRef) -> Value {
+    match value {
+        ValueRef::Null => Value::Null,
+        ValueRef::Integer(i) => Value::from(i),
+        ValueRef::Real(f) => Value::from(f),
+        ValueRef::Text(t) => Value::from(str::from_utf8(t).unwrap()),
+        ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
+    }
+}
+
+/// Convert an SQLite result set into array of JSON objects
+fn rows_to_json(mut rows: Rows) -> Vec<Value> {
+    let mut result = Vec::new();
     while let Some(row) = rows.next().unwrap() {
-        let mut values = Map::new();
+        let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i).unwrap().to_string();
-            match row.get_raw(i) {
-                ValueRef::Null => values.insert(name, Value::Null),
-                ValueRef::Integer(i) => values.insert(name, Value::from(i)),
-                ValueRef::Real(f) => values.insert(name, Value::from(f)),
-                ValueRef::Text(t) => values.insert(name, Value::from(str::from_utf8(t).unwrap())),
-                unknown => panic!("Unexpected SQL type {:?}", unknown),
-            };
+            json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
         }
-        json.push(values);
+        result.push(Value::from(json_object));
     }
-    Value::from(json)
+    result
 }
 
 /// Get an item from the SQLite database.
@@ -52,8 +56,8 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value
     let mut stmt = conn.prepare("SELECT * FROM items WHERE id = :id").unwrap();
     let rows = stmt.query_named(&[(":id", &id)]).unwrap();
 
-    let serialized = row_to_json(rows);
-    Some(serialized)
+    let serialized = rows_to_json(rows);
+    Some(Value::from(serialized))
 }
 
 /// Get an array all items from the dgraph database.
