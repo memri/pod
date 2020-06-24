@@ -40,17 +40,18 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Strin
         .collect::<Vec<_>>();
     let mut rows = stmt.query_named(&[(":id", &id.to_string())]).expect("");
 
-    let mut values: Vec<(String, Value)> = Vec::new();
+    let mut values = Vec::new();
     while let Some(row) = rows.next().unwrap() {
         for i in 0..names.len() {
             let name = names[i].clone();
-            match row.get_raw(i) {
-                ValueRef::Null => values.push((name, Value::Null)),
-                ValueRef::Integer(i) => values.push((name, Value::Number(i))),
-                ValueRef::Real(f) => values.push((name, Value::Number(f))),
-                ValueRef::Text(t) => values.push((name, Value::String(String::from(t)))),
-                _ => {}
+            let value = match row.get_raw(i) {
+                ValueRef::Null => Value::from(""),
+                ValueRef::Integer(i) => Value::from(i),
+                ValueRef::Real(f) => Value::from(f),
+                ValueRef::Text(t) => Value::from(t),
+                _ => Value::Null,
             };
+            values.push((name, value));
         }
     }
     let serialized = serde_json::to_string(&values).unwrap();
