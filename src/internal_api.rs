@@ -53,7 +53,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value
     debug!("Getting item {}", id);
     let conn = sqlite.get().expect("Failed to obtain connection");
 
-    let mut stmt = conn.prepare("SELECT * FROM items WHERE id = :id").unwrap();
+    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE id = :id").unwrap();
     let rows = stmt.query_named(&[(":id", &id)]).unwrap();
 
     let serialized = rows_to_json(rows);
