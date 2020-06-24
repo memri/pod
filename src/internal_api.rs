@@ -32,7 +32,7 @@ fn sqlite_value_to_json(value: ValueRef) -> Value {
 }
 
 /// Convert an SQLite result set into array of JSON objects
-fn rows_to_json(mut rows: Rows) -> Vec<Value> {
+fn sqlite_rows_to_json(mut rows: Rows) -> Vec<Value> {
     let mut result = Vec::new();
     while let Some(row) = rows.next().unwrap() {
         let mut json_object = Map::new();
@@ -56,7 +56,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE id = :id").unwrap();
     let rows = stmt.query_named(&[(":id", &id)]).unwrap();
 
-    let serialized = rows_to_json(rows);
+    let serialized = sqlite_rows_to_json(rows);
     Some(Value::from(serialized))
 }
 
