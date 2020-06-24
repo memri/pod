@@ -2,8 +2,8 @@ extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rusqlite;
 
-mod data_model;
 mod database_schema_generator;
+mod error;
 mod internal_api;
 mod warp_api;
 
@@ -28,7 +28,6 @@ async fn main() {
 
     let sqlite_file = "pod.db";
     let sqlite = SqliteConnectionManager::file(sqlite_file);
-    // .unwrap_or_else(|err| panic!("Could not open {}, {}", sqlite_file, err));
 
     // Start web framework
     warp_api::run_server(sqlite).await;

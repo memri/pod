@@ -37,12 +37,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move |id: i64| {
-            let json = internal_api::get_item(&pool, id);
-            let boxed: Box<dyn Reply> = if let Some(json) = json {
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let result = internal_api::get_item(&pool, id);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
@@ -56,13 +54,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
-            let string = internal_api::get_all_items(&pool);
-            let boxed: Box<dyn Reply> = if let Some(string) = string {
-                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let result = internal_api::get_all_items(&pool);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
@@ -130,24 +125,22 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             }
         });
 
-    // QUERY API for a subset of nodes.
-    // Input: json of query within the body.
-    // Return an array of nodes.
-    // Return StatusCode::NOT_FOUND if nodes not exist.
+    // Search items by their fields.
+    // Given a JSON like { "author": "Vasili", "_type": "note" }
+    // the endpoint will return all entries with exactly the same properties.
     let pool = pool_arc.clone();
-    let query = api_version_1
-        .and(warp::path("all"))
+    let search = api_version_1
+        .and(warp::path("search_by_fields"))
         .and(warp::path::end())
         .and(warp::post())
         .and(warp::body::bytes())
         .map(move |body: Bytes| {
-            let string = internal_api::query(&pool, body);
-            let boxed: Box<dyn Reply> = if let Some(string) = string {
-                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let body =
+                serde_json::from_slice(&body).expect("Failed to serialize request body to JSON");
+            let result = internal_api::search(&pool, body);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
@@ -179,7 +172,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             .or(create_item)
             .or(update_item)
             .or(delete_item)
-            .or(query)
+            .or(search)
             .or(import_notes),
     )
     .run(([0, 0, 0, 0], 3030))
