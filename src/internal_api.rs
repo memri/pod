@@ -21,10 +21,11 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Convert row to JSON.
+/// Convert all rows to a list of items in JSON.
 fn row_to_json(mut rows: Rows) -> Value {
-    let mut values = Map::new();
+    let mut json = vec![];
     while let Some(row) = rows.next().unwrap() {
+        let mut values = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i).unwrap().to_string();
             match row.get_raw(i) {
@@ -32,11 +33,12 @@ fn row_to_json(mut rows: Rows) -> Value {
                 ValueRef::Integer(i) => values.insert(name, Value::from(i)),
                 ValueRef::Real(f) => values.insert(name, Value::from(f)),
                 ValueRef::Text(t) => values.insert(name, Value::from(str::from_utf8(t).unwrap())),
-                _ => panic!(),
+                unknown => panic!("Unexpected SQL type {:?}", unknown),
             };
         }
+        json.push(values);
     }
-    Value::from(values)
+    Value::from(json)
 }
 
 /// Get an item from the SQLite database.
@@ -48,9 +50,9 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value
     let conn = sqlite.get().expect("Failed to obtain connection");
 
     let mut stmt = conn.prepare("SELECT * FROM items WHERE id = :id").unwrap();
-    let rows = stmt.query_named(&[(":id", &id.to_string())]).unwrap();
-    let serialized = row_to_json(rows);
+    let rows = stmt.query_named(&[(":id", &id)]).unwrap();
 
+    let serialized = row_to_json(rows);
     Some(serialized)
 }
 
