@@ -12,6 +12,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::types::ValueRef;
 use serde_json::json;
 use serde_json::to_string_pretty;
+use serde_json::Map;
 use serde_json::Value;
 use std::str;
 
@@ -40,23 +41,23 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Strin
         .collect::<Vec<_>>();
     let mut rows = stmt.query_named(&[(":id", &id.to_string())]).expect("");
 
-    let mut values = Vec::new();
+    let mut values = Map::new();
     while let Some(row) = rows.next().unwrap() {
         for i in 0..names.len() {
             let name = names[i].clone();
-            let value = match row.get_raw(i) {
-                ValueRef::Null => Value::from(""),
-                ValueRef::Integer(i) => Value::from(i),
-                ValueRef::Real(f) => Value::from(f),
-                ValueRef::Text(t) => Value::from(t),
-                _ => Value::Null,
+            match row.get_raw(i) {
+                ValueRef::Null => values.insert(name, Value::from("")),
+                ValueRef::Integer(i) => values.insert(name, Value::from(i)),
+                ValueRef::Real(f) => values.insert(name, Value::from(f)),
+                ValueRef::Text(t) => values.insert(name, Value::from(String::from_utf8_lossy(t))),
+                _ => Option::None,
             };
-            values.push((name, value));
         }
     }
-    let serialized = serde_json::to_string(&values).unwrap();
-    let result: Item = serde_json::from_str(serialized.as_str()).unwrap();
-    println!("{:#?}", result);
+    let serialized = Value::from(values);
+    println!("{:#?}", serialized);
+    let result: Item = serde_json::from_value(serialized).unwrap();
+
     Some(json!({"name": "John Doe"}).to_string())
 }
 
