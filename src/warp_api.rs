@@ -3,16 +3,17 @@ use bytes::Bytes;
 use log::debug;
 use log::info;
 use log::warn;
+use r2d2_sqlite::SqliteConnectionManager;
+use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server() {
-    info!(
-        "Starting {} HTTP server",
-        env!("CARGO_PKG_NAME").to_uppercase()
-    );
+pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
+    let package_name = env!("CARGO_PKG_NAME").to_uppercase();
+    info!("Starting {} HTTP server", package_name);
+
     // Get version of cargo project POD.
     let version = warp::path("version")
         .and(warp::path::end())
@@ -20,17 +21,23 @@ pub async fn run_server() {
         .map(internal_api::get_project_version);
     // Set API version
     let api_version_1 = warp::path("v1");
+
+    let sqlite_pool = r2d2::Pool::new(sqlite_connection_manager)
+        .expect("Failed to create r2d2 SQLite connection pool");
+    let pool_arc = Arc::new(sqlite_pool);
+
     // GET API for a single node.
     // Parameter:
     //     mid: memriID of requested node, String.
     // Return an array of nodes with requested memriID.
     // Return StatusCode::NOT_FOUND if node does not exist.
+    let pool = pool_arc.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::get())
         .map(move |mid: String| {
-            let string = internal_api::get_item(mid);
+            let string = internal_api::get_item(&pool, mid);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 debug!("Response: {}", &json);
@@ -43,12 +50,13 @@ pub async fn run_server() {
     // GET API for all nodes.
     // Return an array of all nodes.
     // Return StatusCode::NOT_FOUND if nodes not exist.
+    let pool = pool_arc.clone();
     let get_all_items = api_version_1
         .and(warp::path!("all"))
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
-            let string = internal_api::get_all_items();
+            let string = internal_api::get_all_items(&pool);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 debug!("Response: {}", &json);
@@ -62,13 +70,14 @@ pub async fn run_server() {
     // Input: json of created node within the body.
     // Return uid of created node if node is unique.
     // Return StatusCode::CONFLICT if node already exists.
+    let pool = pool_arc.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
         .and(warp::path::end())
         .and(warp::post())
         .and(warp::body::json())
         .map(move |body: serde_json::Value| {
-            let uid = internal_api::create_item(body);
+            let uid = internal_api::create_item(&pool, body);
             let boxed: Box<dyn Reply> = if let Some(uid) = uid {
                 let json = serde_json::json!(uid);
                 debug!("Response: {}", &json);
@@ -84,13 +93,14 @@ pub async fn run_server() {
     // Return without body:
     //     StatusCode::OK if node has been updated successfully.
     //     StatusCode::NOT_FOUND if node is not found in the database.
+    let pool = pool_arc.clone();
     let update_item = api_version_1
         .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
         .map(move |mid: String, body: serde_json::Value| {
-            let result = internal_api::update_item(mid, body);
+            let result = internal_api::update_item(&pool, mid, body);
             if result {
                 StatusCode::OK
             } else {
@@ -103,12 +113,13 @@ pub async fn run_server() {
     // Return without body:
     //     StatusCode::OK if node has been deleted successfully.
     //     StatusCode::NOT_FOUND if node was not found in the database.
+    let pool = pool_arc.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / String))
         .and(warp::path::end())
         .and(warp::delete())
         .map(move |mid: String| {
-            let result = internal_api::delete_item(mid);
+            let result = internal_api::delete_item(&pool, mid);
             if result {
                 StatusCode::OK
             } else {
@@ -119,13 +130,14 @@ pub async fn run_server() {
     // Input: json of query within the body.
     // Return an array of nodes.
     // Return StatusCode::NOT_FOUND if nodes not exist.
+    let pool = pool_arc.clone();
     let query = api_version_1
         .and(warp::path("all"))
         .and(warp::path::end())
         .and(warp::post())
         .and(warp::body::bytes())
         .map(move |body: Bytes| {
-            let string = internal_api::query(body);
+            let string = internal_api::query(&pool, body);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 debug!("Response: {}", &json);
