@@ -20,13 +20,3 @@ pub struct AuditAccessLog {
 pub struct NodeReference {
     pub uid: UID,
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Item {
-    pub id: i64,
-    pub _type: String,
-    pub created_at: f64,
-    pub modified_at: f64,
-    pub read_at: f64,
-    pub version: i64,
-}

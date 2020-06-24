@@ -1,5 +1,4 @@
 use crate::data_model::AuditAccessLog;
-use crate::data_model::Item;
 use crate::data_model::NodeReference;
 use crate::data_model::UID;
 use bytes::Bytes;
@@ -10,7 +9,6 @@ use log::trace;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::types::ValueRef;
-use serde_json::json;
 use serde_json::to_string_pretty;
 use serde_json::Map;
 use serde_json::Value;
@@ -46,7 +44,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Strin
         for i in 0..names.len() {
             let name = names[i].clone();
             match row.get_raw(i) {
-                ValueRef::Null => values.insert(name, Value::from("")),
+                ValueRef::Null => values.insert(name, Value::from(0)),
                 ValueRef::Integer(i) => values.insert(name, Value::from(i)),
                 ValueRef::Real(f) => values.insert(name, Value::from(f)),
                 ValueRef::Text(t) => values.insert(name, Value::from(String::from_utf8_lossy(t))),
@@ -55,10 +53,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Strin
         }
     }
     let serialized = Value::from(values);
-    println!("{:#?}", serialized);
-    let result: Item = serde_json::from_value(serialized).unwrap();
-
-    Some(json!({"name": "John Doe"}).to_string())
+    Some(serialized.to_string())
 }
 
 /// Get an array all items from the dgraph database.
