@@ -7,11 +7,12 @@ use chrono::DateTime;
 use chrono::Utc;
 use log::debug;
 use log::trace;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::types::ValueRef;
-use rusqlite::Connection;
+use serde_json::json;
 use serde_json::to_string_pretty;
 use serde_json::Value;
-use serde_json::{json, Number};
 use std::str;
 
 /// Get project version as seen by Cargo.
@@ -24,9 +25,9 @@ pub fn get_project_version() -> &'static str {
 /// None if the `id` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in DB and if properties are all included.
-pub fn get_item(id: i64) -> Option<String> {
+pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<String> {
     debug!("Getting item {}", id);
-    let conn = Connection::open("/home/bijun/workspace/sqlite/test").expect("");
+    let conn = sqlite.get().expect("Failed to obtain connection");
 
     let mut stmt = conn
         .prepare("SELECT * FROM items WHERE id = :id")
@@ -61,7 +62,7 @@ pub fn get_item(id: i64) -> Option<String> {
 /// Get an array all items from the dgraph database.
 /// `syncState` is added to the returned json for each item,
 /// based on the version in dgraph and if properties are all included.
-pub fn get_all_items() -> Option<String> {
+pub fn get_all_items(_sqlite: &Pool<SqliteConnectionManager>) -> Option<String> {
     unimplemented!()
 }
 
@@ -74,7 +75,7 @@ pub fn get_all_items() -> Option<String> {
 /// `syncState` field of the json from client is processed and removed,
 /// before the json is inserted into dgraph.
 /// The new item will be created with `version = 1`.
-pub fn create_item(json: Value) -> Option<u64> {
+pub fn create_item(_sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     unimplemented!()
 }
@@ -89,7 +90,7 @@ pub fn create_item(json: Value) -> Option<u64> {
 /// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
 /// `syncState` from client json is processed and removed.
 /// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(memri_id: String, json: Value) -> bool {
+pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String, json: Value) -> bool {
     debug!("Updating item {} with {}", memri_id, json);
     unimplemented!()
 }
@@ -97,7 +98,7 @@ pub fn update_item(memri_id: String, json: Value) -> bool {
 /// Delete an already existing item.
 /// Return `false` if dgraph didn't have a node with this memriID.
 /// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
-pub fn delete_item(memri_id: String) -> bool {
+pub fn delete_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String) -> bool {
     debug!("Deleting item {}", memri_id);
     unimplemented!()
 }
@@ -105,7 +106,7 @@ pub fn delete_item(memri_id: String) -> bool {
 /// Query a subset of items.
 /// Return `None` if response doesn't contain any items, Some(json) if it does.
 /// `syncState` is added to the returned json for the root-level items.
-pub fn query(query_bytes: Bytes) -> Option<String> {
+pub fn query(_sqlite: &Pool<SqliteConnectionManager>, query_bytes: Bytes) -> Option<String> {
     debug!("Query {:?}", query_bytes);
     unimplemented!()
 }

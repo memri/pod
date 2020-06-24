@@ -32,4 +32,3 @@ enum DatabaseColumnType {
 fn _generate_columns_from_schema(_schema: DatabaseSchema) -> String {
     unimplemented!()
 }
-
