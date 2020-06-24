@@ -9,6 +9,7 @@ use log::trace;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::types::ValueRef;
+use rusqlite::Rows;
 use serde_json::to_string_pretty;
 use serde_json::Map;
 use serde_json::Value;
@@ -20,6 +21,24 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+/// Convert row to JSON.
+fn row_to_json(mut rows: Rows, names: Vec<String>) -> Value {
+    let mut values = Map::new();
+    while let Some(row) = rows.next().unwrap() {
+        for i in 0..names.len() {
+            let name = names[i].clone();
+            match row.get_raw(i) {
+                ValueRef::Null => values.insert(name, Value::Null),
+                ValueRef::Integer(i) => values.insert(name, Value::from(i)),
+                ValueRef::Real(f) => values.insert(name, Value::from(f)),
+                ValueRef::Text(t) => values.insert(name, Value::from(str::from_utf8(t).unwrap())),
+                _ => panic!(),
+            };
+        }
+    }
+    Value::from(values)
+}
+
 /// Get an item from the SQLite database.
 /// None if the `id` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
@@ -28,31 +47,16 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Strin
     debug!("Getting item {}", id);
     let conn = sqlite.get().expect("Failed to obtain connection");
 
-    let mut stmt = conn
-        .prepare("SELECT * FROM items WHERE id = :id")
-        .expect("");
+    let mut stmt = conn.prepare("SELECT * FROM items WHERE id = :id").unwrap();
 
     let names = stmt
         .column_names()
         .into_iter()
         .map(|s| String::from(s))
         .collect::<Vec<_>>();
-    let mut rows = stmt.query_named(&[(":id", &id.to_string())]).expect("");
+    let rows = stmt.query_named(&[(":id", &id.to_string())]).unwrap();
 
-    let mut values = Map::new();
-    while let Some(row) = rows.next().unwrap() {
-        for i in 0..names.len() {
-            let name = names[i].clone();
-            match row.get_raw(i) {
-                ValueRef::Null => values.insert(name, Value::from(0)),
-                ValueRef::Integer(i) => values.insert(name, Value::from(i)),
-                ValueRef::Real(f) => values.insert(name, Value::from(f)),
-                ValueRef::Text(t) => values.insert(name, Value::from(String::from_utf8_lossy(t))),
-                _ => Option::None,
-            };
-        }
-    }
-    let serialized = Value::from(values);
+    let serialized = row_to_json(rows, names);
     Some(serialized.to_string())
 }
 
