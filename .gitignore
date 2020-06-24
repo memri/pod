@@ -1,4 +1,9 @@
+# cargo/rust build output
 target/
+
+# IDE-s
 .idea/
-data
+
+# SQLite database
+/pod.db
 
