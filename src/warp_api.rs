@@ -29,7 +29,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
     // GET API for a single item.
     // Parameter:
     //     id: id of requested item, integer.
-    // Return an array of nodes with requested id.
+    // Return an array of items with requested id.
     // Return StatusCode::NOT_FOUND if item does not exist.
     let pool = pool_arc.clone();
     let get_item = api_version_1
@@ -37,9 +37,8 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move |id: i64| {
-            let string = internal_api::get_item(&pool, id);
-            let boxed: Box<dyn Reply> = if let Some(string) = string {
-                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
+            let json = internal_api::get_item(&pool, id);
+            let boxed: Box<dyn Reply> = if let Some(json) = json {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
@@ -47,6 +46,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             };
             boxed
         });
+
     // GET API for all nodes.
     // Return an array of all nodes.
     // Return StatusCode::NOT_FOUND if nodes not exist.
@@ -66,6 +66,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             };
             boxed
         });
+
     // POST API for a single node.
     // Input: json of created node within the body.
     // Return uid of created node if node is unique.
@@ -87,6 +88,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             };
             boxed
         });
+
     // PUT API for a single node.
     // Parameter:
     //     mid: memriID of the node to be updated.
@@ -107,6 +109,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
                 StatusCode::NOT_FOUND
             }
         });
+
     // DELETE API for a single node.
     // Parameter:
     //     mid: memriID of the node to be deleted.
@@ -126,6 +129,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
                 StatusCode::NOT_FOUND
             }
         });
+
     // QUERY API for a subset of nodes.
     // Input: json of query within the body.
     // Return an array of nodes.
@@ -147,6 +151,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             };
             boxed
         });
+
     // IMPORT API to start importing notes.
     let import_notes = api_version_1
         .and(warp::path("import"))

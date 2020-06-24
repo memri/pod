@@ -22,11 +22,11 @@ pub fn get_project_version() -> &'static str {
 }
 
 /// Convert row to JSON.
-fn row_to_json(mut rows: Rows, names: Vec<String>) -> Value {
+fn row_to_json(mut rows: Rows) -> Value {
     let mut values = Map::new();
     while let Some(row) = rows.next().unwrap() {
-        for i in 0..names.len() {
-            let name = names[i].clone();
+        for i in 0..row.column_count() {
+            let name = row.column_name(i).unwrap().to_string();
             match row.get_raw(i) {
                 ValueRef::Null => values.insert(name, Value::Null),
                 ValueRef::Integer(i) => values.insert(name, Value::from(i)),
@@ -43,21 +43,15 @@ fn row_to_json(mut rows: Rows, names: Vec<String>) -> Value {
 /// None if the `id` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
 /// based on the version in DB and if properties are all included.
-pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<String> {
+pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Option<Value> {
     debug!("Getting item {}", id);
     let conn = sqlite.get().expect("Failed to obtain connection");
 
     let mut stmt = conn.prepare("SELECT * FROM items WHERE id = :id").unwrap();
-
-    let names = stmt
-        .column_names()
-        .into_iter()
-        .map(|s| String::from(s))
-        .collect::<Vec<_>>();
     let rows = stmt.query_named(&[(":id", &id.to_string())]).unwrap();
+    let serialized = row_to_json(rows);
 
-    let serialized = row_to_json(rows, names);
-    Some(serialized.to_string())
+    Some(serialized)
 }
 
 /// Get an array all items from the dgraph database.
