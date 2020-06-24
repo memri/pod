@@ -1,4 +1,5 @@
 use crate::data_model::AuditAccessLog;
+use crate::data_model::Item;
 use crate::data_model::NodeReference;
 use crate::data_model::UID;
 use bytes::Bytes;
@@ -6,8 +7,11 @@ use chrono::DateTime;
 use chrono::Utc;
 use log::debug;
 use log::trace;
+use rusqlite::types::ValueRef;
+use rusqlite::Connection;
 use serde_json::to_string_pretty;
 use serde_json::Value;
+use serde_json::{json, Number};
 use std::str;
 
 /// Get project version as seen by Cargo.
@@ -16,13 +20,42 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Get an item from the dgraph database.
-/// None if the `memriID` doesn't exist in DB, Some(json) if it does.
+/// Get an item from the SQLite database.
+/// None if the `id` doesn't exist in DB, Some(json) if it does.
 /// `syncState` is added to the returned json,
-/// based on the version in dgraph and if properties are all included.
-pub fn get_item(memri_id: String) -> Option<String> {
-    debug!("Getting item {}", memri_id);
-    unimplemented!()
+/// based on the version in DB and if properties are all included.
+pub fn get_item(id: i64) -> Option<String> {
+    debug!("Getting item {}", id);
+    let conn = Connection::open("/home/bijun/workspace/sqlite/test").expect("");
+
+    let mut stmt = conn
+        .prepare("SELECT * FROM items WHERE id = :id")
+        .expect("");
+
+    let names = stmt
+        .column_names()
+        .into_iter()
+        .map(|s| String::from(s))
+        .collect::<Vec<_>>();
+    let mut rows = stmt.query_named(&[(":id", &id.to_string())]).expect("");
+
+    let mut values: Vec<(String, Value)> = Vec::new();
+    while let Some(row) = rows.next().unwrap() {
+        for i in 0..names.len() {
+            let name = names[i].clone();
+            match row.get_raw(i) {
+                ValueRef::Null => values.push((name, Value::Null)),
+                ValueRef::Integer(i) => values.push((name, Value::Number(i))),
+                ValueRef::Real(f) => values.push((name, Value::Number(f))),
+                ValueRef::Text(t) => values.push((name, Value::String(String::from(t)))),
+                _ => {}
+            };
+        }
+    }
+    let serialized = serde_json::to_string(&values).unwrap();
+    let result: Item = serde_json::from_str(serialized.as_str()).unwrap();
+    println!("{:#?}", result);
+    Some(json!({"name": "John Doe"}).to_string())
 }
 
 /// Get an array all items from the dgraph database.

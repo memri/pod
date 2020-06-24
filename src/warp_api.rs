@@ -20,23 +20,23 @@ pub async fn run_server() {
         .map(internal_api::get_project_version);
     // Set API version
     let api_version_1 = warp::path("v1");
-    // GET API for a single node.
+    // GET API for a single item.
     // Parameter:
-    //     mid: memriID of requested node, String.
-    // Return an array of nodes with requested memriID.
-    // Return StatusCode::NOT_FOUND if node does not exist.
+    //     id: id of requested item, integer.
+    // Return an array of nodes with requested id.
+    // Return StatusCode::NOT_FOUND if item does not exist.
     let get_item = api_version_1
-        .and(warp::path!("items" / String))
+        .and(warp::path!("items" / i64))
         .and(warp::path::end())
         .and(warp::get())
-        .map(move |mid: String| {
-            let string = internal_api::get_item(mid);
+        .map(move |id: i64| {
+            let string = internal_api::get_item(id);
             let boxed: Box<dyn Reply> = if let Some(string) = string {
                 let json: serde_json::Value = serde_json::from_str(&string).unwrap();
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NO_CONTENT)
+                Box::new(StatusCode::NOT_FOUND)
             };
             boxed
         });
@@ -54,7 +54,7 @@ pub async fn run_server() {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NO_CONTENT)
+                Box::new(StatusCode::NOT_FOUND)
             };
             boxed
         });
@@ -94,7 +94,7 @@ pub async fn run_server() {
             if result {
                 StatusCode::OK
             } else {
-                StatusCode::NO_CONTENT
+                StatusCode::NOT_FOUND
             }
         });
     // DELETE API for a single node.
@@ -112,7 +112,7 @@ pub async fn run_server() {
             if result {
                 StatusCode::OK
             } else {
-                StatusCode::NO_CONTENT
+                StatusCode::NOT_FOUND
             }
         });
     // QUERY API for a subset of nodes.
@@ -131,7 +131,7 @@ pub async fn run_server() {
                 debug!("Response: {}", &json);
                 Box::new(warp::reply::json(&json))
             } else {
-                Box::new(StatusCode::NO_CONTENT)
+                Box::new(StatusCode::NOT_FOUND)
             };
             boxed
         });
