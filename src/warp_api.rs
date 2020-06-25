@@ -30,7 +30,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
     // Parameter:
     //     id: id of requested item, integer.
     // Return an array of items with requested id.
-    // Return StatusCode::NOT_FOUND if item does not exist.
+    // Return empty array if item does not exist.
     let pool = pool_arc.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / i64))
@@ -47,7 +47,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
 
     // GET API for all nodes.
     // Return an array of all nodes.
-    // Return StatusCode::NOT_FOUND if nodes not exist.
+    // Return empty array if nodes not exist.
     let pool = pool_arc.clone();
     let get_all_items = api_version_1
         .and(warp::path!("all"))
@@ -104,11 +104,11 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
     // DELETE a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
-        .and(warp::path!("items" / String))
+        .and(warp::path!("items" / i64))
         .and(warp::path::end())
         .and(warp::delete())
-        .map(move |mid: String| {
-            let result = internal_api::delete_item(&pool, mid);
+        .map(move |id: i64| {
+            let result = internal_api::delete_item(&pool, id);
             let boxed: Box<dyn Reply> = match result {
                 Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),

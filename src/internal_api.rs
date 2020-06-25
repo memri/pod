@@ -57,9 +57,20 @@ pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String, json
 
 /// Delete an already existing item.
 /// Return successfully if item existed and was successfully deleted.
-pub fn delete_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String) -> Result<()> {
-    debug!("Deleting item {}", i64_id);
-    unimplemented!()
+/// Return NOT_FOUND if item does not exist.
+pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<()> {
+    debug!("Deleting item {}", id);
+    let conn = sqlite.get()?;
+
+    let mut stmt = conn.prepare_cached("DELETE FROM items WHERE id = :id")?;
+    let deleted = stmt.execute_named(&[(":id", &id)])?;
+    if deleted == 0 {
+        return Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: "No such item".to_string(),
+        });
+    }
+    Ok(())
 }
 
 /// Search items by their fields
