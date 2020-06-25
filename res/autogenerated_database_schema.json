@@ -1,0 +1,428 @@
+{
+  "types": [
+    {
+      "name": "AuditAccessLog",
+      "columns": []
+    },
+    {
+      "name": "CVUStoredDefinition",
+      "columns": []
+    },
+    {
+      "name": "Company",
+      "columns": [
+        {
+          "name": "email",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "CreativeWork",
+      "columns": [
+        {
+          "name": "abstract",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keywords",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "_type": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "DigitalDocument",
+      "columns": []
+    },
+    {
+      "name": "Comment",
+      "columns": []
+    },
+    {
+      "name": "Note",
+      "columns": [
+        {
+          "name": "title",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "content",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "MediaObject",
+      "columns": [
+        {
+          "name": "bitrate",
+          "_type": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "_type": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "fileLocation",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "fileSize",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "_type": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "_type": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Audio",
+      "columns": [
+        {
+          "name": "caption",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "transcript",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Photo",
+      "columns": [
+        {
+          "name": "caption",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "exifData",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "thumbnail",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Video",
+      "columns": [
+        {
+          "name": "caption",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "exifData",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "thumbnail",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Diet",
+      "columns": [
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "additions",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Downloader",
+      "columns": []
+    },
+    {
+      "name": "File",
+      "columns": [
+        {
+          "name": "uri",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Importer",
+      "columns": [
+        {
+          "name": "name",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "ImporterInstance",
+      "columns": [
+        {
+          "name": "name",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Indexer",
+      "columns": []
+    },
+    {
+      "name": "IndexerInstance",
+      "columns": []
+    },
+    {
+      "name": "Label",
+      "columns": [
+        {
+          "name": "comment",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "color",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Location",
+      "columns": [
+        {
+          "name": "latitude",
+          "_type": "Real",
+          "indexed": false
+        },
+        {
+          "name": "longitude",
+          "_type": "Real",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Address",
+      "columns": [
+        {
+          "name": "city",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "postalCode",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "state",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "street",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Country",
+      "columns": []
+    },
+    {
+      "name": "GeoCoordinates",
+      "columns": [
+        {
+          "name": "latitude",
+          "_type": "Real",
+          "indexed": false
+        },
+        {
+          "name": "longitude",
+          "_type": "Real",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "LogItem",
+      "columns": [
+        {
+          "name": "contents",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "action",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "MedicalCondition",
+      "columns": [
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "OnlineProfile",
+      "columns": [
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "handle",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "columns": [
+        {
+          "name": "email",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "firstName",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "lastName",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "gender",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sexualOrientation",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "_type": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "shoulderWidth",
+          "_type": "Real",
+          "indexed": false
+        },
+        {
+          "name": "armLength",
+          "_type": "Real",
+          "indexed": false
+        },
+        {
+          "name": "age",
+          "_type": "Real",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "PhoneNumber",
+      "columns": []
+    },
+    {
+      "name": "PublicKey",
+      "columns": [
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "key",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Session",
+      "columns": []
+    },
+    {
+      "name": "SessionView",
+      "columns": []
+    },
+    {
+      "name": "Website",
+      "columns": [
+        {
+          "name": "type",
+          "_type": "Text",
+          "indexed": false
+        },
+        {
+          "name": "url",
+          "_type": "Text",
+          "indexed": false
+        }
+      ]
+    }
+  ]
+}
