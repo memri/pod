@@ -4,7 +4,7 @@ use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::{json_value_to_sqlite_parameter, sqlite_value_to_json};
 use chrono::Utc;
 use log::debug;
-use r2d2::Pool;
+use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ToSql;
 use rusqlite::NO_PARAMS;
@@ -13,6 +13,24 @@ use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
+
+/// Check if item exists by id
+pub fn item_exist(
+    conn: &PooledConnection<SqliteConnectionManager>,
+    fields_map: &Map<String, Value>,
+) -> bool {
+    if let Some(id) = fields_map.get("id") {
+        let id = id.as_i64().expect("Value is not i64");
+        let sql = format!("SELECT COUNT(*) FROM items WHERE id = {};", id);
+        let result: i64 = conn
+            .query_row(&sql, NO_PARAMS, |row| row.get(0))
+            .expect("Failed to query SQLite column information");
+        if result != 0 {
+            return true;
+        }
+    }
+    false
+}
 
 /// Get project version as seen by Cargo.
 pub fn get_project_version() -> &'static str {
@@ -56,20 +74,11 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     };
 
     let conn = sqlite.get()?;
-    if fields_map.contains_key("id") {
-        let id = fields_map
-            .get("id")
-            .expect("No value is found")
-            .as_i64()
-            .expect("Value is not i64");
-        let mut stmt = conn.prepare_cached("SELECT id FROM items WHERE id = :id")?;
-        let mut rows = stmt.query_named(&[(":id", &id)])?;
-        if rows.next()?.is_some() {
-            return Err(Error {
-                code: StatusCode::CONFLICT,
-                msg: "Request contains id, use update_item() instead".to_string(),
-            });
-        }
+    if item_exist(&conn, &fields_map) {
+        return Err(Error {
+            code: StatusCode::CONFLICT,
+            msg: "Request contains id, use update_item() instead".to_string(),
+        });
     }
 
     let mut sql_body = "INSERT INTO items (".to_string();
