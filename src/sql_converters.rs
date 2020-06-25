@@ -18,7 +18,7 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
     Ok(result)
 }
 
-fn sqlite_value_to_json(value: ValueRef) -> Value {
+pub fn sqlite_value_to_json(value: ValueRef) -> Value {
     match value {
         ValueRef::Null => Value::Null,
         ValueRef::Integer(i) => Value::from(i),
