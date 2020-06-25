@@ -37,6 +37,11 @@ During development, you might want to have faster build turn-around. Use this to
 cargo build
 ```
 
+This to run the Pod, re-building if necessary:
+```sh
+cargo run
+```
+
 Or this to incrementally compile the project (after installing cargo-watch):
 ```sh
 cargo watch -x check
