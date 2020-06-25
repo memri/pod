@@ -8,6 +8,13 @@ pub struct Error {
     pub msg: String,
 }
 
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let canon = self.code.canonical_reason().unwrap_or("");
+        write!(f, "Error {} {}, {}", self.code.as_str(), canon, self.msg)
+    }
+}
+
 impl From<r2d2::Error> for Error {
     fn from(err: r2d2::Error) -> Error {
         let msg = format!("Database r2d2 error {}", err);
