@@ -37,12 +37,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move |id: i64| {
-            let json = internal_api::get_item(&pool, id);
-            let boxed: Box<dyn Reply> = if let Some(json) = json {
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let result = internal_api::get_item(&pool, id);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
@@ -56,13 +54,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
-            let string = internal_api::get_all_items(&pool);
-            let boxed: Box<dyn Reply> = if let Some(string) = string {
-                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let result = internal_api::get_all_items(&pool);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
@@ -89,12 +84,8 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             boxed
         });
 
-    // PUT API for a single node.
-    // Parameter:
-    //     mid: memriID of the node to be updated.
-    // Return without body:
-    //     StatusCode::OK if node has been updated successfully.
-    //     StatusCode::NOT_FOUND if node is not found in the database.
+    // PUT (update) a single item
+    // See `internal_api::update_item` for more details
     let pool = pool_arc.clone();
     let update_item = api_version_1
         .and(warp::path!("items" / String))
@@ -110,12 +101,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             }
         });
 
-    // DELETE API for a single node.
-    // Parameter:
-    //     mid: memriID of the node to be deleted.
-    // Return without body:
-    //     StatusCode::OK if node has been deleted successfully.
-    //     StatusCode::NOT_FOUND if node was not found in the database.
+    // DELETE a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / String))
@@ -123,36 +109,34 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::delete())
         .map(move |mid: String| {
             let result = internal_api::delete_item(&pool, mid);
-            if result {
-                StatusCode::OK
-            } else {
-                StatusCode::NOT_FOUND
-            }
-        });
-
-    // QUERY API for a subset of nodes.
-    // Input: json of query within the body.
-    // Return an array of nodes.
-    // Return StatusCode::NOT_FOUND if nodes not exist.
-    let pool = pool_arc.clone();
-    let query = api_version_1
-        .and(warp::path("all"))
-        .and(warp::path::end())
-        .and(warp::post())
-        .and(warp::body::bytes())
-        .map(move |body: Bytes| {
-            let string = internal_api::query(&pool, body);
-            let boxed: Box<dyn Reply> = if let Some(string) = string {
-                let json: serde_json::Value = serde_json::from_str(&string).unwrap();
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(StatusCode::NOT_FOUND)
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });
 
-    // IMPORT API to start importing notes.
+    // Search items by their fields.
+    // Given a JSON like { "author": "Vasili", "_type": "note" }
+    // the endpoint will return all entries with exactly the same properties.
+    let pool = pool_arc.clone();
+    let search = api_version_1
+        .and(warp::path("search_by_fields"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(warp::body::bytes())
+        .map(move |body: Bytes| {
+            let body =
+                serde_json::from_slice(&body).expect("Failed to serialize request body to JSON");
+            let result = internal_api::search(&pool, body);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
+        });
+
+    // IMPORT API to trigger notes importing
     let import_notes = api_version_1
         .and(warp::path("import"))
         .and(warp::path::param())
@@ -179,7 +163,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             .or(create_item)
             .or(update_item)
             .or(delete_item)
-            .or(query)
+            .or(search)
             .or(import_notes),
     )
     .run(([0, 0, 0, 0], 3030))

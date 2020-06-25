@@ -5,6 +5,7 @@ pub fn create_mandatory_tables() {
         created_at REAL NOT NULL,
         modified_at REAL NOT NULL,
         read_at REAL,
+        deleted_at REAL,
         version INTEGER NOT NULL
     );";
 
