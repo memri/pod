@@ -21,8 +21,11 @@ struct DatabaseColumn {
 
 #[derive(Serialize, Deserialize)]
 enum DatabaseColumnType {
+    /// UTF-8 string
     Text,
+    /// Signed 8-byte integer
     Integer,
+    // 8-byte float
     Real,
 }
 
