@@ -76,12 +76,12 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 
     let mut sql_params = Vec::new();
     for (field, value) in &fields_map {
-        let field: &str = field;
+        let field = format!(":{}", field);
         sql_params.push((field, json_value_to_sqlite_parameter(value)));
     }
     let sql_params: Vec<_> = sql_params
         .iter()
-        .map(|(field, value)| (*field, value as &dyn ToSql))
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
         .collect();
 
     let conn = sqlite.get()?;
