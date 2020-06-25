@@ -148,6 +148,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
         sql_body.push_str(" = :");
         sql_body.push_str(field);
     }
+    sql_body.push_str(";");
 
     let mut sql_params = Vec::new();
     for (field, value) in &fields_map {
@@ -158,7 +159,6 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
         .iter()
         .map(|(field, value)| (*field, value as &dyn ToSql))
         .collect();
-    sql_body.push_str(";");
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
     let result = stmt.query_named(sql_params.as_slice())?;
