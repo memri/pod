@@ -8,7 +8,7 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 
 In order to build Pod, you need to install `sqlcipher`.
 
-On Ubuntu: `apt-get install sqlcipher`
+On Ubuntu: `apt-get install libsqlcipher-dev`
 
 On ArchLinux: `pacman -S --needed sqlcipher`
 
