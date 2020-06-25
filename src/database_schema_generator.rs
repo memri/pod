@@ -24,7 +24,6 @@ enum DatabaseColumnType {
     Text,
     Integer,
     Real,
-    Blob,
 }
 
 /// Given a DatabaseSchema from iOS or other components,
