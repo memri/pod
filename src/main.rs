@@ -5,6 +5,7 @@ extern crate rusqlite;
 mod database_schema_generator;
 mod error;
 mod internal_api;
+mod sql_converters;
 mod warp_api;
 
 use chrono::Utc;

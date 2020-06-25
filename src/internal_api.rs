@@ -1,15 +1,13 @@
 use crate::error::Error;
 use crate::error::Result;
+use crate::sql_converters::json_value_to_sqlite_parameter;
+use crate::sql_converters::sqlite_rows_to_json;
 use log::debug;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::types::ToSqlOutput;
-use rusqlite::types::ValueRef;
-use rusqlite::Rows;
 use rusqlite::ToSql;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
-use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
@@ -18,32 +16,6 @@ use warp::http::status::StatusCode;
 pub fn get_project_version() -> &'static str {
     debug!("Returning API version...");
     env!("CARGO_PKG_VERSION")
-}
-
-fn sqlite_value_to_json(value: ValueRef) -> Value {
-    match value {
-        ValueRef::Null => Value::Null,
-        ValueRef::Integer(i) => Value::from(i),
-        ValueRef::Real(f) => Value::from(f),
-        ValueRef::Text(t) => {
-            Value::from(str::from_utf8(t).expect("Non UTF-8 data in TEXT field of the database"))
-        }
-        ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
-    }
-}
-
-/// Convert an SQLite result set into array of JSON objects
-fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
-    let mut result = Vec::new();
-    while let Some(row) = rows.next()? {
-        let mut json_object = Map::new();
-        for i in 0..row.column_count() {
-            let name = row.column_name(i)?.to_string();
-            json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
-        }
-        result.push(Value::from(json_object));
-    }
-    Ok(result)
 }
 
 /// Get an item from the SQLite database.
@@ -105,25 +77,6 @@ pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String, js
 pub fn delete_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String) -> bool {
     debug!("Deleting item {}", memri_id);
     unimplemented!()
-}
-
-fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
-    match json {
-        Value::Null => ToSqlOutput::Borrowed(ValueRef::Null),
-        Value::String(s) => ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes())),
-        Value::Number(n) => {
-            if let Some(int) = n.as_i64() {
-                ToSqlOutput::Borrowed(ValueRef::Integer(int))
-            } else if let Some(float) = n.as_f64() {
-                ToSqlOutput::Borrowed(ValueRef::Real(float))
-            } else {
-                panic!("Unsupported number precision (non-f64) of a JSON value.")
-            }
-        }
-        Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
-        Value::Bool(_) => panic!("Cannot convert boolean to SQLite parameter. Use 0 or 1..."),
-        Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
-    }
 }
 
 /// Search items by their fields
