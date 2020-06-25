@@ -54,24 +54,18 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     };
 
     let mut sql_body = "INSERT INTO items (".to_string();
+    let mut sql_body_params = ") VALUES (:".to_string();
     let mut first_parameter = true;
     for field in fields_map.keys() {
         if !first_parameter {
-            sql_body.push_str(", ")
+            sql_body.push_str(", ");
+            sql_body_params.push_str(", :")
         };
         first_parameter = false;
         sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+        sql_body_params.push_str(field);
     }
-    sql_body.push_str(") VALUES (:");
-
-    let mut first_parameter = true;
-    for field in fields_map.keys() {
-        if !first_parameter {
-            sql_body.push_str(", :")
-        };
-        first_parameter = false;
-        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
-    }
+    sql_body.push_str(sql_body_params.as_str());
     sql_body.push_str(");");
 
     let mut sql_params = Vec::new();
