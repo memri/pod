@@ -1,8 +1,8 @@
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
-use serde_json::Value;
 use rusqlite::Rows;
 use serde_json::Map;
+use serde_json::Value;
 
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {

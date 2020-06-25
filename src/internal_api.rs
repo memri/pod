@@ -18,10 +18,7 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Get an item from the SQLite database.
-/// None if the `id` doesn't exist in DB, Some(json) if it does.
-/// `syncState` is added to the returned json,
-/// based on the version in DB and if properties are all included.
+/// Get an item by its `id`
 pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", id);
     let conn = sqlite.get()?;
@@ -42,40 +39,26 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
     Ok(json)
 }
 
-/// Create an item presuming it didn't exist before.
-/// Return Some(uid) if the data item's `memriID` cannot be found in the DB,
-/// and was successfully created in DB.
-/// Return None if the data item had `uid` field, indicating it already exists,
-/// should use `update` for changing the item.
-/// Dgraph returns `uid` in hexadecimal and should be converted to decimal.
-/// `syncState` field of the json from client is processed and removed,
-/// before the json is inserted into dgraph.
+/// Create an item, failing if the `id` existed before.
 /// The new item will be created with `version = 1`.
 pub fn create_item(_sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Option<u64> {
     debug!("Creating item {}", json);
     unimplemented!()
 }
 
-/// First verify if `mid` exists, if so, then update the already existing item.
-/// Parameters:
-///     - `mid`: memriID of the item to be updated.
-///     - `json`: the json sent by client.
-/// Return `false` if dgraph didn't have a node with this `mid`.
-/// Return `true` if dgraph had a node with this `mid` and it was successfully updated.
-/// The `version` that is sent to us by the client should be completely ignored.
-/// Use `expand(_all_)` to get all properties of an item, only works if data has a `dgraph.type`.
-/// `syncState` from client json is processed and removed.
-/// A successful update operation should also increase the version in dgraph as `version += 1`.
-pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String, json: Value) -> bool {
-    debug!("Updating item {} with {}", memri_id, json);
+/// Update an item with a JSON object.
+/// Json `null` fields will be erased from the database.
+/// Nonexisting or reserved properties like "version" will cause error (TODO).
+/// The version of the item in the database will be increased `version += 1`.
+pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String, json: Value) -> bool {
+    debug!("Updating item {} with {}", i64_id, json);
     unimplemented!()
 }
 
 /// Delete an already existing item.
-/// Return `false` if dgraph didn't have a node with this memriID.
-/// Return `true` if dgraph had a node with this memriID and it was successfully deleted.
-pub fn delete_item(_sqlite: &Pool<SqliteConnectionManager>, memri_id: String) -> bool {
-    debug!("Deleting item {}", memri_id);
+/// Return successfully if item existed and was successfully deleted.
+pub fn delete_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String) -> Result<()> {
+    debug!("Deleting item {}", i64_id);
     unimplemented!()
 }
 

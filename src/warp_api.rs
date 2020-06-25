@@ -105,12 +105,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             }
         });
 
-    // DELETE API for a single node.
-    // Parameter:
-    //     mid: memriID of the node to be deleted.
-    // Return without body:
-    //     StatusCode::OK if node has been deleted successfully.
-    //     StatusCode::NOT_FOUND if node was not found in the database.
+    // DELETE a single node.
     let pool = pool_arc.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / String))
@@ -118,11 +113,11 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::delete())
         .map(move |mid: String| {
             let result = internal_api::delete_item(&pool, mid);
-            if result {
-                StatusCode::OK
-            } else {
-                StatusCode::NOT_FOUND
-            }
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
         });
 
     // Search items by their fields.
