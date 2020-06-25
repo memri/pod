@@ -84,12 +84,8 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             boxed
         });
 
-    // PUT API for a single node.
-    // Parameter:
-    //     mid: memriID of the node to be updated.
-    // Return without body:
-    //     StatusCode::OK if node has been updated successfully.
-    //     StatusCode::NOT_FOUND if node is not found in the database.
+    // PUT (update) a single item
+    // See `internal_api::update_item` for more details
     let pool = pool_arc.clone();
     let update_item = api_version_1
         .and(warp::path!("items" / String))
@@ -105,7 +101,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             }
         });
 
-    // DELETE a single node.
+    // DELETE a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / String))
@@ -140,7 +136,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             boxed
         });
 
-    // IMPORT API to start importing notes.
+    // IMPORT API to trigger notes importing
     let import_notes = api_version_1
         .and(warp::path("import"))
         .and(warp::path::param())
