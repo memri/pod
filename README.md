@@ -54,3 +54,11 @@ You can read about various components of the server:
 * Rusqlite database driver: [github.com/rusqlite/rusqlite](https://github.com/rusqlite/rusqlite)
 * Warp HTTP engine: [github.com/seanmonstar/warp](https://github.com/seanmonstar/warp)
 * Rust language: [rust-lang.org](https://www.rust-lang.org/)
+
+## Database
+Pod uses `SQLite` database as its storage mechanism.
+
+When running Pod, a file named `pod.db` will be created.
+
+Note that the current version of Pod **DOES NOT** use encryption.
+This part will be changed, and a manual import will be needed in the future.
