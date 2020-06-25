@@ -4,7 +4,6 @@ use log::info;
 use log::warn;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
-use warp::http::StatusCode;
 use warp::Filter;
 use warp::Reply;
 
@@ -64,7 +63,7 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
     // POST API for a single item.
     // Input: json of created item within the body.
     // Return id of created item if item is unique.
-    // Return StatusCode::CONFLICT if item already exists.
+    // Return error if item already exists.
     let pool = pool_arc.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
@@ -81,20 +80,23 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         });
 
     // PUT (update) a single item
+    // Input:
+    //      - id of the item to be updated
+    //      - json of content to be updated
     // See `internal_api::update_item` for more details
     let pool = pool_arc.clone();
     let update_item = api_version_1
-        .and(warp::path!("items" / String))
+        .and(warp::path!("items" / i64))
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
-        .map(move |mid: String, body: serde_json::Value| {
-            let result = internal_api::update_item(&pool, mid, body);
-            if result {
-                StatusCode::OK
-            } else {
-                StatusCode::NOT_FOUND
-            }
+        .map(move |id: i64, body: serde_json::Value| {
+            let result = internal_api::update_item(&pool, id, body);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
         });
 
     // DELETE a single item

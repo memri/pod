@@ -89,9 +89,50 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 /// Json `null` fields will be erased from the database.
 /// Nonexisting or reserved properties like "version" will cause error (TODO).
 /// The version of the item in the database will be increased `version += 1`.
-pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String, json: Value) -> bool {
-    debug!("Updating item {} with {}", i64_id, json);
-    unimplemented!()
+pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value) -> Result<()> {
+    debug!("Updating item {} with {}", id, json);
+    let fields_map = match json {
+        Object(map) => map,
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: "Expected JSON object".to_string(),
+            })
+        }
+    };
+    let mut sql_body = "UPDATE items SET ".to_string();
+    let mut first_parameter = true;
+    for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(", ");
+        };
+        first_parameter = false;
+        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+        sql_body.push_str(" = :");
+        sql_body.push_str(field);
+    }
+    sql_body.push_str(" WHERE id = :id");
+
+    let mut sql_params = Vec::new();
+    for (field, value) in &fields_map {
+        let field = format!(":{}", field);
+        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+    }
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
+        .collect();
+
+    let conn = sqlite.get()?;
+    let mut stmt = conn.prepare_cached(&sql_body)?;
+    let updated = stmt.execute_named(sql_params.as_slice())?;
+    if updated == 0 {
+        return Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: "No such item".to_string(),
+        });
+    }
+    Ok(())
 }
 
 /// Delete an already existing item.
