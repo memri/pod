@@ -4,32 +4,33 @@ Pod is the open-source backend for [Memri](https://blog.memri.io/) project.
 
 It's written in Rust and provides an HTTP interface for use by the clients.
 
-## Dependencies
 
-In order to build Pod, you need to install `sqlcipher`.
-
-On Ubuntu: `apt-get install libsqlcipher-dev`
-
-On ArchLinux: `pacman -S --needed sqlcipher`
-
-## Install
-To install Pod locally, you can use the default rust cargo mechanism:
+## Run in docker
+To run Pod inside docker:
 ```sh
-RUSTUP_TOOLCHAIN=stable cargo install --force
+docker-compose up
 ```
 
-## Build
-Alternative to the above, if you want to build Pod on one x86_64 Linux machine
-to be executed later on another x86_64 Linux machine, use this:
 
+## Local build/install
+
+In order to build Pod locally, you need to install `sqlcipher`:
+
+* On Ubuntu: `apt-get install libsqlcipher-dev`
+* On ArchLinux: `pacman -S --needed sqlcipher`
+
+And stable Rust toolchain: `rustup toolchain install stable`
+
+After this, you can build Pod with:
 ```sh
-cargo build --release --target=x86_64-unknown-linux-musl
+cargo build --release
 ```
 
-The compiled binary should be around 8Mb (4Mb if compiled with LTO),
-and placed in `target/x86_64-unknown-linux-musl/release/pod`.
+Or install it with:
+```sh
+cargo install --force
+```
 
-It is runnable by just executing it. You can read more on Rust and MUSL [here](https://doc.rust-lang.org/edition-guide/rust-2018/platform-and-target-support/musl-support-for-fully-static-binaries.html).
 
 ## Development
 During development, you might want to have faster build turn-around. Use this to build a debug version:
@@ -37,12 +38,12 @@ During development, you might want to have faster build turn-around. Use this to
 cargo build
 ```
 
-This to run the Pod, re-building if necessary:
+Run the Pod, re-building if necessary:
 ```sh
 cargo run
 ```
 
-Or this to incrementally compile the project (after installing cargo-watch):
+Incrementally compile the project (after installing cargo-watch):
 ```sh
 cargo watch -x check
 ```
@@ -55,8 +56,9 @@ You can read about various components of the server:
 * Warp HTTP engine: [github.com/seanmonstar/warp](https://github.com/seanmonstar/warp)
 * Rust language: [rust-lang.org](https://www.rust-lang.org/)
 
+
 ## Database
-Pod uses `SQLite` database as its storage mechanism.
+Pod uses SQLite database as its storage mechanism.
 
 When running Pod, a file named `pod.db` will be created.
 
