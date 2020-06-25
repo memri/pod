@@ -1,6 +1,5 @@
 use crate::internal_api;
 use bytes::Bytes;
-use log::debug;
 use log::info;
 use log::warn;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -62,10 +61,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
             boxed
         });
 
-    // POST API for a single node.
-    // Input: json of created node within the body.
-    // Return uid of created node if node is unique.
-    // Return StatusCode::CONFLICT if node already exists.
+    // POST API for a single item.
+    // Input: json of created item within the body.
+    // Return id of created item if item is unique.
+    // Return StatusCode::CONFLICT if item already exists.
     let pool = pool_arc.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
@@ -73,13 +72,10 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
         .and(warp::post())
         .and(warp::body::json())
         .map(move |body: serde_json::Value| {
-            let uid = internal_api::create_item(&pool, body);
-            let boxed: Box<dyn Reply> = if let Some(uid) = uid {
-                let json = serde_json::json!(uid);
-                debug!("Response: {}", &json);
-                Box::new(warp::reply::json(&json))
-            } else {
-                Box::new(warp::reply::with_status("Item contains an uid that already exists in the database, use update() instead.", StatusCode::CONFLICT))
+            let result = internal_api::create_item(&pool, body);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
         });

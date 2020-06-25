@@ -41,9 +41,54 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
 
 /// Create an item, failing if the `id` existed before.
 /// The new item will be created with `version = 1`.
-pub fn create_item(_sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Option<u64> {
+pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<()> {
     debug!("Creating item {}", json);
-    unimplemented!()
+    let fields_map = match json {
+        Object(map) => map,
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: "Expected JSON object".to_string(),
+            })
+        }
+    };
+
+    let mut sql_body = "INSERT INTO items (".to_string();
+    let mut first_parameter = true;
+    for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(", ")
+        };
+        first_parameter = false;
+        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+    }
+    sql_body.push_str(") VALUES (:");
+
+    let mut first_parameter = true;
+    for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(", :")
+        };
+        first_parameter = false;
+        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+    }
+    sql_body.push_str(");");
+
+    let mut sql_params = Vec::new();
+    for (field, value) in &fields_map {
+        let field: &str = field;
+        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+    }
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (*field, value as &dyn ToSql))
+        .collect();
+
+    let conn = sqlite.get()?;
+    let mut stmt = conn.prepare_cached(&sql_body)?;
+    stmt.execute_named(sql_params.as_slice())?;
+
+    Ok(())
 }
 
 /// Update an item with a JSON object.
