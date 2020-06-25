@@ -7,6 +7,7 @@ use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
 use rusqlite::ToSql;
+use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Map;
 use serde_json::Value;
@@ -56,15 +57,17 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<Vec<V
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE id = :id")?;
     let rows = stmt.query_named(&[(":id", &id)])?;
 
-    let serialized = sqlite_rows_to_json(rows)?;
-    Ok(serialized)
+    let json = sqlite_rows_to_json(rows)?;
+    Ok(json)
 }
 
-/// Get an array all items from the dgraph database.
-/// `syncState` is added to the returned json for each item,
-/// based on the version in dgraph and if properties are all included.
-pub fn get_all_items(_sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value>> {
-    unimplemented!()
+pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value>> {
+    debug!("Getting all items");
+    let conn = sqlite.get()?;
+    let mut stmt = conn.prepare_cached("SELECT * FROM items")?;
+    let rows = stmt.query(NO_PARAMS)?;
+    let json = sqlite_rows_to_json(rows)?;
+    Ok(json)
 }
 
 /// Create an item presuming it didn't exist before.
@@ -161,6 +164,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
         .collect();
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
-    let result = stmt.query_named(sql_params.as_slice())?;
-    Ok(sqlite_rows_to_json(result)?)
+    let rows = stmt.query_named(sql_params.as_slice())?;
+    let json = sqlite_rows_to_json(rows)?;
+    Ok(json)
 }
