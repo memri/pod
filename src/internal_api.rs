@@ -138,11 +138,17 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
         }
     };
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
+    let mut first_parameter = true;
     for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(" AND ")
+        };
+        first_parameter = false;
         sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
         sql_body.push_str(" = :");
         sql_body.push_str(field);
     }
+
     let mut sql_params = Vec::new();
     for (field, value) in &fields_map {
         let field: &str = field;
