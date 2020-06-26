@@ -39,6 +39,7 @@ pub fn fields_mapping_to_owned_sql_params(
         match value {
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
+            Value::Object(_) => continue,
             _ => ()
         };
         let field = format!(":{}", field);

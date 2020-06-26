@@ -80,6 +80,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
         match value {
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
+            Value::Object(_) => continue,
             _ => ()
         };
         if !first_parameter {
@@ -131,6 +132,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
         match value {
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
+            Value::Object(_) => continue,
             _ => ()
         };
         if !first_parameter {
@@ -191,6 +193,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
         match value {
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
+            Value::Object(_) => continue,
             _ => ()
         };
         if !first_parameter {
