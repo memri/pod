@@ -166,7 +166,7 @@ where
 }
 
 const MANDATORY_ITEMS_FIELDS: &[&str] = &[
-    "id",
+    "uid",
     "_type",
     "created_at",
     "modified_at",
@@ -176,7 +176,7 @@ const MANDATORY_ITEMS_FIELDS: &[&str] = &[
 ];
 
 const ITEMS_TABLE_DDL: &str = "CREATE TABLE IF NOT EXISTS items (
-    id INTEGER NOT NULL PRIMARY KEY,
+    uid INTEGER NOT NULL PRIMARY KEY,
     _type TEXT NOT NULL,
     created_at REAL NOT NULL,
     modified_at REAL NOT NULL,
@@ -199,8 +199,8 @@ const RELATIONS_TALBLE_DDL: &str = "CREATE TABLE IF NOT EXISTS relations (
     created_at REAL NOT NULL,
     modified_at REAL NOT NULL,
     read_at REAL,
-    FOREIGN KEY (source) REFERENCES items(id),
-    FOREIGN KEY (target) REFERENCES items(id),
+    FOREIGN KEY (source) REFERENCES items(uid),
+    FOREIGN KEY (target) REFERENCES items(uid),
     UNIQUE(source, target, _type)
 );";
 

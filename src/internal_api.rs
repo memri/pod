@@ -16,12 +16,12 @@ use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
 
-/// Check if item exists by id
+/// Check if item exists by uid
 pub fn _check_item_exist(
     conn: &PooledConnection<SqliteConnectionManager>,
-    id: i64,
+    uid: i64,
 ) -> Result<bool> {
-    let sql = format!("SELECT COUNT(*) FROM items WHERE id = {};", id);
+    let sql = format!("SELECT COUNT(*) FROM items WHERE uid = {};", uid);
     let result: i64 = conn.query_row(&sql, NO_PARAMS, |row| row.get(0))?;
     Ok(result != 0)
 }
@@ -32,13 +32,13 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Get an item by its `id`
-pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<Vec<Value>> {
-    debug!("Getting item {}", id);
+/// Get an item by its `uid`
+pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
+    debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
 
-    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE id = :id")?;
-    let rows = stmt.query_named(&[(":id", &id)])?;
+    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+    let rows = stmt.query_named(&[(":uid", &uid)])?;
 
     let json = sqlite_rows_to_json(rows)?;
     Ok(json)
@@ -53,7 +53,7 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
     Ok(json)
 }
 
-/// Create an item, failing if the `id` existed before.
+/// Create an item, failing if the `uid` existed before.
 /// The new item will be created with `version = 1`.
 pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<Value> {
     debug!("Creating item {}", json);
@@ -104,8 +104,8 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 /// Json `null` fields will be erased from the database.
 /// Nonexisting or reserved properties like "version" will cause error (TODO).
 /// The version of the item in the database will be increased `version += 1`.
-pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value) -> Result<()> {
-    debug!("Updating item {} with {}", id, json);
+pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
+    debug!("Updating item {} with {}", uid, json);
     let mut fields_map = match json {
         Object(map) => map,
         _ => {
@@ -133,11 +133,11 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
         sql_body.push_str(field);
     }
     sql_body.push_str(", version = version + 1");
-    sql_body.push_str(" WHERE id = :id ;");
+    sql_body.push_str(" WHERE uid = :uid ;");
 
     let mut sql_params = fields_mapping_to_owned_sql_params(&fields_map);
-    let id = Value::from(id);
-    sql_params.push((":id".into(), json_value_to_sqlite_parameter(&id)));
+    let uid = Value::from(uid);
+    sql_params.push((":uid".into(), json_value_to_sqlite_parameter(&uid)));
     let sql_params = borrow_sql_params(&sql_params);
 
     let conn = sqlite.get()?;
@@ -148,7 +148,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
     } else {
         Err(Error {
             code: StatusCode::NOT_FOUND,
-            msg: "Update failed, id not found".to_string(),
+            msg: "Update failed, uid not found".to_string(),
         })
     }
 }
@@ -156,10 +156,10 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
 /// Delete an already existing item.
 /// Return successfully if item existed and was successfully deleted.
 /// Return NOT_FOUND if item does not exist.
-pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<()> {
-    debug!("Deleting item {}", id);
+pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
+    debug!("Deleting item {}", uid);
     let json = serde_json::json!({"deleted_at": Utc::now().timestamp_millis()});
-    update_item(sqlite, id, json)
+    update_item(sqlite, uid, json)
 }
 
 /// Search items by their fields

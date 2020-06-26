@@ -33,16 +33,16 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
 
     // GET API for a single item.
     // Parameter:
-    //     id: id of requested item, integer.
-    // Return an array of items with requested id.
+    //     uid: uid of requested item, signed 8-byte (64bit) integer.
+    // Return an array of items with requested uid.
     // Return empty array if item does not exist.
     let pool = pool_arc.clone();
     let get_item = api_version_1
         .and(warp::path!("items" / i64))
         .and(warp::path::end())
         .and(warp::get())
-        .map(move |id: i64| {
-            let result = internal_api::get_item(&pool, id);
+        .map(move |uid: i64| {
+            let result = internal_api::get_item(&pool, uid);
             let boxed: Box<dyn Reply> = match result {
                 Ok(result) => Box::new(warp::reply::json(&result)),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
@@ -69,7 +69,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
 
     // POST API for a single item.
     // Input: json of created item within the body.
-    // Return id of created item if item is unique.
+    // Return uid of created item if item is unique.
     // Return error if item already exists.
     let pool = pool_arc.clone();
     let create_item = api_version_1
@@ -88,7 +88,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
 
     // PUT (update) a single item
     // Input:
-    //      - id of the item to be updated
+    //      - uid of the item to be updated
     //      - json of content to be updated
     // See `internal_api::update_item` for more details
     let pool = pool_arc.clone();
@@ -97,8 +97,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::put())
         .and(warp::body::json())
-        .map(move |id: i64, body: serde_json::Value| {
-            let result = internal_api::update_item(&pool, id, body);
+        .map(move |uid: i64, body: serde_json::Value| {
+            let result = internal_api::update_item(&pool, uid, body);
             let boxed: Box<dyn Reply> = match result {
                 Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
@@ -112,8 +112,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path!("items" / i64))
         .and(warp::path::end())
         .and(warp::delete())
-        .map(move |id: i64| {
-            let result = internal_api::delete_item(&pool, id);
+        .map(move |uid: i64| {
+            let result = internal_api::delete_item(&pool, uid);
             let boxed: Box<dyn Reply> = match result {
                 Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
