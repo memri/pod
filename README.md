@@ -18,6 +18,7 @@ In order to build Pod locally, you need to install `sqlcipher`:
 
 * On Ubuntu: `apt-get install libsqlcipher-dev`
 * On ArchLinux: `pacman -S --needed sqlcipher`
+* On MacOS: `brew install sqlcipher`
 
 And stable Rust toolchain: `rustup toolchain install stable`
 

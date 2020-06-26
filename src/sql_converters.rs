@@ -1,6 +1,7 @@
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
+use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
 
@@ -29,6 +30,31 @@ pub fn sqlite_value_to_json(value: ValueRef) -> Value {
         ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
     }
 }
+
+pub fn fields_mapping_to_owned_sql_params(
+    fields_map: &Map<String, serde_json::Value>,
+) -> Vec<(String, ToSqlOutput)> {
+    let mut sql_params = Vec::new();
+    for (field, value) in fields_map {
+        let field = format!(":{}", field);
+        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+    }
+    sql_params
+}
+
+pub fn borrow_sql_params<'a>(
+    sql_params: &'a [(String, ToSqlOutput)],
+) -> Vec<(&'a str, &'a dyn ToSql)> {
+    sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
+        .collect()
+}
+
+// pub fn datetime_to_sqlite<'a>(dt: DateTime<Utc>) -> ToSqlOutput<'a> {
+//     let milliseconds = dt.timestamp_millis();
+//     ToSqlOutput::Owned(rusqlite::types::Value::from(milliseconds))
+// }
 
 pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
     match json {

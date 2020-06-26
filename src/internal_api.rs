@@ -1,35 +1,29 @@
 use crate::error::Error;
 use crate::error::Result;
+use crate::sql_converters::borrow_sql_params;
+use crate::sql_converters::fields_mapping_to_owned_sql_params;
+use crate::sql_converters::json_value_to_sqlite_parameter;
 use crate::sql_converters::sqlite_rows_to_json;
-use crate::sql_converters::{json_value_to_sqlite_parameter, sqlite_value_to_json};
 use chrono::Utc;
 use log::debug;
-use r2d2::{Pool, PooledConnection};
+use r2d2::Pool;
+use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ToSql;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
-use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
 
 /// Check if item exists by id
-pub fn item_exist(
+pub fn _check_item_exist(
     conn: &PooledConnection<SqliteConnectionManager>,
-    fields_map: &Map<String, Value>,
-) -> bool {
-    if let Some(id) = fields_map.get("id") {
-        let id = id.as_i64().expect("Value is not i64");
-        let sql = format!("SELECT COUNT(*) FROM items WHERE id = {};", id);
-        let result: i64 = conn
-            .query_row(&sql, NO_PARAMS, |row| row.get(0))
-            .expect("Failed to query SQLite column information");
-        if result != 0 {
-            return true;
-        }
-    }
-    false
+    id: i64,
+) -> Result<bool> {
+    let sql = format!("SELECT COUNT(*) FROM items WHERE id = {};", id);
+    let result: i64 = conn.query_row(&sql, NO_PARAMS, |row| row.get(0))?;
+    Ok(result != 0)
 }
 
 /// Get project version as seen by Cargo.
@@ -63,7 +57,7 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
 /// The new item will be created with `version = 1`.
 pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<Value> {
     debug!("Creating item {}", json);
-    let fields_map = match json {
+    let mut fields_map = match json {
         Object(map) => map,
         _ => {
             return Err(Error {
@@ -73,16 +67,15 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
         }
     };
 
-    let conn = sqlite.get()?;
-    if item_exist(&conn, &fields_map) {
-        return Err(Error {
-            code: StatusCode::CONFLICT,
-            msg: "Request contains id, use update_item() instead".to_string(),
-        });
-    }
+    let millis_now = Utc::now().timestamp_millis();
+    fields_map.remove("version");
+    fields_map.insert("created_at".to_string(), millis_now.into());
+    fields_map.insert("modified_at".to_string(), millis_now.into());
+    fields_map.remove("read_at");
+    fields_map.insert("version".to_string(), Value::from(1));
 
     let mut sql_body = "INSERT INTO items (".to_string();
-    let mut sql_body_params = ") VALUES (:".to_string();
+    let mut sql_body_params = "".to_string();
     let mut first_parameter = true;
     for field in fields_map.keys() {
         if !first_parameter {
@@ -93,36 +86,14 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
         sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
         sql_body_params.push_str(field);
     }
-    sql_body.push_str(", created_at, modified_at, version");
+    sql_body.push_str(") VALUES (:");
     sql_body.push_str(sql_body_params.as_str());
-    sql_body.push_str(", :created_at, :modified_at, :version");
     sql_body.push_str(");");
 
-    let mut sql_params = Vec::new();
-    for (field, value) in &fields_map {
-        let field = format!(":{}", field);
-        sql_params.push((field, json_value_to_sqlite_parameter(value)));
-    }
-    let created_at = Value::from(Utc::now().timestamp() as f64);
-    sql_params.push((
-        ":created_at".to_string(),
-        json_value_to_sqlite_parameter(&created_at),
-    ));
-    let modified_at = Value::from(0 as f64);
-    sql_params.push((
-        ":modified_at".to_string(),
-        json_value_to_sqlite_parameter(&modified_at),
-    ));
-    let version = Value::from(1);
-    sql_params.push((
-        ":version".to_string(),
-        json_value_to_sqlite_parameter(&version),
-    ));
-    let sql_params: Vec<_> = sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect();
+    let sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let sql_params = borrow_sql_params(&sql_params);
 
+    let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
     stmt.execute_named(sql_params.as_slice())?;
     let json = serde_json::json!({"id": conn.last_insert_rowid()});
@@ -135,7 +106,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 /// The version of the item in the database will be increased `version += 1`.
 pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value) -> Result<()> {
     debug!("Updating item {} with {}", id, json);
-    let fields_map = match json {
+    let mut fields_map = match json {
         Object(map) => map,
         _ => {
             return Err(Error {
@@ -145,23 +116,10 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
         }
     };
 
-    let conn = sqlite.get()?;
-    let mut stmt = conn.prepare_cached("SELECT version FROM items WHERE id = :id")?;
-    let mut rows = stmt.query_named(&[(":id", &id)])?;
-    let mut values = Map::new();
-    if let Some(row) = rows.next()? {
-        values.insert("version".to_string(), sqlite_value_to_json(row.get_raw(0)));
-    } else {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: "No such item".to_string(),
-        });
-    }
-    let version = values
-        .get("version")
-        .expect("No value is found")
-        .as_i64()
-        .expect("Value is not i64");
+    fields_map.insert(
+        "modified_at".to_string(),
+        Utc::now().timestamp_millis().into(),
+    );
 
     let mut sql_body = "UPDATE items SET ".to_string();
     let mut first_parameter = true;
@@ -174,34 +132,25 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
         sql_body.push_str(" = :");
         sql_body.push_str(field);
     }
-    sql_body.push_str(", modified_at = :modified_at, version = :version");
-    sql_body.push_str(" WHERE id = :id");
+    sql_body.push_str(", version = version + 1");
+    sql_body.push_str(" WHERE id = :id ;");
 
-    let mut sql_params = Vec::new();
-    for (field, value) in &fields_map {
-        let field = format!(":{}", field);
-        sql_params.push((field, json_value_to_sqlite_parameter(value)));
-    }
-    let modified_at = Value::from(Utc::now().timestamp() as f64);
-    sql_params.push((
-        ":modified_at".to_string(),
-        json_value_to_sqlite_parameter(&modified_at),
-    ));
-    let new_version = Value::from(version + 1);
-    sql_params.push((
-        ":version".to_string(),
-        json_value_to_sqlite_parameter(&new_version),
-    ));
-    let id_value = Value::from(id);
-    sql_params.push((":id".to_string(), json_value_to_sqlite_parameter(&id_value)));
-    let sql_params: Vec<_> = sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect();
+    let mut sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let id = Value::from(id);
+    sql_params.push((":id".into(), json_value_to_sqlite_parameter(&id)));
+    let sql_params = borrow_sql_params(&sql_params);
 
+    let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
-    stmt.execute_named(sql_params.as_slice())?;
-    Ok(())
+    let updated_count = stmt.execute_named(sql_params.as_slice())?;
+    if updated_count > 0 {
+        Ok(())
+    } else {
+        Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: "Update failed, id not found".to_string(),
+        })
+    }
 }
 
 /// Delete an already existing item.
@@ -209,17 +158,8 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value)
 /// Return NOT_FOUND if item does not exist.
 pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, id: i64) -> Result<()> {
     debug!("Deleting item {}", id);
-    let conn = sqlite.get()?;
-
-    let mut stmt = conn.prepare_cached("DELETE FROM items WHERE id = :id")?;
-    let deleted = stmt.execute_named(&[(":id", &id)])?;
-    if deleted == 0 {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: "No such item".to_string(),
-        });
-    }
-    Ok(())
+    let json = serde_json::json!({"deleted_at": Utc::now().timestamp_millis()});
+    update_item(sqlite, id, json)
 }
 
 /// Search items by their fields
