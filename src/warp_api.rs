@@ -5,6 +5,8 @@ use log::warn;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
+use warp::http::header::HeaderMap;
+use warp::http::header::HeaderValue;
 use warp::Filter;
 use warp::Reply;
 
@@ -18,6 +20,12 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::get())
         .map(internal_api::get_project_version);
+
+    let mut headers = HeaderMap::new();
+    warn!("Remove Access-Control-Allow-Origin before releasing to PROD!!! :see_no_evil:");
+    headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+    let headers = warp::reply::with::headers(headers);
+
     // Set API version
     let api_version_1 = warp::path("v1");
 
@@ -154,14 +162,14 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     // Specify APIs.
     // Specify address and port number to listen to.
     warp::serve(
-        version
-            .or(get_item)
-            .or(get_all_items)
-            .or(create_item)
-            .or(update_item)
-            .or(delete_item)
-            .or(search)
-            .or(import_notes),
+        version.with(&headers)
+            .or(get_item.with(&headers))
+            .or(get_all_items.with(&headers))
+            .or(create_item.with(&headers))
+            .or(update_item.with(&headers))
+            .or(delete_item.with(&headers))
+            .or(search.with(&headers))
+            .or(import_notes.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
