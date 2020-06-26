@@ -1,16 +1,36 @@
 use crate::error::Error;
 use crate::error::Result;
-use crate::sql_converters::json_value_to_sqlite_parameter;
 use crate::sql_converters::sqlite_rows_to_json;
+use crate::sql_converters::{json_value_to_sqlite_parameter, sqlite_value_to_json};
+use chrono::Utc;
 use log::debug;
-use r2d2::Pool;
+use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ToSql;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
+use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
+
+/// Check if item exists by id
+pub fn item_exist(
+    conn: &PooledConnection<SqliteConnectionManager>,
+    fields_map: &Map<String, Value>,
+) -> bool {
+    if let Some(id) = fields_map.get("id") {
+        let id = id.as_i64().expect("Value is not i64");
+        let sql = format!("SELECT COUNT(*) FROM items WHERE id = {};", id);
+        let result: i64 = conn
+            .query_row(&sql, NO_PARAMS, |row| row.get(0))
+            .expect("Failed to query SQLite column information");
+        if result != 0 {
+            return true;
+        }
+    }
+    false
+}
 
 /// Get project version as seen by Cargo.
 pub fn get_project_version() -> &'static str {
@@ -41,18 +61,147 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
 
 /// Create an item, failing if the `id` existed before.
 /// The new item will be created with `version = 1`.
-pub fn create_item(_sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Option<u64> {
+pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<Value> {
     debug!("Creating item {}", json);
-    unimplemented!()
+    let fields_map = match json {
+        Object(map) => map,
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: "Expected JSON object".to_string(),
+            })
+        }
+    };
+
+    let conn = sqlite.get()?;
+    if item_exist(&conn, &fields_map) {
+        return Err(Error {
+            code: StatusCode::CONFLICT,
+            msg: "Request contains id, use update_item() instead".to_string(),
+        });
+    }
+
+    let mut sql_body = "INSERT INTO items (".to_string();
+    let mut sql_body_params = ") VALUES (:".to_string();
+    let mut first_parameter = true;
+    for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(", ");
+            sql_body_params.push_str(", :")
+        };
+        first_parameter = false;
+        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+        sql_body_params.push_str(field);
+    }
+    sql_body.push_str(", created_at, modified_at, version");
+    sql_body.push_str(sql_body_params.as_str());
+    sql_body.push_str(", :created_at, :modified_at, :version");
+    sql_body.push_str(");");
+
+    let mut sql_params = Vec::new();
+    for (field, value) in &fields_map {
+        let field = format!(":{}", field);
+        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+    }
+    let created_at = Value::from(Utc::now().timestamp() as f64);
+    sql_params.push((
+        ":created_at".to_string(),
+        json_value_to_sqlite_parameter(&created_at),
+    ));
+    let modified_at = Value::from(0 as f64);
+    sql_params.push((
+        ":modified_at".to_string(),
+        json_value_to_sqlite_parameter(&modified_at),
+    ));
+    let version = Value::from(1);
+    sql_params.push((
+        ":version".to_string(),
+        json_value_to_sqlite_parameter(&version),
+    ));
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
+        .collect();
+
+    let mut stmt = conn.prepare_cached(&sql_body)?;
+    stmt.execute_named(sql_params.as_slice())?;
+    let json = serde_json::json!({"id": conn.last_insert_rowid()});
+    Ok(json)
 }
 
 /// Update an item with a JSON object.
 /// Json `null` fields will be erased from the database.
 /// Nonexisting or reserved properties like "version" will cause error (TODO).
 /// The version of the item in the database will be increased `version += 1`.
-pub fn update_item(_sqlite: &Pool<SqliteConnectionManager>, i64_id: String, json: Value) -> bool {
-    debug!("Updating item {} with {}", i64_id, json);
-    unimplemented!()
+pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, id: i64, json: Value) -> Result<()> {
+    debug!("Updating item {} with {}", id, json);
+    let fields_map = match json {
+        Object(map) => map,
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: "Expected JSON object".to_string(),
+            })
+        }
+    };
+
+    let conn = sqlite.get()?;
+    let mut stmt = conn.prepare_cached("SELECT version FROM items WHERE id = :id")?;
+    let mut rows = stmt.query_named(&[(":id", &id)])?;
+    let mut values = Map::new();
+    if let Some(row) = rows.next()? {
+        values.insert("version".to_string(), sqlite_value_to_json(row.get_raw(0)));
+    } else {
+        return Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: "No such item".to_string(),
+        });
+    }
+    let version = values
+        .get("version")
+        .expect("No value is found")
+        .as_i64()
+        .expect("Value is not i64");
+
+    let mut sql_body = "UPDATE items SET ".to_string();
+    let mut first_parameter = true;
+    for field in fields_map.keys() {
+        if !first_parameter {
+            sql_body.push_str(", ");
+        };
+        first_parameter = false;
+        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
+        sql_body.push_str(" = :");
+        sql_body.push_str(field);
+    }
+    sql_body.push_str(", modified_at = :modified_at, version = :version");
+    sql_body.push_str(" WHERE id = :id");
+
+    let mut sql_params = Vec::new();
+    for (field, value) in &fields_map {
+        let field = format!(":{}", field);
+        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+    }
+    let modified_at = Value::from(Utc::now().timestamp() as f64);
+    sql_params.push((
+        ":modified_at".to_string(),
+        json_value_to_sqlite_parameter(&modified_at),
+    ));
+    let new_version = Value::from(version + 1);
+    sql_params.push((
+        ":version".to_string(),
+        json_value_to_sqlite_parameter(&new_version),
+    ));
+    let id_value = Value::from(id);
+    sql_params.push((":id".to_string(), json_value_to_sqlite_parameter(&id_value)));
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
+        .collect();
+
+    let mut stmt = conn.prepare_cached(&sql_body)?;
+    stmt.execute_named(sql_params.as_slice())?;
+    Ok(())
 }
 
 /// Delete an already existing item.
