@@ -2,13 +2,14 @@ use crate::internal_api;
 use bytes::Bytes;
 use log::info;
 use log::warn;
+use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
 use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
+pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
@@ -20,8 +21,6 @@ pub async fn run_server(sqlite_connection_manager: SqliteConnectionManager) {
     // Set API version
     let api_version_1 = warp::path("v1");
 
-    let sqlite_pool = r2d2::Pool::new(sqlite_connection_manager)
-        .expect("Failed to create r2d2 SQLite connection pool");
     let pool_arc = Arc::new(sqlite_pool);
 
     // GET API for a single item.
