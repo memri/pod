@@ -9,7 +9,6 @@ use log::debug;
 use r2d2::Pool;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::ToSql;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
@@ -178,7 +177,11 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     };
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
-    for field in fields_map.keys() {
+    for (field, value) in &fields_map {
+        match value {
+            Value::Array(_) => continue,
+            _ => ()
+        };
         if !first_parameter {
             sql_body.push_str(" AND ")
         };
@@ -189,15 +192,8 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     }
     sql_body.push_str(";");
 
-    let mut sql_params = Vec::new();
-    for (field, value) in &fields_map {
-        let field = format!(":{}", field);
-        sql_params.push((field, json_value_to_sqlite_parameter(value)));
-    }
-    let sql_params: Vec<_> = sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect();
+    let sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let sql_params = borrow_sql_params(&sql_params);
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
     let rows = stmt.query_named(sql_params.as_slice())?;

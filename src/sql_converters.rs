@@ -36,6 +36,10 @@ pub fn fields_mapping_to_owned_sql_params(
 ) -> Vec<(String, ToSqlOutput)> {
     let mut sql_params = Vec::new();
     for (field, value) in fields_map {
+        match value {
+            Value::Array(_) => continue,
+            _ => ()
+        };
         let field = format!(":{}", field);
         sql_params.push((field, json_value_to_sqlite_parameter(value)));
     }
