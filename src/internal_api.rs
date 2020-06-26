@@ -76,7 +76,12 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     let mut sql_body = "INSERT INTO items (".to_string();
     let mut sql_body_params = "".to_string();
     let mut first_parameter = true;
-    for field in fields_map.keys() {
+    for (field, value) in &fields_map {
+        match value {
+            Value::Array(_) => continue,
+            Value::Bool(_) => continue,
+            _ => ()
+        };
         if !first_parameter {
             sql_body.push_str(", ");
             sql_body_params.push_str(", :")
@@ -122,7 +127,12 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
 
     let mut sql_body = "UPDATE items SET ".to_string();
     let mut first_parameter = true;
-    for field in fields_map.keys() {
+    for (field, value) in &fields_map {
+        match value {
+            Value::Array(_) => continue,
+            Value::Bool(_) => continue,
+            _ => ()
+        };
         if !first_parameter {
             sql_body.push_str(", ");
         };
@@ -180,6 +190,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
+            Value::Bool(_) => continue,
             _ => ()
         };
         if !first_parameter {
