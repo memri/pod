@@ -1,7 +1,6 @@
 use crate::internal_api;
 use bytes::Bytes;
 use log::info;
-use log::warn;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
@@ -22,8 +21,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .map(internal_api::get_project_version);
 
     let mut headers = HeaderMap::new();
-    warn!("Remove Access-Control-Allow-Origin before releasing to PROD!!! :see_no_evil:");
-    headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+    if std::env::var_os("INSECURE_ACCESS").is_some() {
+        info!("Adding Access-Control-Allow-Origin header as per environment config");
+        headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+    }
     let headers = warp::reply::with::headers(headers);
 
     // Set API version
