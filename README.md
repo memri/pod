@@ -39,9 +39,9 @@ During development, you might want to have faster build turn-around. Use this to
 cargo build
 ```
 
-Run the Pod, re-building if necessary:
+Run the Pod with debug logging (will re-building first if necessary):
 ```sh
-cargo run
+RUST_LOG=pod=debug,info cargo run
 ```
 
 Incrementally compile the project (after installing cargo-watch):
