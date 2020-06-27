@@ -14,13 +14,11 @@ docker-compose up
 
 ## Local build/install
 
-In order to build Pod locally, you need to install `sqlcipher`:
+In order to build Pod locally, you need to install `rust` and `sqlcipher`:
 
-* On Ubuntu: `apt-get install libsqlcipher-dev`
-* On ArchLinux: `pacman -S --needed sqlcipher`
-* On MacOS: `brew install sqlcipher`
-
-And stable Rust toolchain: `rustup toolchain install stable`
+* On Ubuntu: `apt-get install rust libsqlcipher-dev`
+* On ArchLinux: `pacman -S --needed rust sqlcipher`
+* On MacOS: `brew install rust sqlcipher`
 
 After this, you can build Pod with:
 ```sh
