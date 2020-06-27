@@ -68,9 +68,9 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 
     let millis_now = Utc::now().timestamp_millis();
     fields_map.remove("version");
-    fields_map.insert("created_at".to_string(), millis_now.into());
-    fields_map.insert("modified_at".to_string(), millis_now.into());
-    fields_map.remove("read_at");
+    fields_map.insert("dateCreated".to_string(), millis_now.into());
+    fields_map.insert("dateModified".to_string(), millis_now.into());
+    fields_map.remove("dateAccessed");
     fields_map.insert("version".to_string(), Value::from(1));
 
     let mut sql_body = "INSERT INTO items (".to_string();
@@ -81,7 +81,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
             Value::Object(_) => continue,
-            _ => ()
+            _ => (),
         };
         if !first_parameter {
             sql_body.push_str(", ");
@@ -122,7 +122,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     };
 
     fields_map.insert(
-        "modified_at".to_string(),
+        "dateModified".to_string(),
         Utc::now().timestamp_millis().into(),
     );
 
@@ -133,7 +133,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
             Value::Object(_) => continue,
-            _ => ()
+            _ => (),
         };
         if !first_parameter {
             sql_body.push_str(", ");
@@ -169,13 +169,16 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
 /// Return NOT_FOUND if item does not exist.
 pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
     debug!("Deleting item {}", uid);
-    let json = serde_json::json!({"deleted_at": Utc::now().timestamp_millis()});
+    let json = serde_json::json!({
+        "deleted": true,
+        "dateModified": Utc::now().timestamp_millis(),
+    });
     update_item(sqlite, uid, json)
 }
 
 /// Search items by their fields
 ///
-/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "_type": "note" }
+/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "type": "note" }
 pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Vec<Value>> {
     debug!("Query {:?}", query);
     let fields_map = match query {
@@ -194,7 +197,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
             Value::Object(_) => continue,
-            _ => ()
+            _ => (),
         };
         if !first_parameter {
             sql_body.push_str(" AND ")

@@ -40,7 +40,7 @@ pub fn fields_mapping_to_owned_sql_params(
             Value::Array(_) => continue,
             Value::Bool(_) => continue,
             Value::Object(_) => continue,
-            _ => ()
+            _ => (),
         };
         let field = format!(":{}", field);
         sql_params.push((field, json_value_to_sqlite_parameter(value)));

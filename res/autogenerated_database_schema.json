@@ -13,7 +13,7 @@
       "columns": [
         {
           "name": "email",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -23,22 +23,22 @@
       "columns": [
         {
           "name": "abstract",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "keywords",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "text",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "version",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         }
       ]
@@ -56,12 +56,12 @@
       "columns": [
         {
           "name": "title",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "content",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -71,32 +71,32 @@
       "columns": [
         {
           "name": "bitrate",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         },
         {
           "name": "duration",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         },
         {
           "name": "fileLocation",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "fileSize",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "height",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         },
         {
           "name": "width",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         }
       ]
@@ -106,12 +106,12 @@
       "columns": [
         {
           "name": "caption",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "transcript",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -121,17 +121,17 @@
       "columns": [
         {
           "name": "caption",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "exifData",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "thumbnail",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -141,17 +141,17 @@
       "columns": [
         {
           "name": "caption",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "exifData",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "thumbnail",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -161,12 +161,12 @@
       "columns": [
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "additions",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -180,7 +180,7 @@
       "columns": [
         {
           "name": "uri",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -190,7 +190,7 @@
       "columns": [
         {
           "name": "name",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -200,7 +200,7 @@
       "columns": [
         {
           "name": "name",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -218,12 +218,12 @@
       "columns": [
         {
           "name": "comment",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "color",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -233,12 +233,12 @@
       "columns": [
         {
           "name": "latitude",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         },
         {
           "name": "longitude",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         }
       ]
@@ -248,27 +248,27 @@
       "columns": [
         {
           "name": "city",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "postalCode",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "state",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "street",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -282,12 +282,12 @@
       "columns": [
         {
           "name": "latitude",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         },
         {
           "name": "longitude",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         }
       ]
@@ -297,12 +297,12 @@
       "columns": [
         {
           "name": "contents",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "action",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -312,7 +312,7 @@
       "columns": [
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -322,12 +322,12 @@
       "columns": [
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "handle",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -337,47 +337,47 @@
       "columns": [
         {
           "name": "email",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "firstName",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "lastName",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "gender",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "sexualOrientation",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "height",
-          "_type": "Integer",
+          "dbtype": "Integer",
           "indexed": false
         },
         {
           "name": "shoulderWidth",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         },
         {
           "name": "armLength",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         },
         {
           "name": "age",
-          "_type": "Real",
+          "dbtype": "Real",
           "indexed": false
         }
       ]
@@ -391,12 +391,12 @@
       "columns": [
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "key",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]
@@ -414,12 +414,12 @@
       "columns": [
         {
           "name": "type",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "url",
-          "_type": "Text",
+          "dbtype": "Text",
           "indexed": false
         }
       ]

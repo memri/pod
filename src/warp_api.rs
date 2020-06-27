@@ -122,7 +122,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         });
 
     // Search items by their fields.
-    // Given a JSON like { "author": "Vasili", "_type": "note" }
+    // Given a JSON like { "author": "Vasili", "type": "note" }
     // the endpoint will return all entries with exactly the same properties.
     let pool = pool_arc.clone();
     let search = api_version_1
@@ -141,35 +141,17 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // IMPORT API to trigger notes importing
-    let import_notes = api_version_1
-        .and(warp::path("import"))
-        .and(warp::path::param())
-        .and(warp::path::param())
-        .and(warp::path::end())
-        .and(warp::get())
-        .map(move |import_service: String, import_type: String| {
-            info!("trying to import {} from {}", import_type, import_service);
-            match (import_service.as_str(), import_type.as_str()) {
-                ("Evernote", "notes") => unimplemented!(),
-                ("iCloud", "notes") => {}
-                (_, "notes") => warn!("UNKNOWN SERVICE : {}", import_service),
-                (_, _) => warn!("UNKNOWN TYPE : {}", import_type),
-            }
-            ""
-        });
-
     // Specify APIs.
     // Specify address and port number to listen to.
     warp::serve(
-        version.with(&headers)
+        version
+            .with(&headers)
             .or(get_item.with(&headers))
             .or(get_all_items.with(&headers))
             .or(create_item.with(&headers))
             .or(update_item.with(&headers))
             .or(delete_item.with(&headers))
-            .or(search.with(&headers))
-            .or(import_notes.with(&headers)),
+            .or(search.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
