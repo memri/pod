@@ -63,7 +63,7 @@ You can read about various components of the server:
 ## Database
 Pod uses SQLite database as its storage mechanism.
 
-When running Pod, a file named `pod.db` will be created.
+When running Pod, a file named `pod.db` will be created. You can use `sqlite3 pod.db` to browse the database locally. For example, `.schema` will display the current database schema.
 
 Note that the current version of Pod **DOES NOT** use encryption.
 This part will be changed, and a manual import will be needed in the future.
