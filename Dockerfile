@@ -4,13 +4,12 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt-get install -y build-essential curl libsqlcipher-dev
-
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN apt-get install -y libsqlcipher-dev cargo
 
 WORKDIR /usr/src/pod
 COPY Cargo.lock Cargo.lock
 COPY Cargo.toml Cargo.toml
+COPY res res
 COPY src src
 
 RUN cargo build --release
