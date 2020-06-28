@@ -1,3 +1,6 @@
+# If you EDIT this file,
+# Make sure to update Dockerfile COPY commands as well
+
 *
 !src
 !res
