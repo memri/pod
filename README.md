@@ -17,9 +17,10 @@ docker-compose up
 
 In order to build Pod locally, you need to install `rust` and `sqlcipher`:
 
+* On MacOS: `brew install rust sqlcipher`
 * On Ubuntu: `apt-get install rust libsqlcipher-dev`
 * On ArchLinux: `pacman -S --needed rust sqlcipher`
-* On MacOS: `brew install rust sqlcipher`
+* Submit pull requests for your other OS :)
 
 After this, you can build Pod with:
 ```sh
@@ -33,19 +34,21 @@ cargo install --force
 
 
 ## Development
-During development, you might want to have faster build turn-around. Use this to build a debug version:
+During development, you might want to have faster build turn-around.
+
+Use this to incrementally compile the project (after installing [cargo-watch](https://gitlab.memri.io/memri/ios-application)):
+```sh
+cargo watch
+```
+
+To build (debug version):
 ```sh
 cargo build
 ```
 
-Run the Pod:
+Run:
 ```sh
 RUST_LOG=pod=debug,info cargo run
-```
-
-Incrementally compile (after installing [cargo-watch](https://gitlab.memri.io/memri/ios-application)):
-```sh
-cargo watch
 ```
 
 You can read about various components of the server:
