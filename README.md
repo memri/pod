@@ -38,14 +38,14 @@ During development, you might want to have faster build turn-around. Use this to
 cargo build
 ```
 
-Run the Pod with debug logging (will re-building first if necessary):
+Run the Pod:
 ```sh
 RUST_LOG=pod=debug,info cargo run
 ```
 
-Incrementally compile the project (after installing cargo-watch):
+Incrementally compile (after installing [cargo-watch](https://gitlab.memri.io/memri/ios-application)):
 ```sh
-cargo watch -x check
+cargo watch
 ```
 
 You can read about various components of the server:
