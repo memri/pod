@@ -8,6 +8,7 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 ## Run in docker
 To run Pod inside docker:
 ```sh
+docker-compose build
 docker-compose up
 ```
 
