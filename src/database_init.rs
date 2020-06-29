@@ -5,6 +5,7 @@ use rusqlite::NO_PARAMS;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::hash::Hash;
 
 /// Constraints:
@@ -80,6 +81,9 @@ fn get_column_info(
     let mut column_indexes = HashMap::new();
     let mut declared_columns = HashMap::new();
 
+    let all_items_columns: HashSet<String> = get_all_columns_gragma("items", conn)
+        .expect("Failed to get items column information using PRAGMA");
+
     let columns = parsed_schema.types.iter().flat_map(|t| &t.columns);
     let columns_grouped = group_by(columns, |c| c.name.to_lowercase());
     for (column_name, column_group) in columns_grouped {
@@ -90,7 +94,7 @@ fn get_column_info(
         let needs_index = column_group.iter().any(|c| c.indexed);
         column_indexes.insert(column_name.to_string(), needs_index);
 
-        if column_exists("items", &column_name, conn) {
+        if all_items_columns.contains(&column_name) {
             // SQLite cannot add columns "IF NOT EXIST", so we need to manually skip
             continue;
         }
@@ -110,20 +114,26 @@ fn get_column_info(
     (column_indexes, declared_columns)
 }
 
+// Solution taken from here:
 // https://stackoverflow.com/questions/18920136/check-if-a-column-exists-in-sqlite
-fn column_exists(
+//
+// Note that the approach of querying `pragma_table_info`
+// does not work on older sqlcipher versions (ubuntu 20.04 still uses sqlcipher 3.4).
+fn get_all_columns_gragma(
     table: &str,
-    column: &str,
     conn: &PooledConnection<SqliteConnectionManager>,
-) -> bool {
-    let sql = format!(
-        "SELECT COUNT(*) AS CNTREC FROM pragma_table_info('{}') WHERE name='{}';",
-        table, column
-    );
-    let result: i64 = conn
-        .query_row(&sql, NO_PARAMS, |row| row.get(0))
-        .expect("Failed to query SQLite column information");
-    result != 0
+) -> rusqlite::Result<HashSet<String>> {
+    let sql = format!("PRAGMA table_info('{}');", table);
+    let mut stmt = conn.prepare_cached(&sql)?;
+    let mut rows = stmt.query(NO_PARAMS)?;
+    let mut result = HashSet::new();
+    while let Some(row) = rows.next()? {
+        let column_name: String = row
+            .get(1)
+            .expect("Column 1 of PRAGMA table_info code is not a table column name");
+        result.insert(column_name);
+    }
+    Ok(result)
 }
 
 fn generate_sql(
