@@ -29,8 +29,8 @@ async fn main() {
         })
         .init();
 
-    create_dir_all("db").expect("Failed to create directory db");
-    let sqlite_file = "db/pod.db";
+    create_dir_all("data/db").expect("Failed to create directory db");
+    let sqlite_file = "data/db/pod.db";
     let sqlite = SqliteConnectionManager::file(sqlite_file);
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");

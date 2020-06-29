@@ -4,6 +4,5 @@ target/
 # IDE-s
 .idea/
 
-# SQLite database
-/pod.db
-
+# all data, including database
+data/
