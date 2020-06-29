@@ -38,7 +38,6 @@ pub fn fields_mapping_to_owned_sql_params(
     for (field, value) in fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
@@ -75,8 +74,14 @@ pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
                 panic!("Unsupported number precision (non-f64) of a JSON value.")
             }
         }
+        Value::Bool(b) => {
+            if b.eq(&true) {
+                ToSqlOutput::Borrowed(ValueRef::Integer(1))
+            } else {
+                ToSqlOutput::Borrowed(ValueRef::Integer(0))
+            }
+        }
         Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
-        Value::Bool(_) => panic!("Cannot convert boolean to SQLite parameter. Use 0 or 1..."),
         Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
     }
 }
