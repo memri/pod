@@ -8,7 +8,7 @@ RUN apt-get install -y libsqlcipher-dev cargo
 
 WORKDIR /usr/src/pod
 
-# Compile (and docker-cache) dependencies
+# Compile dependencies and cache them in a docker layer
 COPY Cargo.toml Cargo.toml
 COPY Cargo.lock Cargo.lock
 RUN set -x && \
@@ -18,16 +18,15 @@ RUN set -x && \
   rm src/main.rs && \
   find target/release/ -type f -executable -maxdepth 1 -delete
 
-# Now that the dependencies are built and cached as a docker layer,
-# Copy the sources and build the real thing
+# After the dependencies are built, copy the sources and build the real thing.
 COPY res res
 COPY src src
-RUN cargo build --release
+RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 
 
 FROM ubuntu:latest
 RUN apt-get update
 RUN apt-get install -y libsqlcipher-dev
-COPY --from=cargo-build /usr/src/pod/target/release/pod pod
+COPY --from=cargo-build /usr/src/pod/pod pod
 EXPOSE 3030
 CMD ["./pod"]
