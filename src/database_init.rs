@@ -145,7 +145,7 @@ fn generate_sql(
                 column, column, column
             )
         } else {
-            format!("DROP INDEX IF NOT EXISTS idx_items_{};", column)
+            format!("DROP INDEX IF EXISTS idx_items_{};", column)
         };
         result.push_str(&index);
         result.push_str("\n");
