@@ -9,7 +9,8 @@ RUN apt-get install -y libsqlcipher-dev cargo
 WORKDIR /usr/src/pod
 
 # Compile (and docker-cache) dependencies
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.toml
+COPY Cargo.lock Cargo.lock
 RUN set -x && \
   mkdir -p src && \
   echo "fn main() {println!(\"broken\")}" > src/main.rs && \
