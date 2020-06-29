@@ -12,9 +12,11 @@ services:
         - my-net
       volumes:
         - download-volume:/data
+        - ./db:/db:consistent
 
 volumes:
   download-volume:
+  db:
 
 networks:
   my-net:
