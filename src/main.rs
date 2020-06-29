@@ -29,7 +29,7 @@ async fn main() {
         })
         .init();
 
-    create_dir_all("data/db").expect("Failed to create directory db");
+    create_dir_all("data/db").expect("Failed to create data/db");
     let sqlite_file = "data/db/pod.db";
     let sqlite = SqliteConnectionManager::file(sqlite_file);
     let sqlite: Pool<SqliteConnectionManager> =
