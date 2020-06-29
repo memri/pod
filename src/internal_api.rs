@@ -130,7 +130,6 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
