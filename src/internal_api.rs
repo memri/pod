@@ -193,7 +193,6 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
