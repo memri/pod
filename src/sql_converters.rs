@@ -1,9 +1,14 @@
+use lazy_static::lazy_static;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
+
+lazy_static! {
+    static ref BOOL_COLUMN: [&'static str; 1] = ["deleted"];
+}
 
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
@@ -12,11 +17,27 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
         let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i)?.to_string();
-            json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
+            if BOOL_COLUMN.contains(&name.as_str()) {
+                json_object.insert(name, sqlite_bool_to_json(row.get_raw(i)));
+            } else {
+                json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
+            }
         }
         result.push(Value::from(json_object));
     }
     Ok(result)
+}
+
+pub fn sqlite_bool_to_json(value: ValueRef) -> Value {
+    match value {
+        ValueRef::Integer(i) => {
+            if i == 1 {
+                return Value::from(true);
+            }
+            Value::from(false)
+        }
+        _ => panic!("Only BOOLEAN should be converted"),
+    }
 }
 
 pub fn sqlite_value_to_json(value: ValueRef) -> Value {
