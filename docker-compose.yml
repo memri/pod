@@ -11,10 +11,10 @@ services:
       networks:
         - my-net
       volumes:
-        - download-volume:/data
+        - ./data/db:/data/db
 
 volumes:
-  download-volume:
+  db:
 
 networks:
   my-net:
