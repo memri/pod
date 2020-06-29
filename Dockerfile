@@ -7,11 +7,20 @@ RUN apt-get update
 RUN apt-get install -y libsqlcipher-dev cargo
 
 WORKDIR /usr/src/pod
-COPY Cargo.lock Cargo.lock
-COPY Cargo.toml Cargo.toml
+
+# Compile (and docker-cache) dependencies
+COPY Cargo.toml Cargo.lock ./
+RUN set -x && \
+  mkdir -p src && \
+  echo "fn main() {println!(\"broken\")}" > src/main.rs && \
+  cargo build --release && \
+  rm src/main.rs && \
+  find target/release/ -type f -executable -maxdepth 1 -delete
+
+# Now that the dependencies are built and cached as a docker layer,
+# Copy the sources and build the real thing
 COPY res res
 COPY src src
-
 RUN cargo build --release
 
 
