@@ -12,6 +12,7 @@ use chrono::Utc;
 use env_logger::Env;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use std::fs::create_dir_all;
 use std::io::Write;
 
 #[tokio::main]
@@ -28,7 +29,8 @@ async fn main() {
         })
         .init();
 
-    let sqlite_file = "pod.db";
+    create_dir_all("data/db").expect("Failed to create data/db");
+    let sqlite_file = "data/db/pod.db";
     let sqlite = SqliteConnectionManager::file(sqlite_file);
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
