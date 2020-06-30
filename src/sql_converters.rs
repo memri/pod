@@ -1,16 +1,10 @@
-use lazy_static::lazy_static;
+use crate::database_init;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
-use std::collections::HashSet;
-
-lazy_static! {
-    static ref BOOL_COLUMNS: HashSet<String> =
-        { vec!["deleted".to_string()].into_iter().collect() };
-}
 
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
@@ -19,7 +13,7 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
         let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i)?.to_string();
-            let bool_convert = !BOOL_COLUMNS.is_empty() && BOOL_COLUMNS.contains(name.as_str());
+            let bool_convert = database_init::BOOL_COLUMNS.contains(&name);
             json_object.insert(name, sqlite_value_to_json(row.get_raw(i), bool_convert));
         }
         result.push(Value::from(json_object));
