@@ -13,28 +13,26 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
         let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i)?.to_string();
-            let bool_convert = database_init::BOOL_COLUMNS.contains(&name);
-            json_object.insert(name, sqlite_value_to_json(row.get_raw(i), bool_convert));
+            let value = sqlite_value_to_json(row.get_raw(i), &name);
+            json_object.insert(name, value);
         }
         result.push(Value::from(json_object));
     }
     Ok(result)
 }
 
-pub fn sqlite_value_to_json(value: ValueRef, convert: bool) -> Value {
+pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Value {
     match value {
         ValueRef::Null => Value::Null,
         ValueRef::Integer(i) => {
-            if convert {
-                if i == 1 {
-                    return Value::from(true);
-                } else if { i == 0 } {
-                    return Value::from(false);
-                } else {
-                    panic!("Unsupported number {} for a BOOLEAN JSON value", i)
-                }
-            } else {
+            if !database_init::BOOL_COLUMNS.contains(column_name) {
                 Value::from(i)
+            } else if i == 1 {
+                return Value::from(true);
+            } else if { i == 0 } {
+                return Value::from(false);
+            } else {
+                panic!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i)
             }
         }
         ValueRef::Real(f) => Value::from(f),
