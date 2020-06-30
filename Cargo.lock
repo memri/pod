@@ -934,6 +934,7 @@ dependencies = [
  "log 0.4.8",
  "r2d2",
  "r2d2_sqlite",
+ "regex",
  "rusqlite",
  "serde 1.0.114",
  "serde_json",

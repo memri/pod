@@ -5,15 +5,28 @@ use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
 use crate::sql_converters::sqlite_rows_to_json;
 use chrono::Utc;
+use lazy_static::lazy_static;
 use log::debug;
 use r2d2::Pool;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
+use regex::Regex;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
+use std::collections::HashSet;
 use std::str;
 use warp::http::status::StatusCode;
+
+/// Validate field name.
+/// Field name is valid only if it contains less than 14 characters and
+/// characters from 'a' to 'z', 'A' to 'Z'.
+fn field_name_validator(field: &str) -> HashSet<&str> {
+    lazy_static! {
+        static ref FIELD_RE: Regex = Regex::new(r"$[a-zA-Z]{1,14}^").unwrap();
+    }
+    FIELD_RE.find_iter(field).map(|m| m.as_str()).collect()
+}
 
 /// Check if item exists by uid
 pub fn _check_item_exist(
@@ -88,6 +101,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
+        println!("{:#?}", field_name_validator(field));
         sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
         sql_body_params.push_str(field);
     }
