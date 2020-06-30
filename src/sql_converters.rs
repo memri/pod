@@ -86,13 +86,7 @@ pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
                 panic!("Unsupported number precision (non-f64) of a JSON value.")
             }
         }
-        Value::Bool(b) => {
-            if b == &true {
-                ToSqlOutput::Borrowed(ValueRef::Integer(1))
-            } else {
-                ToSqlOutput::Borrowed(ValueRef::Integer(0))
-            }
-        }
+        Value::Bool(b) => ToSqlOutput::Borrowed(ValueRef::Integer(if *b { 1 } else { 0 })),
         Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
         Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
     }

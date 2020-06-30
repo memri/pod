@@ -109,6 +109,7 @@ fn get_column_info(
         if MANDATORY_ITEMS_FIELDS.contains(&column_name.as_str()) {
             continue;
         }
+
         let needs_index = column_group.iter().any(|c| c.indexed);
         column_indexes.insert(column_name.to_string(), needs_index);
 
@@ -120,20 +121,10 @@ fn get_column_info(
         let db_type = column_group
             .first()
             .expect("All groups of `group_by` have at least 1 element");
-        let mut db_type = db_type.dbtype;
-
-        if db_type == DatabaseColumnType::Bool {
-            db_type = DatabaseColumnType::Integer;
-        }
+        let db_type = db_type.dbtype;
 
         assert!(
-            column_group.iter().all(|c| {
-                if c.dbtype == DatabaseColumnType::Bool {
-                    DatabaseColumnType::Integer == db_type
-                } else {
-                    c.dbtype == db_type
-                }
-            }),
+            column_group.iter().all(|c| c.dbtype == db_type),
             "Column {} has inconsistent database type",
             column_name
         );
