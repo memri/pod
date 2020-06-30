@@ -120,6 +120,11 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
         }
     };
 
+    if fields_map.contains_key("dateCreated") {
+        fields_map
+            .remove("dateCreated")
+            .expect("Cannot remove dateCreated");
+    }
     fields_map.insert(
         "dateModified".to_string(),
         Utc::now().timestamp_millis().into(),
