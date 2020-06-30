@@ -162,7 +162,15 @@ fn generate_sql(
     let mut result = String::new();
 
     for (column, db_type) in declared_columns {
-        let creation = format!("ALTER TABLE items ADD {} {:?};", column, db_type);
+        let creation = format!(
+            "ALTER TABLE items ADD {} {:?};",
+            column,
+            if db_type == DatabaseColumnType::Bool {
+                DatabaseColumnType::Integer
+            } else {
+                db_type
+            }
+        );
         result.push_str(&creation);
         result.push_str("\n");
     }
