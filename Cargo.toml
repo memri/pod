@@ -26,6 +26,5 @@ tokio = { version = "0.2.21", features = ["macros"] }
 warp = { version = "0.2.3", features = ["tls"] }
 
 [profile.release]
-## Enable LTO when we start having "incremental" docker builds of the Pod.
-# lto = true
+lto = true
 
