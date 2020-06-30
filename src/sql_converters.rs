@@ -5,9 +5,11 @@ use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
+use std::collections::HashSet;
 
 lazy_static! {
-    static ref BOOL_COLUMN: [&'static str; 1] = ["deleted"];
+    static ref BOOL_COLUMNS: HashSet<String> =
+        { vec!["deleted".to_string()].into_iter().collect() };
 }
 
 /// Convert an SQLite result set into array of JSON objects
@@ -17,33 +19,30 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
         let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i)?.to_string();
-            if BOOL_COLUMN.contains(&name.as_str()) {
-                json_object.insert(name, sqlite_bool_to_json(row.get_raw(i)));
-            } else {
-                json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
-            }
+            let bool_convert = !BOOL_COLUMNS.is_empty() && BOOL_COLUMNS.contains(name.as_str());
+            json_object.insert(name, sqlite_value_to_json(row.get_raw(i), bool_convert));
         }
         result.push(Value::from(json_object));
     }
     Ok(result)
 }
 
-pub fn sqlite_bool_to_json(value: ValueRef) -> Value {
-    match value {
-        ValueRef::Integer(i) => {
-            if i == 1 {
-                return Value::from(true);
-            }
-            Value::from(false)
-        }
-        _ => panic!("Only BOOLEAN should be converted"),
-    }
-}
-
-pub fn sqlite_value_to_json(value: ValueRef) -> Value {
+pub fn sqlite_value_to_json(value: ValueRef, convert: bool) -> Value {
     match value {
         ValueRef::Null => Value::Null,
-        ValueRef::Integer(i) => Value::from(i),
+        ValueRef::Integer(i) => {
+            if convert {
+                if i == 1 {
+                    return Value::from(true);
+                } else if { i == 0 } {
+                    return Value::from(false);
+                } else {
+                    panic!("Unsupported number {} for a BOOLEAN JSON value", i)
+                }
+            } else {
+                Value::from(i)
+            }
+        }
         ValueRef::Real(f) => Value::from(f),
         ValueRef::Text(t) => Value::from(
             std::str::from_utf8(t).expect("Non UTF-8 data in TEXT field of the database"),
@@ -96,7 +95,7 @@ pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
             }
         }
         Value::Bool(b) => {
-            if b.eq(&true) {
+            if b == &true {
                 ToSqlOutput::Borrowed(ValueRef::Integer(1))
             } else {
                 ToSqlOutput::Borrowed(ValueRef::Integer(0))
