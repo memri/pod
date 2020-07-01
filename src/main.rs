@@ -10,10 +10,12 @@ mod warp_api;
 
 use chrono::Utc;
 use env_logger::Env;
+use log::info;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::fs::create_dir_all;
 use std::io::Write;
+use std::path::PathBuf;
 
 mod embedded {
     use refinery::embed_migrations;
@@ -34,20 +36,24 @@ async fn main() {
         })
         .init();
 
-    create_dir_all("data/db").expect("Failed to create data/db");
-    let sqlite_file = "data/db/pod.db";
-    let sqlite = SqliteConnectionManager::file(sqlite_file);
+    let sqlite_file = PathBuf::from("data/db/pod.db");
+    info!("Using SQLite database {:?}", sqlite_file);
+    let sqlite_dir = sqlite_file
+        .parent()
+        .expect("Failed to get parent directory for database");
+    create_dir_all(sqlite_dir).expect("Failed to create database directory");
+    let sqlite = SqliteConnectionManager::file(&sqlite_file);
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
 
     // Create a new rusqlite connection for migration, this is a suboptimal solution for now,
     // and should be improved later to use the existing connection manager (TODO)
-    let mut conn = rusqlite::Connection::open(sqlite_file)
-        .unwrap_or_else(|err| panic!("Cannot open database {}", err));
+    let mut conn = rusqlite::Connection::open(&sqlite_file)
+        .expect("Failed to open database for refinery migrations");
     embedded::migrations::runner()
         .run(&mut conn)
-        .expect("Cannot run migration");
-    conn.close().expect("Cannot close connection");
+        .expect("Failed to run migration");
+    conn.close().expect("Failed to close connection");
 
     database_init::init(&sqlite);
 
