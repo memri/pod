@@ -14,18 +14,17 @@ use regex::Regex;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
-use std::collections::HashSet;
 use std::str;
 use warp::http::status::StatusCode;
 
 /// Validate field name.
 /// Field name is valid only if it contains less than 14 characters and
 /// characters from 'a' to 'z', 'A' to 'Z'.
-fn field_name_validator(field: &str) -> HashSet<&str> {
+fn field_name_validator(field: &str) -> bool {
     lazy_static! {
-        static ref FIELD_RE: Regex = Regex::new(r"$[a-zA-Z]{1,14}^").unwrap();
+        static ref FIELD_RE: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
     }
-    FIELD_RE.find_iter(field).map(|m| m.as_str()).collect()
+    FIELD_RE.is_match(field)
 }
 
 /// Check if item exists by uid
@@ -101,9 +100,15 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
-        println!("{:#?}", field_name_validator(field));
-        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
-        sql_body_params.push_str(field);
+        if field_name_validator(field) {
+            sql_body.push_str(field);
+            sql_body_params.push_str(field);
+        } else {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Invalid field name {}", field),
+            });
+        }
     }
     sql_body.push_str(") VALUES (:");
     sql_body.push_str(sql_body_params.as_str());
@@ -153,9 +158,16 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             sql_body.push_str(", ");
         };
         first_parameter = false;
-        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
-        sql_body.push_str(" = :");
-        sql_body.push_str(field);
+        if field_name_validator(field) {
+            sql_body.push_str(field);
+            sql_body.push_str(" = :");
+            sql_body.push_str(field);
+        } else {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Invalid field name {}", field),
+            });
+        }
     }
     sql_body.push_str(", version = version + 1");
     sql_body.push_str(" WHERE uid = :uid ;");
@@ -217,9 +229,16 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             sql_body.push_str(" AND ")
         };
         first_parameter = false;
-        sql_body.push_str(field); // TODO: prevent SQL injection! See GitLab issue #84
-        sql_body.push_str(" = :");
-        sql_body.push_str(field);
+        if field_name_validator(field) {
+            sql_body.push_str(field);
+            sql_body.push_str(" = :");
+            sql_body.push_str(field);
+        } else {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Invalid field name {}", field),
+            });
+        }
     }
     sql_body.push_str(";");
 
