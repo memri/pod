@@ -10,17 +10,42 @@ mod warp_api;
 
 use chrono::Utc;
 use env_logger::Env;
+use lazy_static::lazy_static;
 use log::info;
 use pnet::datalink;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use regex::RegexSet;
 use std::fs::create_dir_all;
 use std::io::Write;
 use std::path::PathBuf;
+use warp::http::status::StatusCode;
 
 mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("./res/migrations");
+}
+
+pub fn warn_public_ip(ip: &str) -> crate::error::Result<()> {
+    lazy_static! {
+        static ref REGEXP: RegexSet = RegexSet::new(&[
+            r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}",
+            r"172\.1[6-9]\.\d{1,3}\.\d{1,3}",
+            r"172\.2[0-9]\.\d{1,3}\.\d{1,3}",
+            r"172\.3[0-1]\.\d{1,3}\.\d{1,3}",
+            r"192\.168\.\d{1,3}\.\d{1,3}",
+            r"127\.\d{1,3}\.\d{1,3}\.\d{1,3}",
+        ])
+        .expect("Cannot create regex");
+    }
+    if REGEXP.is_match(ip) {
+        Ok(())
+    } else {
+        Err(crate::error::Error {
+            code: StatusCode::FORBIDDEN,
+            msg: format!("DO NOT RUN WITH PUBLIC IP {}", ip),
+        })
+    }
 }
 
 #[tokio::main]
@@ -56,9 +81,16 @@ async fn main() {
         .expect("Failed to run refinery migrations");
     conn.close().expect("Failed to close connection");
 
+    // Add auto-generated schema into database
     database_init::init(&sqlite);
-    for iface in datalink::interfaces() {
-        println!("{:?}", iface.ips);
+
+    // Warn if pod is running with a public IP
+    for interface in datalink::interfaces() {
+        for ip in interface.ips {
+            if ip.is_ipv4() {
+                warn_public_ip(&ip.ip().to_string()).unwrap();
+            }
+        }
     }
 
     // Start web framework
