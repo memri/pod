@@ -12,14 +12,13 @@ use chrono::Utc;
 use env_logger::Env;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-// use refinery;
 use std::fs::create_dir_all;
 use std::io::Write;
 
-// mod embedded {
-//     use refinery::embed_migrations;
-//     embed_migrations!("data/db/pod.db");
-// }
+mod embedded {
+    use refinery::embed_migrations;
+    embed_migrations!("./res/migrations");
+}
 
 #[tokio::main]
 async fn main() {
@@ -41,10 +40,12 @@ async fn main() {
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
 
-    database_init::init(&sqlite);
+    // Create a new rusqlite connection for migration, this is a suboptimal solution for now,
+    // and should be improved later to use the existing connection manager (TODO)
+    let mut conn = rusqlite::Connection::open("./data/db/pod.db").unwrap();
+    embedded::migrations::runner().run(&mut conn).unwrap();
 
-    // let mut conn = sqlite.get()?;
-    // embedded::migrations::runner().run(&mut conn)?;
+    database_init::init(&sqlite);
 
     // Start web framework
     warp_api::run_server(sqlite).await;
