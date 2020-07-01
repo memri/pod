@@ -18,7 +18,7 @@ use std::str;
 use warp::http::status::StatusCode;
 
 /// Validate field name.
-/// Field name is valid only if it contains less than 14 characters and
+/// Field name is valid only if it contains less than 18 characters and
 /// characters from 'a' to 'z', 'A' to 'Z'.
 fn field_name_validator(field: &str) -> bool {
     lazy_static! {
