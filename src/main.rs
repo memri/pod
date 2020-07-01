@@ -42,8 +42,11 @@ async fn main() {
 
     // Create a new rusqlite connection for migration, this is a suboptimal solution for now,
     // and should be improved later to use the existing connection manager (TODO)
-    let mut conn = rusqlite::Connection::open("./data/db/pod.db").unwrap();
-    embedded::migrations::runner().run(&mut conn).unwrap();
+    let mut conn = rusqlite::Connection::open(sqlite_file)
+        .expect(&format!("Cannot open database file {}", sqlite_file));
+    embedded::migrations::runner()
+        .run(&mut conn)
+        .expect("Cannot run migration");
 
     database_init::init(&sqlite);
 
