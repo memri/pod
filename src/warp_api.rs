@@ -155,6 +155,26 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    // GET API for items with edges.
+    // Parameter:
+    //     uid: uid of requested item, signed 8-byte (64bit) integer.
+    // Return an array of all properties of the item with requested uid,
+    // and items that are linked with the item via edges.
+    // Return empty array if item does not exist.
+    let pool = pool_arc.clone();
+    let get_item_and_edges = api_version_1
+        .and(warp::path!("items" / i64))
+        .and(warp::path::end())
+        .and(warp::get())
+        .map(move |uid: i64| {
+            let result = internal_api::get_item(&pool, uid);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(result) => Box::new(warp::reply::json(&result)),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
+        });
+
     // Specify APIs.
     // Specify address and port number to listen to.
     warp::serve(
