@@ -20,6 +20,7 @@ log = "0.4.8"
 pnet = "0.26.0"
 r2d2 = "0.8.8"
 r2d2_sqlite = "0.16.0"
+refinery = { version = "0.3", features = ["rusqlite"]}
 regex = "1"
 rusqlite = { version = "0.23.1", features = ["sqlcipher"] }
 serde = { version = "1.0.114", features = ["derive"] }
