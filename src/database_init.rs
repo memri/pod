@@ -193,7 +193,7 @@ where
     let mut map = HashMap::new();
     for item in collection {
         let group = grouping_func(&item);
-        map.entry(group).or_insert_with(|| vec![]).push(item);
+        map.entry(group).or_insert_with(Vec::new).push(item);
     }
     map
 }
