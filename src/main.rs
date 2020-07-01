@@ -19,14 +19,13 @@ use regex::RegexSet;
 use std::fs::create_dir_all;
 use std::io::Write;
 use std::path::PathBuf;
-use warp::http::status::StatusCode;
 
 mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("./res/migrations");
 }
 
-pub fn warn_public_ip(ip: &str) -> crate::error::Result<()> {
+pub fn abort_at_public_ip(ip: &str) {
     lazy_static! {
         static ref REGEXP: RegexSet = RegexSet::new(&[
             r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}",
@@ -38,13 +37,8 @@ pub fn warn_public_ip(ip: &str) -> crate::error::Result<()> {
         ])
         .expect("Cannot create regex");
     }
-    if REGEXP.is_match(ip) {
-        Ok(())
-    } else {
-        Err(crate::error::Error {
-            code: StatusCode::FORBIDDEN,
-            msg: format!("DO NOT RUN WITH PUBLIC IP {}", ip),
-        })
+    if !REGEXP.is_match(ip) {
+        panic!(format!("DO NOT RUN WITH PUBLIC IP {}", ip));
     }
 }
 
@@ -88,7 +82,7 @@ async fn main() {
     for interface in datalink::interfaces() {
         for ip in interface.ips {
             if ip.is_ipv4() {
-                warn_public_ip(&ip.ip().to_string()).unwrap();
+                abort_at_public_ip(&ip.ip().to_string());
             }
         }
     }
