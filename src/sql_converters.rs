@@ -1,10 +1,13 @@
 use crate::database_init;
+use lazy_static::lazy_static;
+use regex::Regex;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
+use warp::http::status::StatusCode;
 
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
@@ -89,5 +92,21 @@ pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
         Value::Bool(b) => ToSqlOutput::Borrowed(ValueRef::Integer(if *b { 1 } else { 0 })),
         Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
         Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
+    }
+}
+
+/// Field name is valid only if it contains less than or equal to 18 characters and
+/// characters from 'a' to 'z', 'A' to 'Z'.
+pub fn validate_field_name(field: &str) -> crate::error::Result<()> {
+    lazy_static! {
+        static ref REGEXP: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
+    }
+    if REGEXP.is_match(field) {
+        Ok(())
+    } else {
+        Err(crate::error::Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Invalid field (database column) name {}", field),
+        })
     }
 }
