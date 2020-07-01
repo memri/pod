@@ -122,6 +122,19 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    // CHECK if an item exists with the external_id
+    let pool = pool_arc.clone();
+    let external_id_exists = api_version_1
+        .and(warp::path!("external_id_exists" / String))
+        .and(warp::path::end())
+        .map(move |external_id: String| {
+            // TODO: more efficient querying, change uri to external_id
+            let body = serde_json::from_str(&format!("{{\"uri\":\"{}\"}}", external_id)).unwrap();
+            let result = internal_api::search(&pool, body).unwrap();
+            let exists = result.len() != 0;
+            Box::new(warp::reply::json(&exists))
+        });
+
     // Search items by their fields.
     // Given a JSON like { "author": "Vasili", "type": "note" }
     // the endpoint will return all entries with exactly the same properties.
@@ -152,6 +165,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(create_item.with(&headers))
             .or(update_item.with(&headers))
             .or(delete_item.with(&headers))
+            .or(external_id_exists.with(&headers))
             .or(search.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
