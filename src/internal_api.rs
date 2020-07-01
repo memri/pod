@@ -17,10 +17,9 @@ use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
 
-/// Validate field name.
-/// Field name is valid only if it contains less than 18 characters and
+/// Field name is valid only if it contains less than or equal to 18 characters and
 /// characters from 'a' to 'z', 'A' to 'Z'.
-fn field_name_validator(field: &str) -> Result<()> {
+fn validate_field_name(field: &str) -> Result<()> {
     lazy_static! {
         static ref FIELD_RE: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
     }
