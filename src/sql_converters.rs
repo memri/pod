@@ -1,3 +1,4 @@
+use crate::database_init;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Rows;
@@ -12,17 +13,28 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
         let mut json_object = Map::new();
         for i in 0..row.column_count() {
             let name = row.column_name(i)?.to_string();
-            json_object.insert(name, sqlite_value_to_json(row.get_raw(i)));
+            let value = sqlite_value_to_json(row.get_raw(i), &name);
+            json_object.insert(name, value);
         }
         result.push(Value::from(json_object));
     }
     Ok(result)
 }
 
-pub fn sqlite_value_to_json(value: ValueRef) -> Value {
+pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Value {
     match value {
         ValueRef::Null => Value::Null,
-        ValueRef::Integer(i) => Value::from(i),
+        ValueRef::Integer(i) => {
+            if !database_init::BOOL_COLUMNS.contains(column_name) {
+                Value::from(i)
+            } else if i == 0 {
+                Value::from(false)
+            } else if i == 1 {
+                Value::from(true)
+            } else {
+                panic!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i)
+            }
+        }
         ValueRef::Real(f) => Value::from(f),
         ValueRef::Text(t) => Value::from(
             std::str::from_utf8(t).expect("Non UTF-8 data in TEXT field of the database"),
@@ -38,7 +50,6 @@ pub fn fields_mapping_to_owned_sql_params(
     for (field, value) in fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
@@ -75,8 +86,8 @@ pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
                 panic!("Unsupported number precision (non-f64) of a JSON value.")
             }
         }
+        Value::Bool(b) => ToSqlOutput::Borrowed(ValueRef::Integer(if *b { 1 } else { 0 })),
         Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
-        Value::Bool(_) => panic!("Cannot convert boolean to SQLite parameter. Use 0 or 1..."),
         Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
     }
 }

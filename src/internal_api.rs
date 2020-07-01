@@ -97,7 +97,6 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
@@ -140,6 +139,14 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
         }
     };
 
+    fields_map.remove("uid");
+    fields_map.remove("type");
+    fields_map.remove("dateCreated");
+    fields_map.remove("dateModified");
+    fields_map.remove("dateAccessed");
+    fields_map.remove("deleted");
+    fields_map.remove("version");
+
     fields_map.insert(
         "dateModified".to_string(),
         Utc::now().timestamp_millis().into(),
@@ -150,7 +157,6 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
@@ -215,7 +221,6 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     for (field, value) in &fields_map {
         match value {
             Value::Array(_) => continue,
-            Value::Bool(_) => continue,
             Value::Object(_) => continue,
             _ => (),
         };
