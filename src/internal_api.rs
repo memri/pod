@@ -4,34 +4,17 @@ use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
 use crate::sql_converters::sqlite_rows_to_json;
+use crate::sql_converters::validate_field_name;
 use chrono::Utc;
-use lazy_static::lazy_static;
 use log::debug;
 use r2d2::Pool;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
-use regex::Regex;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
-
-/// Field name is valid only if it contains less than or equal to 18 characters and
-/// characters from 'a' to 'z', 'A' to 'Z'.
-fn validate_field_name(field: &str) -> Result<()> {
-    lazy_static! {
-        static ref FIELD_RE: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
-    }
-    if FIELD_RE.is_match(field) {
-        Ok(())
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Invalid field name {}", field),
-        });
-    }
-}
 
 /// Check if item exists by uid
 pub fn _check_item_exist(
@@ -105,7 +88,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
-        field_name_validator(field)?;
+        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body_params.push_str(field);
     }
@@ -164,7 +147,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             sql_body.push_str(", ");
         };
         first_parameter = false;
-        field_name_validator(field)?;
+        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);
@@ -228,7 +211,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             sql_body.push_str(" AND ")
         };
         first_parameter = false;
-        field_name_validator(field)?;
+        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);
