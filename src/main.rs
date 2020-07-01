@@ -10,6 +10,7 @@ mod warp_api;
 
 use chrono::Utc;
 use env_logger::Env;
+use pnet::datalink;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::fs::create_dir_all;
@@ -36,6 +37,9 @@ async fn main() {
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
 
     database_init::init(&sqlite);
+    for iface in datalink::interfaces() {
+        println!("{:?}", iface.ips);
+    }
 
     // Start web framework
     warp_api::run_server(sqlite).await;
