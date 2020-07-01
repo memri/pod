@@ -12,8 +12,14 @@ use chrono::Utc;
 use env_logger::Env;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+// use refinery;
 use std::fs::create_dir_all;
 use std::io::Write;
+
+// mod embedded {
+//     use refinery::embed_migrations;
+//     embed_migrations!("data/db/pod.db");
+// }
 
 #[tokio::main]
 async fn main() {
@@ -36,6 +42,9 @@ async fn main() {
         r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
 
     database_init::init(&sqlite);
+
+    // let mut conn = sqlite.get()?;
+    // embedded::migrations::runner().run(&mut conn)?;
 
     // Start web framework
     warp_api::run_server(sqlite).await;
