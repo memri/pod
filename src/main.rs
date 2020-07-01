@@ -52,7 +52,7 @@ async fn main() {
         .expect("Failed to open database for refinery migrations");
     embedded::migrations::runner()
         .run(&mut conn)
-        .expect("Failed to run migration");
+        .expect("Failed to run refinery migrations");
     conn.close().expect("Failed to close connection");
 
     database_init::init(&sqlite);
