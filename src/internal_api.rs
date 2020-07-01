@@ -20,11 +20,18 @@ use warp::http::status::StatusCode;
 /// Validate field name.
 /// Field name is valid only if it contains less than 18 characters and
 /// characters from 'a' to 'z', 'A' to 'Z'.
-fn field_name_validator(field: &str) -> bool {
+fn field_name_validator(field: &str) -> Result<()> {
     lazy_static! {
         static ref FIELD_RE: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
     }
-    FIELD_RE.is_match(field)
+    if FIELD_RE.is_match(field) {
+        Ok(())
+    } else {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Invalid field name {}", field),
+        });
+    }
 }
 
 /// Check if item exists by uid
@@ -100,15 +107,9 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
-        if field_name_validator(field) {
-            sql_body.push_str(field);
-            sql_body_params.push_str(field);
-        } else {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Invalid field name {}", field),
-            });
-        }
+        field_name_validator(field)?;
+        sql_body.push_str(field);
+        sql_body_params.push_str(field);
     }
     sql_body.push_str(") VALUES (:");
     sql_body.push_str(sql_body_params.as_str());
@@ -158,16 +159,10 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             sql_body.push_str(", ");
         };
         first_parameter = false;
-        if field_name_validator(field) {
-            sql_body.push_str(field);
-            sql_body.push_str(" = :");
-            sql_body.push_str(field);
-        } else {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Invalid field name {}", field),
-            });
-        }
+        field_name_validator(field)?;
+        sql_body.push_str(field);
+        sql_body.push_str(" = :");
+        sql_body.push_str(field);
     }
     sql_body.push_str(", version = version + 1");
     sql_body.push_str(" WHERE uid = :uid ;");
@@ -229,16 +224,10 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             sql_body.push_str(" AND ")
         };
         first_parameter = false;
-        if field_name_validator(field) {
-            sql_body.push_str(field);
-            sql_body.push_str(" = :");
-            sql_body.push_str(field);
-        } else {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Invalid field name {}", field),
-            });
-        }
+        field_name_validator(field)?;
+        sql_body.push_str(field);
+        sql_body.push_str(" = :");
+        sql_body.push_str(field);
     }
     sql_body.push_str(";");
 
