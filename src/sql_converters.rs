@@ -28,9 +28,9 @@ pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Value {
             if !database_init::BOOL_COLUMNS.contains(column_name) {
                 Value::from(i)
             } else if i == 0 {
-                return Value::from(false);
+                Value::from(false)
             } else if i == 1 {
-                return Value::from(true);
+                Value::from(true)
             } else {
                 panic!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i)
             }
