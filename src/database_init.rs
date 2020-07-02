@@ -1,3 +1,4 @@
+use crate::sql_converters::validate_field_name;
 use lazy_static::lazy_static;
 use log::info;
 use r2d2::Pool;
@@ -9,6 +10,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::hash::Hash;
+use DatabaseColumnType::Bool;
 
 /// Constraints:
 ///
@@ -97,6 +99,11 @@ fn get_column_info(
     let columns = parsed_schema.types.iter().flat_map(|t| &t.columns);
     let columns_grouped = group_by(columns, |c| c.name.to_lowercase());
     for (column_name, column_group) in columns_grouped {
+        assert!(
+            validate_field_name(&column_name).is_ok(),
+            "Failed to add invalid column name {}",
+            column_name
+        );
         if MANDATORY_ITEMS_FIELDS.contains(&column_name.as_str()) {
             continue;
         }
@@ -153,15 +160,11 @@ fn generate_sql(
     let mut result = String::new();
 
     for (column, db_type) in declared_columns {
-        let creation = format!(
-            "ALTER TABLE items ADD {} {:?};",
-            column,
-            if db_type == DatabaseColumnType::Bool {
-                DatabaseColumnType::Integer
-            } else {
-                db_type
-            }
-        );
+        let db_type = match db_type {
+            Bool => "INTEGER /* boolean */".to_string(),
+            db_type => format!("{:?}", db_type).to_uppercase(),
+        };
+        let creation = format!("ALTER TABLE items ADD {} {};", column, db_type);
         result.push_str(&creation);
         result.push_str("\n");
     }
@@ -198,10 +201,9 @@ where
 
 const MANDATORY_ITEMS_FIELDS: &[&str] = &[
     "uid",
-    "type",
+    "_type",
     "dateCreated",
     "dateModified",
-    "dateAccessed",
     "deleted",
     "version",
 ];
