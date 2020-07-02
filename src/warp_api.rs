@@ -135,7 +135,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         });
 
     // Search items by their fields.
-    // Given a JSON like { "author": "Vasili", "type": "note" }
+    // Given a JSON like { "author": "Vasili", "_type": "note" }
     // the endpoint will return all entries with exactly the same properties.
     let pool = pool_arc.clone();
     let search = api_version_1
