@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
+use rusqlite::Row;
 use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
@@ -11,35 +12,21 @@ use std::collections::HashSet;
 use warp::http::status::StatusCode;
 
 /// Convert an SQLite result set into a Map
-pub fn sqlite_rows_to_map(mut rows: Rows) -> Map<String, Value> {
+pub fn sqlite_rows_to_map(row: &Row) -> Map<String, Value> {
     let mut json_object = Map::new();
-    while let Some(row) = rows.next().unwrap() {
-        for i in 0..row.column_count() {
-            let name = row.column_name(i).unwrap().to_string();
-            let value = sqlite_value_to_json(row.get_raw(i), &name);
-            json_object.insert(name, value);
-        }
+    for i in 0..row.column_count() {
+        let name = row.column_name(i).unwrap().to_string();
+        let value = sqlite_value_to_json(row.get_raw(i), &name);
+        json_object.insert(name, value);
     }
     json_object
-}
-
-/// Convert a Map to JSON
-pub fn map_to_json(map: Map<String, Value>) -> rusqlite::Result<Vec<Value>> {
-    let mut result = Vec::new();
-    result.push(Value::from(map));
-    Ok(result)
 }
 
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let mut json_object = Map::new();
-        for i in 0..row.column_count() {
-            let name = row.column_name(i)?.to_string();
-            let value = sqlite_value_to_json(row.get_raw(i), &name);
-            json_object.insert(name, value);
-        }
+        let json_object = sqlite_rows_to_map(row);
         result.push(Value::from(json_object));
     }
     Ok(result)

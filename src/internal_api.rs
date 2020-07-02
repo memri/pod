@@ -3,7 +3,6 @@ use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
-use crate::sql_converters::map_to_json;
 use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::sqlite_rows_to_map;
 use crate::sql_converters::validate_field_name;
@@ -14,7 +13,6 @@ use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
-use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
@@ -237,27 +235,38 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     let conn = sqlite.get()?;
 
     let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-    let item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
-    let mut item_json: Map<String, Value> = sqlite_rows_to_map(item_rows);
-
-    let mut stmt_edge =
-        conn.prepare_cached("SELECT _type, _target FROM edges WHERE _source = :_source")?;
-    let edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
-    let edges = sqlite_rows_to_json(edge_rows)?;
-    let mut targets = Vec::new();
-    for edge in edges {
-        let target = edge
-            .as_object()
-            .expect("Failed to get object")
-            .get("_target")
-            .expect("Failed to get target")
-            .as_i64()
-            .expect("Failed to get i64");
-        let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-        let rows = stmt.query_named(&[(":uid", &target)])?;
-        targets.push(sqlite_rows_to_map(rows));
+    let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
+    let mut items = Vec::new();
+    while let Some(row) = item_rows.next()? {
+        items.push(sqlite_rows_to_map(row));
     }
-    item_json.insert("edges".to_string(), Value::from(targets));
 
-    Ok(map_to_json(item_json)?)
+    let mut stmt_edge = conn.prepare_cached(
+        "SELECT _type, sequence, label, _target FROM edges WHERE _source = :_source",
+    )?;
+    let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
+    let mut edges = Vec::new();
+    while let Some(row) = edge_rows.next()? {
+        edges.push(sqlite_rows_to_map(row));
+    }
+
+    let mut new_edges = Vec::new();
+    for mut edge in edges {
+        let target = edge.get("_target").unwrap().as_i64().unwrap();
+        let mut stmt =
+            conn.prepare_cached("SELECT uid, _type, name, color FROM items WHERE uid = :uid")?;
+        let mut rows = stmt.query_named(&[(":uid", &target)])?;
+        edge.remove("_target");
+        while let Some(row) = rows.next()? {
+            edge.insert("_target".to_string(), Value::from(sqlite_rows_to_map(row)));
+        }
+        new_edges.push(edge);
+    }
+
+    let mut new_item = items.get(0).unwrap().clone();
+    new_item.insert("allEdges".to_string(), Value::from(new_edges));
+
+    let mut result = Vec::new();
+    result.push(Value::from(new_item));
+    Ok(result)
 }
