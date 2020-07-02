@@ -36,7 +36,7 @@ cargo install --force
 ## Development
 During development, you might want to have faster build turn-around.
 
-Use this to incrementally compile the project (after installing [cargo-watch](https://gitlab.memri.io/memri/ios-application)):
+Use this to incrementally compile the project (after installing [cargo-watch](https://github.com/passcod/cargo-watch)):
 ```sh
 cargo watch
 ```
