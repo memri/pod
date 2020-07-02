@@ -71,13 +71,13 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     fields_map.remove("version");
     fields_map.insert("dateCreated".to_string(), millis_now.into());
     fields_map.insert("dateModified".to_string(), millis_now.into());
-    fields_map.remove("dateAccessed");
     fields_map.insert("version".to_string(), Value::from(1));
 
     let mut sql_body = "INSERT INTO items (".to_string();
     let mut sql_body_params = "".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -88,7 +88,6 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body_params.push_str(field);
     }
@@ -107,8 +106,11 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 }
 
 /// Update an item with a JSON object.
-/// Json `null` fields will be erased from the database.
-/// Nonexisting or reserved properties like "version" will cause error (TODO).
+/// Json `null` properties will be erased from the database.
+/// Nonexisting properties will cause error.
+/// Reserved properties like "version" will be silently ignored.
+/// All existing edges from the item will be removed,
+/// and new edges will be created to all Objects and Arrays within the JSON, by their `uid`.
 /// The version of the item in the database will be increased `version += 1`.
 pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
     debug!("Updating item {} with {}", uid, json);
@@ -123,10 +125,9 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     };
 
     fields_map.remove("uid");
-    fields_map.remove("type");
+    fields_map.remove("_type");
     fields_map.remove("dateCreated");
     fields_map.remove("dateModified");
-    fields_map.remove("dateAccessed");
     fields_map.remove("deleted");
     fields_map.remove("version");
 
@@ -138,6 +139,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     let mut sql_body = "UPDATE items SET ".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -147,7 +149,6 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             sql_body.push_str(", ");
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);
@@ -187,7 +188,7 @@ pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<(
 
 /// Search items by their fields
 ///
-/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "type": "note" }
+/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "_type": "note" }
 pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Vec<Value>> {
     debug!("Query {:?}", query);
     let fields_map = match query {
@@ -202,6 +203,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -211,7 +213,6 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             sql_body.push_str(" AND ")
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);

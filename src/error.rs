@@ -34,3 +34,13 @@ impl From<rusqlite::Error> for Error {
         }
     }
 }
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Error {
+        let msg = format!("JSON formatting error {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
