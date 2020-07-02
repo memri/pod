@@ -39,21 +39,19 @@ pub fn abort_at_public_ip(ip: &str) {
         ])
         .expect("Cannot create regex");
     }
-    let is_public = !REGEXP.is_match(ip);
-    if is_public
-        && env::var("FORCE_SUPER_INSECURE")
-            .expect("Failed to get environment variable")
-            .as_str()
-            == "1"
-    {
-        warn!("WARNING: FORCING SUPER INSECURE PUBLIC IP {}", ip);
-    } else if is_public
-        && env::var("")
-            .expect("Failed to get environment variable")
-            .as_str()
-            == ""
-    {
-        panic!("DO NOT RUN WITH PUBLIC IP {}", ip);
+    let is_public = REGEXP.is_match(ip);
+    let env_var = "FORCE_SUPER_INSECURE";
+
+    if !is_public {
+        return;
+    } else {
+        match env::var(env_var) {
+            Ok(val) => match val.as_str() {
+                "1" => warn!("WARNING: FORCING SUPER INSECURE PUBLIC IP"),
+                _ => panic!("INVALID VALUE FOR {}", env_var),
+            },
+            Err(_e) => panic!("DO NOT RUN WITH PUBLIC IP!!! OR USE {}=1", env_var),
+        }
     }
 }
 
