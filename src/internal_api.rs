@@ -109,11 +109,11 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     Ok(json)
 }
 
-fn is_property(value: &Value) -> bool {
+fn is_array_or_object(value: &Value) -> bool {
     match value {
-        Value::Array(_) => false,
-        Value::Object(_) => false,
-        _ => true,
+        Value::Array(_) => true,
+        Value::Object(_) => true,
+        _ => false,
     }
 }
 
@@ -146,7 +146,7 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
 fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     let fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
 
     let mut sql = "INSERT INTO items (".to_string();
@@ -162,7 +162,7 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
 fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     let fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
     let mut sql = "UPDATE items SET ".to_string();
     let mut after_first = false;
@@ -184,7 +184,7 @@ fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
 fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     let fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
     let mut sql = "INSERT INTO edges (".to_string();
     let keys: Vec<_> = fields.keys().collect();
