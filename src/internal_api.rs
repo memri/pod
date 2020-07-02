@@ -243,8 +243,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
 
-    let mut stmt_item =
-        conn.prepare_cached("SELECT * FROM items WHERE uid = :uid AND IS NOT NULL")?;
+    let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
     let mut items = Vec::new();
     while let Some(row) = item_rows.next()? {
@@ -279,9 +278,9 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     }
 
     let mut result = Vec::new();
-    let mut new_item = match items.len() {
-        1 => items.first().expect("Failed to get the first item").clone(),
-        _ => return Ok(result),
+    let mut new_item = match items.first() {
+        Some(first) => first.clone(),
+        None => return Ok(result),
     };
 
     new_item.insert("allEdges".to_string(), Value::from(new_edges));
