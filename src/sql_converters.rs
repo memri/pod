@@ -15,7 +15,10 @@ use warp::http::status::StatusCode;
 pub fn sqlite_rows_to_map(row: &Row) -> Map<String, Value> {
     let mut json_object = Map::new();
     for i in 0..row.column_count() {
-        let name = row.column_name(i).unwrap().to_string();
+        let name = row
+            .column_name(i)
+            .expect("Failed to get column name")
+            .to_string();
         let value = sqlite_value_to_json(row.get_raw(i), &name);
         json_object.insert(name, value);
     }

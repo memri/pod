@@ -252,7 +252,11 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 
     let mut new_edges = Vec::new();
     for mut edge in edges {
-        let target = edge.get("_target").unwrap().as_i64().unwrap();
+        let target = edge
+            .get("_target")
+            .expect("Failed to get _target")
+            .as_i64()
+            .expect("Failed to get value as i64");
         let mut stmt =
             conn.prepare_cached("SELECT uid, _type, name, color FROM items WHERE uid = :uid")?;
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
@@ -263,7 +267,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
         new_edges.push(edge);
     }
 
-    let mut new_item = items.get(0).unwrap().clone();
+    let mut new_item = items.get(0).expect("Failed to get the first item").clone();
     new_item.insert("allEdges".to_string(), Value::from(new_edges));
 
     let mut result = Vec::new();
