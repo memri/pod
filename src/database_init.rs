@@ -201,7 +201,6 @@ const MANDATORY_ITEMS_FIELDS: &[&str] = &[
     "type",
     "dateCreated",
     "dateModified",
-    "dateAccessed",
     "deleted",
     "version",
 ];
