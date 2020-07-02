@@ -9,6 +9,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::hash::Hash;
+use DatabaseColumnType::Bool;
 
 /// Constraints:
 ///
@@ -153,15 +154,11 @@ fn generate_sql(
     let mut result = String::new();
 
     for (column, db_type) in declared_columns {
-        let creation = format!(
-            "ALTER TABLE items ADD {} {:?};",
-            column,
-            if db_type == DatabaseColumnType::Bool {
-                DatabaseColumnType::Integer
-            } else {
-                db_type
-            }
-        );
+        let db_type = match db_type {
+            Bool => "INTEGER /* boolean */".to_string(),
+            db_type => format!("{:?}", db_type).to_uppercase(),
+        };
+        let creation = format!("ALTER TABLE items ADD {} {};", column, db_type);
         result.push_str(&creation);
         result.push_str("\n");
     }
