@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
+use rusqlite::Row;
 use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
@@ -10,16 +11,21 @@ use serde_json::Value;
 use std::collections::HashSet;
 use warp::http::status::StatusCode;
 
+pub fn sqlite_row_to_map(row: &Row) -> rusqlite::Result<Map<String, Value>> {
+    let mut row_map = Map::new();
+    for i in 0..row.column_count() {
+        let name = row.column_name(i)?.to_string();
+        let value = sqlite_value_to_json(row.get_raw(i), &name);
+        row_map.insert(name, value);
+    }
+    Ok(row_map)
+}
+
 /// Convert an SQLite result set into array of JSON objects
 pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let mut json_object = Map::new();
-        for i in 0..row.column_count() {
-            let name = row.column_name(i)?.to_string();
-            let value = sqlite_value_to_json(row.get_raw(i), &name);
-            json_object.insert(name, value);
-        }
+        let json_object = sqlite_row_to_map(row)?;
         result.push(Value::from(json_object));
     }
     Ok(result)
