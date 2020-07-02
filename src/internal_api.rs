@@ -278,8 +278,8 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     }
 
     let mut result = Vec::new();
-    let mut new_item = match items.first() {
-        Some(first) => first.clone(),
+    let mut new_item = match items.into_iter().next() {
+        Some(first) => first,
         None => return Ok(result),
     };
 
