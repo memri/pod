@@ -122,16 +122,15 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // CHECK if an item exists with the external_id
+    // CHECK if an item exists with the uri
     let pool = pool_arc.clone();
     let external_id_exists = api_version_1
-        .and(warp::path!("external_id_exists" / String))
+        .and(warp::path!("deprecated" / "uri_exists" / String))
         .and(warp::path::end())
         .map(move |external_id: String| {
-            // TODO: more efficient querying, change uri to external_id
-            let body = serde_json::from_str(&format!("{{\"uri\":\"{}\"}}", external_id)).unwrap();
+            let body = serde_json::json!({ "uri": external_id });
             let result = internal_api::search(&pool, body).unwrap();
-            let exists = result.len() != 0;
+            let exists = !result.is_empty();
             Box::new(warp::reply::json(&exists))
         });
 
