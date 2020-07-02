@@ -240,7 +240,7 @@ pub fn get_item_with_edges(
     let item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
 
     let mut stmt_edge = conn.prepare_cached(
-        "SELECT e.type, e.target FROM edges e INNER JOIN items i ON i.uid=e.source WHERE source = :source")?;
+        "SELECT e._type, e.target FROM edges e INNER JOIN items i ON i.uid=e.source WHERE source = :source")?;
     let edge_rows = stmt_edge.query_named(&[(":source", &uid)])?;
     let edges = sqlite_rows_to_json(edge_rows)?;
     let mut targets = Vec::new();
