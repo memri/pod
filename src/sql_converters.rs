@@ -7,6 +7,7 @@ use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
+use std::collections::HashSet;
 use warp::http::status::StatusCode;
 
 /// Convert an SQLite result set into array of JSON objects
@@ -71,11 +72,6 @@ pub fn borrow_sql_params<'a>(
         .collect()
 }
 
-// pub fn datetime_to_sqlite<'a>(dt: DateTime<Utc>) -> ToSqlOutput<'a> {
-//     let milliseconds = dt.timestamp_millis();
-//     ToSqlOutput::Owned(rusqlite::types::Value::from(milliseconds))
-// }
-
 pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
     match json {
         Value::Null => ToSqlOutput::Borrowed(ValueRef::Null),
@@ -101,7 +97,7 @@ pub fn validate_field_name(field: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex = Regex::new(r"^[a-zA-Z]{1,18}$").expect("Cannot create regex");
     }
-    if REGEXP.is_match(field) {
+    if REGEXP.is_match(field) && !BLACKLIST_COLUMN_NAMES.contains(field) {
         Ok(())
     } else {
         Err(crate::error::Error {
@@ -109,4 +105,162 @@ pub fn validate_field_name(field: &str) -> crate::error::Result<()> {
             msg: format!("Invalid field (database column) name {}", field),
         })
     }
+}
+
+// Taken from the official documentation https://www.sqlite.org/lang_keywords.html
+const BLACKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
+    "ABORT",
+    "ACTION",
+    "ADD",
+    "AFTER",
+    "ALL",
+    "ALTER",
+    "ALWAYS",
+    "ANALYZE",
+    "AND",
+    "AS",
+    "ASC",
+    "ATTACH",
+    "AUTOINCREMENT",
+    "BEFORE",
+    "BEGIN",
+    "BETWEEN",
+    "BY",
+    "CASCADE",
+    "CASE",
+    "CAST",
+    "CHECK",
+    "COLLATE",
+    "COLUMN",
+    "COMMIT",
+    "CONFLICT",
+    "CONSTRAINT",
+    "CREATE",
+    "CROSS",
+    "CURRENT",
+    "CURRENT_DATE",
+    "CURRENT_TIME",
+    "CURRENT_TIMESTAMP",
+    "DATABASE",
+    "DEFAULT",
+    "DEFERRABLE",
+    "DEFERRED",
+    "DELETE",
+    "DESC",
+    "DETACH",
+    "DISTINCT",
+    "DO",
+    "DROP",
+    "EACH",
+    "ELSE",
+    "END",
+    "ESCAPE",
+    "EXCEPT",
+    "EXCLUDE",
+    "EXCLUSIVE",
+    "EXISTS",
+    "EXPLAIN",
+    "FAIL",
+    "FILTER",
+    "FIRST",
+    "FOLLOWING",
+    "FOR",
+    "FOREIGN",
+    "FROM",
+    "FULL",
+    "GENERATED",
+    "GLOB",
+    "GROUP",
+    "GROUPS",
+    "HAVING",
+    "IF",
+    "IGNORE",
+    "IMMEDIATE",
+    "IN",
+    "INDEX",
+    "INDEXED",
+    "INITIALLY",
+    "INNER",
+    "INSERT",
+    "INSTEAD",
+    "INTERSECT",
+    "INTO",
+    "IS",
+    "ISNULL",
+    "JOIN",
+    "KEY",
+    "LAST",
+    "LEFT",
+    "LIKE",
+    "LIMIT",
+    "MATCH",
+    "NATURAL",
+    "NO",
+    "NOT",
+    "NOTHING",
+    "NOTNULL",
+    "NULL",
+    "NULLS",
+    "OF",
+    "OFFSET",
+    "ON",
+    "OR",
+    "ORDER",
+    "OTHERS",
+    "OUTER",
+    "OVER",
+    "PARTITION",
+    "PLAN",
+    "PRAGMA",
+    "PRECEDING",
+    "PRIMARY",
+    "QUERY",
+    "RAISE",
+    "RANGE",
+    "RECURSIVE",
+    "REFERENCES",
+    "REGEXP",
+    "REINDEX",
+    "RELEASE",
+    "RENAME",
+    "REPLACE",
+    "RESTRICT",
+    "RIGHT",
+    "ROLLBACK",
+    "ROW",
+    "ROWS",
+    "SAVEPOINT",
+    "SELECT",
+    "SET",
+    "TABLE",
+    "TEMP",
+    "TEMPORARY",
+    "THEN",
+    "TIES",
+    "TO",
+    "TRANSACTION",
+    "TRIGGER",
+    "UNBOUNDED",
+    "UNION",
+    "UNIQUE",
+    "UPDATE",
+    "USING",
+    "VACUUM",
+    "VALUES",
+    "VIEW",
+    "VIRTUAL",
+    "WHEN",
+    "WHERE",
+    "WINDOW",
+    "WITH",
+    "WITHOUT",
+];
+
+lazy_static! {
+    pub static ref BLACKLIST_COLUMN_NAMES: HashSet<String> = {
+        BLACKLIST_COLUMN_NAMES_ARRAY
+            .iter()
+            .map(|w| w.to_string())
+            .collect()
+    };
 }

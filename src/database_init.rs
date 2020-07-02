@@ -1,3 +1,4 @@
+use crate::sql_converters::validate_field_name;
 use lazy_static::lazy_static;
 use log::info;
 use r2d2::Pool;
@@ -98,6 +99,11 @@ fn get_column_info(
     let columns = parsed_schema.types.iter().flat_map(|t| &t.columns);
     let columns_grouped = group_by(columns, |c| c.name.to_lowercase());
     for (column_name, column_group) in columns_grouped {
+        assert!(
+            validate_field_name(&column_name).is_ok(),
+            "Failed to add invalid column name {}",
+            column_name
+        );
         if MANDATORY_ITEMS_FIELDS.contains(&column_name.as_str()) {
             continue;
         }

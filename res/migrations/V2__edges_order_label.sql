@@ -1,2 +1,2 @@
 ALTER TABLE edges ADD label TEXT;
-ALTER TABLE edges ADD order INTEGER;
+ALTER TABLE edges ADD sequence INTEGER;
