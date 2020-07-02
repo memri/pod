@@ -71,13 +71,13 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     fields_map.remove("version");
     fields_map.insert("dateCreated".to_string(), millis_now.into());
     fields_map.insert("dateModified".to_string(), millis_now.into());
-    fields_map.remove("dateAccessed");
     fields_map.insert("version".to_string(), Value::from(1));
 
     let mut sql_body = "INSERT INTO items (".to_string();
     let mut sql_body_params = "".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -88,7 +88,6 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
             sql_body_params.push_str(", :")
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body_params.push_str(field);
     }
@@ -126,7 +125,6 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     fields_map.remove("type");
     fields_map.remove("dateCreated");
     fields_map.remove("dateModified");
-    fields_map.remove("dateAccessed");
     fields_map.remove("deleted");
     fields_map.remove("version");
 
@@ -138,6 +136,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     let mut sql_body = "UPDATE items SET ".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -147,7 +146,6 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
             sql_body.push_str(", ");
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);
@@ -202,6 +200,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
+        validate_field_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
@@ -211,7 +210,6 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
             sql_body.push_str(" AND ")
         };
         first_parameter = false;
-        validate_field_name(field)?;
         sql_body.push_str(field);
         sql_body.push_str(" = :");
         sql_body.push_str(field);
