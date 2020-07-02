@@ -201,7 +201,7 @@ where
 
 const MANDATORY_ITEMS_FIELDS: &[&str] = &[
     "uid",
-    "type",
+    "_type",
     "dateCreated",
     "dateModified",
     "deleted",

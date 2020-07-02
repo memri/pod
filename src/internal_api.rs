@@ -106,8 +106,11 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
 }
 
 /// Update an item with a JSON object.
-/// Json `null` fields will be erased from the database.
-/// Nonexisting or reserved properties like "version" will cause error (TODO).
+/// Json `null` properties will be erased from the database.
+/// Nonexisting properties will cause error.
+/// Reserved properties like "version" will be silently ignored.
+/// All existing edges from the item will be removed,
+/// and new edges will be created to all Objects and Arrays within the JSON, by their `uid`.
 /// The version of the item in the database will be increased `version += 1`.
 pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
     debug!("Updating item {} with {}", uid, json);
@@ -122,7 +125,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     };
 
     fields_map.remove("uid");
-    fields_map.remove("type");
+    fields_map.remove("_type");
     fields_map.remove("dateCreated");
     fields_map.remove("dateModified");
     fields_map.remove("deleted");
@@ -185,7 +188,7 @@ pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<(
 
 /// Search items by their fields
 ///
-/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "type": "note" }
+/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "_type": "note" }
 pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Vec<Value>> {
     debug!("Query {:?}", query);
     let fields_map = match query {
