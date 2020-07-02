@@ -3,7 +3,9 @@ use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
+use crate::sql_converters::map_to_json;
 use crate::sql_converters::sqlite_rows_to_json;
+use crate::sql_converters::sqlite_rows_to_map;
 use crate::sql_converters::validate_field_name;
 use chrono::Utc;
 use log::debug;
@@ -12,6 +14,7 @@ use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
+use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
@@ -229,32 +232,32 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
 }
 
 /// Get an item by its `uid`, with edges and linked items.
-pub fn get_item_with_edges(
-    sqlite: &Pool<SqliteConnectionManager>,
-    uid: i64,
-) -> Result<Vec<Vec<Value>>> {
+pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
 
     let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
+    let mut item_json: Map<String, Value> = sqlite_rows_to_map(item_rows);
 
-    let mut stmt_edge = conn.prepare_cached(
-        "SELECT e._type, e.target FROM edges e INNER JOIN items i ON i.uid=e.source WHERE source = :source")?;
-    let edge_rows = stmt_edge.query_named(&[(":source", &uid)])?;
+    let mut stmt_edge =
+        conn.prepare_cached("SELECT _type, _target FROM edges WHERE _source = :_source")?;
+    let edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
     let edges = sqlite_rows_to_json(edge_rows)?;
     let mut targets = Vec::new();
     for edge in edges {
         let target = edge
             .as_object()
             .expect("Failed to get object")
-            .get("target")
+            .get("_target")
             .expect("Failed to get target")
             .as_i64()
             .expect("Failed to get i64");
         let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
         let rows = stmt.query_named(&[(":uid", &target)])?;
-        targets.push(sqlite_rows_to_json(rows)?);
+        targets.push(sqlite_rows_to_map(rows));
     }
-    Ok(targets)
+    item_json.insert("edges".to_string(), Value::from(targets));
+
+    Ok(map_to_json(item_json)?)
 }
