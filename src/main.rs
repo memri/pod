@@ -10,53 +10,22 @@ mod warp_api;
 
 use chrono::Utc;
 use env_logger::Env;
-use lazy_static::lazy_static;
 use log::info;
 use log::warn;
 use pnet::datalink;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use regex::RegexSet;
 use std::env;
 use std::fs::create_dir_all;
 use std::io::Write;
+use std::net::IpAddr::V4;
+use std::net::IpAddr::V6;
+use std::net::Ipv6Addr;
 use std::path::PathBuf;
 
 mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("./res/migrations");
-}
-
-pub fn abort_at_public_ip(ip: &str) {
-    lazy_static! {
-        static ref REGEXP: RegexSet = RegexSet::new(&[
-            r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}",
-            r"172\.1[6-9]\.\d{1,3}\.\d{1,3}",
-            r"172\.2[0-9]\.\d{1,3}\.\d{1,3}",
-            r"172\.3[0-1]\.\d{1,3}\.\d{1,3}",
-            r"192\.168\.\d{1,3}\.\d{1,3}",
-            r"127\.\d{1,3}\.\d{1,3}\.\d{1,3}",
-            r"fe80:{1,2}",
-            r":{2}1"
-        ])
-        .expect("Cannot create regex");
-    }
-    let is_public = !REGEXP.is_match(ip);
-    let env_var = "FORCE_SUPER_INSECURE";
-
-    if !is_public {
-    } else {
-        match env::var(env_var) {
-            Ok(val) => match val.as_str() {
-                "1" => warn!("WARNING: FORCING SUPER INSECURE PUBLIC IP"),
-                _ => panic!("INVALID VALUE FOR {}", env_var),
-            },
-            Err(e) => panic!(
-                "DO NOT RUN WITH PUBLIC IP {}!!! {}, use {}=1",
-                ip, e, env_var
-            ),
-        }
-    }
 }
 
 #[tokio::main]
@@ -95,10 +64,25 @@ async fn main() {
     // Add auto-generated schema into database
     database_init::init(&sqlite);
 
-    // Warn if pod is running with a public IP
+    // Try to prevent Pod from running on a public IP
     for interface in datalink::interfaces() {
         for ip in interface.ips {
-            abort_at_public_ip(&ip.ip().to_string());
+            // https://en.wikipedia.org/wiki/Private_network
+            let is_private = match ip.ip() {
+                V4(v4) => v4.is_private(),
+                V6(v6) if v6 == Ipv6Addr::LOCALHOST => true,
+                // https://en.wikipedia.org/wiki/Unique_local_address
+                // Implementation copied from `v6.is_unique_local()`,
+                // which is not yet stabilized in Rust
+                V6(v6) if (v6.segments()[0] & 0xfe00) == 0xfc00 => true,
+                _ => false,
+            };
+            if !is_private && env::var_os("INSECURE_USE_PUBLIC_IP").is_some() {
+                warn!("USING INSECURE PUBLIC IP {}.", ip.ip());
+            } else if !is_private {
+                eprintln!("ERROR! Pod seems to be running on a public network with IP {}. THIS IS NOT SECURE! Please wait until proper authorization is implemented, or do not run Pod on a publicly available network, or set environment variable INSECURE_USE_PUBLIC_IP to any value to override the failsafe.", ip.ip());
+                std::process::exit(1)
+            }
         }
     }
 
