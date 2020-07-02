@@ -3,6 +3,7 @@ use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
+use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::validate_field_name;
 use chrono::Utc;
@@ -12,9 +13,17 @@ use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
+use serde_json::Map;
 use serde_json::Value;
 use std::str;
 use warp::http::status::StatusCode;
+
+/// Create `syncState` for linked items
+pub fn add_sync_state(mut map: Map<String, Value>, is_part: bool) -> Map<String, Value> {
+    let sync_state = serde_json::json!({ "isPartiallyLoaded": is_part });
+    map.insert("syncState".to_string(), sync_state);
+    map
+}
 
 /// Check if item exists by uid
 pub fn _check_item_exist(
@@ -226,4 +235,55 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     let rows = stmt.query_named(sql_params.as_slice())?;
     let json = sqlite_rows_to_json(rows)?;
     Ok(json)
+}
+
+/// Get an item by its `uid`, with edges and linked items.
+/// `syncState` is added to linked items.
+pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
+    debug!("Getting item {}", uid);
+    let conn = sqlite.get()?;
+
+    let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+    let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
+    let mut items = Vec::new();
+    while let Some(row) = item_rows.next()? {
+        items.push(sqlite_row_to_map(row)?);
+    }
+
+    let mut stmt_edge = conn.prepare_cached(
+        "SELECT _type, sequence, label, _target FROM edges WHERE _source = :_source",
+    )?;
+    let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
+    let mut edges = Vec::new();
+    while let Some(row) = edge_rows.next()? {
+        edges.push(sqlite_row_to_map(row)?);
+    }
+
+    let mut new_edges = Vec::new();
+    for mut edge in edges {
+        let target = edge
+            .get("_target")
+            .expect("Failed to get _target")
+            .as_i64()
+            .expect("Failed to get value as i64");
+        let mut stmt =
+            conn.prepare_cached("SELECT uid, _type, name, color FROM items WHERE uid = :uid")?;
+        let mut rows = stmt.query_named(&[(":uid", &target)])?;
+        edge.remove("_target");
+        while let Some(row) = rows.next()? {
+            edge.insert("_target".to_string(), Value::from(sqlite_row_to_map(row)?));
+        }
+        edge = add_sync_state(edge, true);
+        new_edges.push(edge);
+    }
+
+    let mut result = Vec::new();
+    let mut new_item = match items.into_iter().next() {
+        Some(first) => first,
+        None => return Ok(result),
+    };
+
+    new_item.insert("allEdges".to_string(), Value::from(new_edges));
+    result.push(Value::from(new_item));
+    Ok(result)
 }
