@@ -98,7 +98,12 @@ fn get_column_info(
 
     let columns = parsed_schema.types.iter().flat_map(|t| &t.columns);
     let columns_grouped = group_by(columns, |c| c.name.to_lowercase());
-    for (column_name, column_group) in columns_grouped {
+    for (_, column_group) in columns_grouped {
+        let column_name = column_group
+            .first()
+            .expect("All groups of `group_by` have at least 1 element")
+            .name
+            .to_string();
         assert!(
             validate_field_name(&column_name).is_ok(),
             "Failed to add invalid column name {}",
