@@ -12,10 +12,12 @@ use chrono::Utc;
 use env_logger::Env;
 use lazy_static::lazy_static;
 use log::info;
+use log::warn;
 use pnet::datalink;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use regex::RegexSet;
+use std::env;
 use std::fs::create_dir_all;
 use std::io::Write;
 use std::path::PathBuf;
@@ -37,8 +39,21 @@ pub fn abort_at_public_ip(ip: &str) {
         ])
         .expect("Cannot create regex");
     }
-    if !REGEXP.is_match(ip) {
-        panic!(format!("DO NOT RUN WITH PUBLIC IP {}", ip));
+    let is_public = !REGEXP.is_match(ip);
+    if is_public
+        && env::var("FORCE_SUPER_INSECURE")
+            .expect("Failed to get environment variable")
+            .as_str()
+            == "1"
+    {
+        warn!("WARNING: FORCING SUPER INSECURE PUBLIC IP {}", ip);
+    } else if is_public
+        && env::var("")
+            .expect("Failed to get environment variable")
+            .as_str()
+            == ""
+    {
+        panic!("DO NOT RUN WITH PUBLIC IP {}", ip);
     }
 }
 
