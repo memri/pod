@@ -162,12 +162,12 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     // and items that are linked with the item via edges.
     // Return empty array if item does not exist.
     let pool = pool_arc.clone();
-    let get_item_and_edges = api_version_1
-        .and(warp::path!("items" / i64))
+    let get_item_with_edges = api_version_1
+        .and(warp::path!("items_edges" / i64))
         .and(warp::path::end())
         .and(warp::get())
         .map(move |uid: i64| {
-            let result = internal_api::get_item(&pool, uid);
+            let result = internal_api::get_item_with_edges(&pool, uid);
             let boxed: Box<dyn Reply> = match result {
                 Ok(result) => Box::new(warp::reply::json(&result)),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
@@ -186,7 +186,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(update_item.with(&headers))
             .or(delete_item.with(&headers))
             .or(external_id_exists.with(&headers))
-            .or(search.with(&headers)),
+            .or(search.with(&headers))
+            .or(get_item_with_edges.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;

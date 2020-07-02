@@ -226,3 +226,34 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     let json = sqlite_rows_to_json(rows)?;
     Ok(json)
 }
+
+/// Get an item by its `uid`, with edges and linked items.
+pub fn get_item_with_edges(
+    sqlite: &Pool<SqliteConnectionManager>,
+    uid: i64,
+) -> Result<Vec<Vec<Value>>> {
+    debug!("Getting item {}", uid);
+    let conn = sqlite.get()?;
+
+    let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+    let item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
+
+    let mut stmt_edge = conn.prepare_cached(
+        "SELECT e.type, e.target FROM edges e INNER JOIN items i ON i.uid=e.source WHERE source = :source")?;
+    let edge_rows = stmt_edge.query_named(&[(":source", &uid)])?;
+    let edges = sqlite_rows_to_json(edge_rows)?;
+    let mut targets = Vec::new();
+    for edge in edges {
+        let target = edge
+            .as_object()
+            .expect("Failed to get object")
+            .get("target")
+            .expect("Failed to get target")
+            .as_i64()
+            .expect("Failed to get i64");
+        let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+        let rows = stmt.query_named(&[(":uid", &target)])?;
+        targets.push(sqlite_rows_to_json(rows)?);
+    }
+    Ok(targets)
+}
