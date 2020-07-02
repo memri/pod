@@ -3,7 +3,7 @@ CREATE TABLE items (
     _type TEXT NOT NULL,
     dateCreated REAL NOT NULL,
     dateModified REAL NOT NULL,
-    deleted INTEGER /* boolean */ NOT NULL,
+    deleted INTEGER /* boolean */ NOT NULL DEFAULT 0,
     version INTEGER NOT NULL
 );
 

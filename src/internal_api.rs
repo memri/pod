@@ -72,7 +72,6 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     };
 
     let millis_now = Utc::now().timestamp_millis();
-    fields_map.remove("version");
     fields_map.insert("dateCreated".to_string(), millis_now.into());
     fields_map.insert("dateModified".to_string(), millis_now.into());
     fields_map.insert("version".to_string(), Value::from(1));
@@ -105,7 +104,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
     stmt.execute_named(sql_params.as_slice())?;
-    let json = serde_json::json!({"id": conn.last_insert_rowid()});
+    let json = serde_json::json!({"uid": conn.last_insert_rowid()});
     Ok(json)
 }
 
@@ -144,10 +143,14 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
 
 /// Create an item presuming consistency checks were already done
 fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
-    let fields: HashMap<String, Value> = fields
+    let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
+    let millis_now = Utc::now().timestamp_millis();
+    fields.insert("dateCreated".to_string(), millis_now.into());
+    fields.insert("dateModified".to_string(), millis_now.into());
+    fields.insert("version".to_string(), Value::from(1));
 
     let mut sql = "INSERT INTO items (".to_string();
     let keys: Vec<_> = fields.keys().collect();
@@ -160,10 +163,16 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
 
 /// Update an item presuming all dangerous fields were already removed, and "uid" is present
 fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
-    let fields: HashMap<String, Value> = fields
+    let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
+    let millis_now = Utc::now().timestamp_millis();
+    fields.remove("_type");
+    fields.remove("dateCreated");
+    fields.insert("dateModified".to_string(), millis_now.into());
+    fields.remove("deleted");
+    fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
     let mut after_first = false;
     for key in fields.keys() {
@@ -176,7 +185,7 @@ fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
         sql.push_str(key);
     }
     sql.push_str(", version = version + 1 ");
-    sql.push_str("WHERE id = :id ;");
+    sql.push_str("WHERE uid = :uid ;");
     execute_sql(tx, &sql, &fields)
 }
 
