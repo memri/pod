@@ -36,7 +36,7 @@ pub fn abort_at_public_ip(ip: &str) {
             r"172\.3[0-1]\.\d{1,3}\.\d{1,3}",
             r"192\.168\.\d{1,3}\.\d{1,3}",
             r"127\.\d{1,3}\.\d{1,3}\.\d{1,3}",
-            r"fe80::",
+            r"fe80:{1,2}",
             r":{2}1"
         ])
         .expect("Cannot create regex");
