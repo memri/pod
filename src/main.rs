@@ -36,6 +36,8 @@ pub fn abort_at_public_ip(ip: &str) {
             r"172\.3[0-1]\.\d{1,3}\.\d{1,3}",
             r"192\.168\.\d{1,3}\.\d{1,3}",
             r"127\.\d{1,3}\.\d{1,3}\.\d{1,3}",
+            r"fe80::",
+            r":{2}1"
         ])
         .expect("Cannot create regex");
     }
@@ -49,7 +51,10 @@ pub fn abort_at_public_ip(ip: &str) {
                 "1" => warn!("WARNING: FORCING SUPER INSECURE PUBLIC IP"),
                 _ => panic!("INVALID VALUE FOR {}", env_var),
             },
-            Err(e) => panic!("DO NOT RUN WITH PUBLIC IP!!! {}, use {}=1", e, env_var),
+            Err(e) => panic!(
+                "DO NOT RUN WITH PUBLIC IP {}!!! {}, use {}=1",
+                ip, e, env_var
+            ),
         }
     }
 }
@@ -93,9 +98,7 @@ async fn main() {
     // Warn if pod is running with a public IP
     for interface in datalink::interfaces() {
         for ip in interface.ips {
-            if ip.is_ipv4() {
-                abort_at_public_ip(&ip.ip().to_string());
-            }
+            abort_at_public_ip(&ip.ip().to_string());
         }
     }
 
