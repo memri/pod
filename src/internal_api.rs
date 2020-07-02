@@ -1,5 +1,6 @@
 use crate::error::Error;
 use crate::error::Result;
+use crate::sql_converters::add_sync_state;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite_parameter;
@@ -230,6 +231,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
 }
 
 /// Get an item by its `uid`, with edges and linked items.
+/// `syncState` is added to linked items.
 pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
@@ -264,6 +266,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
         while let Some(row) = rows.next()? {
             edge.insert("_target".to_string(), Value::from(sqlite_rows_to_map(row)));
         }
+        edge = add_sync_state(edge, true);
         new_edges.push(edge);
     }
 

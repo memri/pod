@@ -11,6 +11,14 @@ use serde_json::Value;
 use std::collections::HashSet;
 use warp::http::status::StatusCode;
 
+/// Create `syncState` for linked items
+pub fn add_sync_state(mut map: Map<String, Value>, is_part: bool) -> Map<String, Value> {
+    let mut is_partial = Map::new();
+    is_partial.insert("isPartiallyLoaded".to_string(), Value::Bool(is_part));
+    map.insert("syncState".to_string(), Value::from(is_partial));
+    map
+}
+
 /// Convert an SQLite result set into a Map
 pub fn sqlite_rows_to_map(row: &Row) -> Map<String, Value> {
     let mut json_object = Map::new();
