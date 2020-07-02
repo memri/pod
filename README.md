@@ -4,6 +4,12 @@ Pod is the open-source backend for [Memri](https://blog.memri.io/) project.
 
 It's written in Rust and provides an HTTP interface for use by the clients.
 
+## WARNING: NOT SECURE WITH PUBLIC IP!!!
+
+The current version of Pod **DOES NOT** guarantee security yet, **DO NOT** use it for production or run it with a public IP.
+
+* When attached with a public IP, on start, Pod will give an error and abort;
+* Forcing a public IP requires environment variable `FORCE-SUPER-INSECURE=1` and will receive a warning.
 
 ## Run in docker
 To run Pod inside docker:
