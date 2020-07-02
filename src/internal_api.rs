@@ -1,8 +1,9 @@
+use crate::api_model::BulkActions;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::fields_mapping_to_owned_sql_params;
-use crate::sql_converters::json_value_to_sqlite_parameter;
+use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::validate_field_name;
 use chrono::Utc;
@@ -10,9 +11,12 @@ use log::debug;
 use r2d2::Pool;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::ToSql;
+use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::str;
 use warp::http::status::StatusCode;
 
@@ -95,7 +99,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     sql_body.push_str(sql_body_params.as_str());
     sql_body.push_str(");");
 
-    let sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
     let sql_params = borrow_sql_params(&sql_params);
 
     let conn = sqlite.get()?;
@@ -103,6 +107,125 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     stmt.execute_named(sql_params.as_slice())?;
     let json = serde_json::json!({"id": conn.last_insert_rowid()});
     Ok(json)
+}
+
+fn is_property(value: &Value) -> bool {
+    match value {
+        Value::Array(_) => false,
+        Value::Object(_) => false,
+        _ => true,
+    }
+}
+
+fn write_sql_body(sql: &mut String, keys: &[&String], separator: &str) {
+    let mut first = true;
+    for key in keys {
+        if !first {
+            sql.push_str(separator);
+        }
+        sql.push_str(key);
+        first = false;
+    }
+}
+
+fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
+    let mut sql_params = Vec::new();
+    for (key, value) in fields {
+        sql_params.push((format!(":{}", key), json_value_to_sqlite(value)?));
+    }
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
+        .collect();
+    let mut stmt = tx.prepare_cached(&sql)?;
+    stmt.execute_named(&sql_params)?;
+    Ok(())
+}
+
+/// Create an item presuming consistency checks were already done
+fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+    let fields: HashMap<String, Value> = fields
+        .into_iter()
+        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .collect();
+
+    let mut sql = "INSERT INTO items (".to_string();
+    let keys: Vec<_> = fields.keys().collect();
+    write_sql_body(&mut sql, &keys, ", ");
+    sql.push_str(") VALUES (:");
+    write_sql_body(&mut sql, &keys, ", :");
+    sql.push_str(");");
+    execute_sql(tx, &sql, &fields)
+}
+
+/// Update an item presuming all dangerous fields were already removed, and "uid" is present
+fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+    let fields: HashMap<String, Value> = fields
+        .into_iter()
+        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .collect();
+    let mut sql = "UPDATE items SET ".to_string();
+    let mut after_first = false;
+    for key in fields.keys() {
+        if after_first {
+            sql.push_str(", ");
+        }
+        after_first = true;
+        sql.push_str(key);
+        sql.push_str(" = :");
+        sql.push_str(key);
+    }
+    sql.push_str(", version = version + 1 ");
+    sql.push_str("WHERE id = :id ;");
+    execute_sql(tx, &sql, &fields)
+}
+
+/// Create an edge presuming consistency checks were already done
+fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+    let fields: HashMap<String, Value> = fields
+        .into_iter()
+        .filter(|(k, v)| is_property(v) && validate_field_name(k).is_ok())
+        .collect();
+    let mut sql = "INSERT INTO edges (".to_string();
+    let keys: Vec<_> = fields.keys().collect();
+    write_sql_body(&mut sql, &keys, ", ");
+    sql.push_str(") VALUES (:");
+    write_sql_body(&mut sql, &keys, ", :");
+    sql.push_str(");");
+    execute_sql(tx, &sql, &fields)
+}
+
+fn bulk_action_tx(tx: &Transaction, json_actions: BulkActions) -> Result<()> {
+    for mut item in json_actions.create_items {
+        item.fields.insert("uid".to_string(), item.uid.into());
+        create_item_tx(tx, item.fields)?;
+    }
+    for mut item in json_actions.update_items {
+        item.fields.insert("uid".to_string(), item.uid.into());
+        update_item_tx(tx, item.fields)?;
+    }
+    for mut edge in json_actions.create_edges {
+        edge.fields
+            .insert("_source".to_string(), edge._source.into());
+        edge.fields
+            .insert("_target".to_string(), edge._target.into());
+        edge.fields.insert("_type".to_string(), edge._type.into());
+        create_edge(tx, edge.fields)?;
+    }
+    Ok(())
+}
+
+/// Perform a bulk of operations simultaneously.
+/// All changes are guaranteed to happen at the same time - or not at all.
+/// See `api_model::BulkActions` for input JSON information.
+pub fn bulk_action(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<()> {
+    debug!("Performing bulk action {}", json);
+    let json: BulkActions = serde_json::from_value(json)?;
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    bulk_action_tx(&tx, json)?;
+    tx.commit()?;
+    Ok(())
 }
 
 /// Update an item with a JSON object.
@@ -156,9 +279,9 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     sql_body.push_str(", version = version + 1");
     sql_body.push_str(" WHERE uid = :uid ;");
 
-    let mut sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let mut sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
     let uid = Value::from(uid);
-    sql_params.push((":uid".into(), json_value_to_sqlite_parameter(&uid)));
+    sql_params.push((":uid".into(), json_value_to_sqlite(&uid)?));
     let sql_params = borrow_sql_params(&sql_params);
 
     let conn = sqlite.get()?;
@@ -219,7 +342,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     }
     sql_body.push_str(";");
 
-    let sql_params = fields_mapping_to_owned_sql_params(&fields_map);
+    let sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
     let sql_params = borrow_sql_params(&sql_params);
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;

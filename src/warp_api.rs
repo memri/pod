@@ -107,6 +107,22 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    // See `internal_api::bulk_action` for more details
+    let pool = pool_arc.clone();
+    let bulk_action = api_version_1
+        .and(warp::path!("bulk_action"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(warp::body::json())
+        .map(move |body: serde_json::Value| {
+            let result = internal_api::bulk_action(&pool, body);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
+        });
+
     // DELETE a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
@@ -162,6 +178,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(get_item.with(&headers))
             .or(get_all_items.with(&headers))
             .or(create_item.with(&headers))
+            .or(bulk_action.with(&headers))
             .or(update_item.with(&headers))
             .or(delete_item.with(&headers))
             .or(external_id_exists.with(&headers))
