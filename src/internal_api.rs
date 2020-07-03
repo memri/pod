@@ -72,9 +72,9 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
         }
     };
 
-    let millis_now = Utc::now().timestamp_millis();
-    fields_map.insert("dateCreated".to_string(), millis_now.into());
-    fields_map.insert("dateModified".to_string(), millis_now.into());
+    let time_now = Utc::now().timestamp_nanos();
+    fields_map.insert("dateCreated".to_string(), time_now.into());
+    fields_map.insert("dateModified".to_string(), time_now.into());
     fields_map.insert("version".to_string(), Value::from(1));
 
     let mut sql_body = "INSERT INTO items (".to_string();
@@ -148,9 +148,9 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
-    let millis_now = Utc::now().timestamp_millis();
-    fields.insert("dateCreated".to_string(), millis_now.into());
-    fields.insert("dateModified".to_string(), millis_now.into());
+    let time_now = Utc::now().timestamp_nanos();
+    fields.insert("dateCreated".to_string(), time_now.into());
+    fields.insert("dateModified".to_string(), time_now.into());
     fields.insert("version".to_string(), Value::from(1));
 
     let mut sql = "INSERT INTO items (".to_string();
@@ -168,11 +168,10 @@ fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
-    let millis_now = Utc::now().timestamp_millis();
+    let time_now = Utc::now().timestamp_nanos();
     fields.remove("_type");
     fields.remove("dateCreated");
-    fields.insert("dateModified".to_string(), millis_now.into());
-    fields.remove("deleted");
+    fields.insert("dateModified".to_string(), time_now.into());
     fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
     let mut after_first = false;
@@ -262,13 +261,10 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     fields_map.remove("_type");
     fields_map.remove("dateCreated");
     fields_map.remove("dateModified");
-    fields_map.remove("deleted");
     fields_map.remove("version");
 
-    fields_map.insert(
-        "dateModified".to_string(),
-        Utc::now().timestamp_millis().into(),
-    );
+    let time_now = Utc::now().timestamp_nanos();
+    fields_map.insert("dateModified".to_string(), time_now.into());
 
     let mut sql_body = "UPDATE items SET ".to_string();
     let mut first_parameter = true;
@@ -313,10 +309,8 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
 /// Return NOT_FOUND if item does not exist.
 pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
     debug!("Deleting item {}", uid);
-    let json = serde_json::json!({
-        "deleted": true,
-        "dateModified": Utc::now().timestamp_millis(),
-    });
+    let time_now = Utc::now().timestamp_nanos();
+    let json = serde_json::json!({ "deleted": true, "dateModified": time_now, });
     update_item(sqlite, uid, json)
 }
 

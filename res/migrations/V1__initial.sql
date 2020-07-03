@@ -1,8 +1,8 @@
 CREATE TABLE items (
     uid INTEGER NOT NULL PRIMARY KEY,
     _type TEXT NOT NULL,
-    dateCreated REAL NOT NULL,
-    dateModified REAL NOT NULL,
+    dateCreated INTEGER /* datetime */ NOT NULL,
+    dateModified INTEGER /* datetime */ NOT NULL,
     deleted INTEGER /* boolean */ NOT NULL DEFAULT 0,
     version INTEGER NOT NULL
 );
