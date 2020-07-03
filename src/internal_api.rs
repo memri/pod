@@ -24,8 +24,7 @@ use warp::http::status::StatusCode;
 
 /// Create `syncState` for linked items
 pub fn add_sync_state(mut map: Map<String, Value>, is_part: bool) -> Map<String, Value> {
-    let sync_state = serde_json::json!({ "isPartiallyLoaded": is_part });
-    map.insert("syncState".to_string(), sync_state);
+    map.insert("_partial".to_string(), Value::Bool(is_part));
     map
 }
 
@@ -399,8 +398,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
             .expect("Failed to get _target")
             .as_i64()
             .expect("Failed to get value as i64");
-        let mut stmt =
-            conn.prepare_cached("SELECT uid, _type, name, color FROM items WHERE uid = :uid")?;
+        let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
         edge.remove("_target");
         while let Some(row) = rows.next()? {
