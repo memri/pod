@@ -72,7 +72,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
         }
     };
 
-    let time_now = Utc::now().timestamp_nanos();
+    let time_now = Utc::now().timestamp_millis();
     fields_map.insert("dateCreated".to_string(), time_now.into());
     fields_map.insert("dateModified".to_string(), time_now.into());
     fields_map.insert("version".to_string(), Value::from(1));
@@ -148,7 +148,7 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
-    let time_now = Utc::now().timestamp_nanos();
+    let time_now = Utc::now().timestamp_millis();
     fields.insert("dateCreated".to_string(), time_now.into());
     fields.insert("dateModified".to_string(), time_now.into());
     fields.insert("version".to_string(), Value::from(1));
@@ -168,7 +168,7 @@ fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
-    let time_now = Utc::now().timestamp_nanos();
+    let time_now = Utc::now().timestamp_millis();
     fields.remove("_type");
     fields.remove("dateCreated");
     fields.insert("dateModified".to_string(), time_now.into());
@@ -263,7 +263,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
     fields_map.remove("dateModified");
     fields_map.remove("version");
 
-    let time_now = Utc::now().timestamp_nanos();
+    let time_now = Utc::now().timestamp_millis();
     fields_map.insert("dateModified".to_string(), time_now.into());
 
     let mut sql_body = "UPDATE items SET ".to_string();
@@ -309,7 +309,7 @@ pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value
 /// Return NOT_FOUND if item does not exist.
 pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
     debug!("Deleting item {}", uid);
-    let time_now = Utc::now().timestamp_nanos();
+    let time_now = Utc::now().timestamp_millis();
     let json = serde_json::json!({ "deleted": true, "dateModified": time_now, });
     update_item(sqlite, uid, json)
 }
