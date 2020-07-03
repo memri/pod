@@ -48,11 +48,8 @@ async fn main() {
         .parent()
         .expect("Failed to get parent directory for database");
     create_dir_all(sqlite_dir).expect("Failed to create database directory");
-    let sqlite = SqliteConnectionManager::file(&sqlite_file);
-    let sqlite: Pool<SqliteConnectionManager> =
-        r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
 
-    // Create a new rusqlite connection for migration, this is a suboptimal solution for now,
+    // Create a new rusqlite connection for migration. This is a suboptimal solution for now,
     // and should be improved later to use the existing connection manager (TODO)
     let mut conn = rusqlite::Connection::open(&sqlite_file)
         .expect("Failed to open database for refinery migrations");
@@ -61,7 +58,11 @@ async fn main() {
         .expect("Failed to run refinery migrations");
     conn.close().expect("Failed to close connection");
 
-    // Add auto-generated schema into database
+    let sqlite = SqliteConnectionManager::file(&sqlite_file)
+        .with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
+    let sqlite: Pool<SqliteConnectionManager> =
+        r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
+    // Alter schema based on information from auto-generated iOS JSON schema
     database_init::init(&sqlite);
 
     // Try to prevent Pod from running on a public IP
