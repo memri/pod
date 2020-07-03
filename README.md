@@ -31,7 +31,6 @@ In order to build Pod locally, you need Rust and `sqlcipher`:
 ```
 apt-get install libsqlcipher-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default stable
 ```
 * Submit merge requests for your other OS :)
 
