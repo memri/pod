@@ -1,4 +1,4 @@
-use crate::api_model::BulkActions;
+use crate::api_model::BulkAction;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
@@ -213,16 +213,17 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     execute_sql(tx, &sql, &fields)
 }
 
-fn bulk_action_tx(tx: &Transaction, json_actions: BulkActions) -> Result<()> {
-    for mut item in json_actions.create_items {
+fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
+    debug!("Performing bulk action {:#?}", bulk_action);
+    for mut item in bulk_action.create_items {
         item.fields.insert("uid".to_string(), item.uid.into());
         create_item_tx(tx, item.fields)?;
     }
-    for mut item in json_actions.update_items {
+    for mut item in bulk_action.update_items {
         item.fields.insert("uid".to_string(), item.uid.into());
         update_item_tx(tx, item.fields)?;
     }
-    for mut edge in json_actions.create_edges {
+    for mut edge in bulk_action.create_edges {
         edge.fields
             .insert("_source".to_string(), edge._source.into());
         edge.fields
@@ -238,10 +239,10 @@ fn bulk_action_tx(tx: &Transaction, json_actions: BulkActions) -> Result<()> {
 /// See `api_model::BulkActions` for input JSON information.
 pub fn bulk_action(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<()> {
     debug!("Performing bulk action {}", json);
-    let json: BulkActions = serde_json::from_value(json)?;
+    let bulk_action: BulkAction = serde_json::from_value(json)?;
     let mut conn = sqlite.get()?;
     let tx = conn.transaction()?;
-    bulk_action_tx(&tx, json)?;
+    bulk_action_tx(&tx, bulk_action)?;
     tx.commit()?;
     Ok(())
 }

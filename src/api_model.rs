@@ -30,7 +30,7 @@ pub struct CreateEdge {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BulkActions {
+pub struct BulkAction {
     pub create_items: Vec<CreateItem>,
     pub update_items: Vec<UpdateItem>,
     pub create_edges: Vec<CreateEdge>,
