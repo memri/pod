@@ -50,6 +50,8 @@ enum DatabaseColumnType {
     Real,
 
     /// Boolean
+    /// Internally, booleans are stored as Integers 0 and 1. This is never exposed
+    /// to the clients, however, and clients should only ever receive/send `true` and `false`.
     Bool,
 
     /// The number of non-leap-nanoseconds since January 1, 1970 UTC.
