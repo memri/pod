@@ -16,17 +16,10 @@ use rusqlite::ToSql;
 use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
-use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
 use warp::http::status::StatusCode;
-
-/// Create `syncState` for linked items
-pub fn add_sync_state(mut map: Map<String, Value>, is_part: bool) -> Map<String, Value> {
-    map.insert("_partial".to_string(), Value::Bool(is_part));
-    map
-}
 
 /// Check if item exists by uid
 pub fn _check_item_exist(
@@ -404,7 +397,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
         while let Some(row) = rows.next()? {
             edge.insert("_target".to_string(), Value::from(sqlite_row_to_map(row)?));
         }
-        edge = add_sync_state(edge, true);
+        edge.insert("_partial".to_string(), Value::Bool(true));
         new_edges.push(edge);
     }
 

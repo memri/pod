@@ -16,11 +16,9 @@ pub fn sqlite_row_to_map(row: &Row) -> rusqlite::Result<Map<String, Value>> {
     let mut row_map = Map::new();
     for i in 0..row.column_count() {
         let name = row.column_name(i)?.to_string();
-        let value = match sqlite_value_to_json(row.get_raw(i), &name) {
-            Some(non_null) => non_null,
-            None => continue,
-        };
-        row_map.insert(name, value);
+        if let Some(value) = sqlite_value_to_json(row.get_raw(i), &name) {
+            row_map.insert(name, value);
+        }
     }
     Ok(row_map)
 }
