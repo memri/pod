@@ -17,6 +17,7 @@ chrono = { version = "0.4.11", features = ["serde"] }
 env_logger = "0.7.1"
 lazy_static = "1.4.0"
 log = "0.4.8"
+pnet = "0.26.0"
 r2d2 = "0.8.8"
 r2d2_sqlite = "0.16.0"
 refinery = { version = "0.3", features = ["rusqlite"]}
