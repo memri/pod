@@ -1,4 +1,5 @@
 use crate::database_init;
+use crate::error::Error;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rusqlite::types::ToSqlOutput;
@@ -55,7 +56,7 @@ pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Value {
 
 pub fn fields_mapping_to_owned_sql_params(
     fields_map: &Map<String, serde_json::Value>,
-) -> Vec<(String, ToSqlOutput)> {
+) -> crate::error::Result<Vec<(String, ToSqlOutput)>> {
     let mut sql_params = Vec::new();
     for (field, value) in fields_map {
         match value {
@@ -64,9 +65,9 @@ pub fn fields_mapping_to_owned_sql_params(
             _ => (),
         };
         let field = format!(":{}", field);
-        sql_params.push((field, json_value_to_sqlite_parameter(value)));
+        sql_params.push((field, json_value_to_sqlite(value)?));
     }
-    sql_params
+    Ok(sql_params)
 }
 
 pub fn borrow_sql_params<'a>(
@@ -78,22 +79,31 @@ pub fn borrow_sql_params<'a>(
         .collect()
 }
 
-pub fn json_value_to_sqlite_parameter(json: &Value) -> ToSqlOutput<'_> {
+pub fn json_value_to_sqlite(json: &Value) -> crate::error::Result<ToSqlOutput<'_>> {
     match json {
-        Value::Null => ToSqlOutput::Borrowed(ValueRef::Null),
-        Value::String(s) => ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes())),
+        Value::Null => Ok(ToSqlOutput::Borrowed(ValueRef::Null)),
+        Value::String(s) => Ok(ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes()))),
         Value::Number(n) => {
             if let Some(int) = n.as_i64() {
-                ToSqlOutput::Borrowed(ValueRef::Integer(int))
+                Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
             } else if let Some(float) = n.as_f64() {
-                ToSqlOutput::Borrowed(ValueRef::Real(float))
+                Ok(ToSqlOutput::Borrowed(ValueRef::Real(float)))
             } else {
-                panic!("Unsupported number precision (non-f64) of a JSON value.")
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: "Unsupported number precision (non-f64) of a JSON value.".to_string(),
+                })
             }
         }
-        Value::Bool(b) => ToSqlOutput::Borrowed(ValueRef::Integer(if *b { 1 } else { 0 })),
-        Value::Array(_) => panic!("Cannot convert JSON array to an SQL parameter"),
-        Value::Object(_) => panic!("Cannot convert JSON object to an SQL parameter"),
+        Value::Bool(b) => Ok((if *b { 1 } else { 0 }).into()),
+        Value::Array(arr) => Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Cannot convert JSON array to an SQL parameter: {:?}", arr),
+        }),
+        Value::Object(obj) => Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Cannot convert JSON object to an SQL parameter: {:?}", obj),
+        }),
     }
 }
 

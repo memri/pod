@@ -2,6 +2,7 @@ extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rusqlite;
 
+mod api_model;
 mod database_init;
 mod error;
 mod internal_api;
