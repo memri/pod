@@ -71,7 +71,7 @@ async fn main() {
         for ip in interface.ips {
             // https://en.wikipedia.org/wiki/Private_network
             let is_private = match ip.ip() {
-                V4(v4) => v4.is_private(),
+                V4(v4) => v4.is_private() || v4.is_loopback(),
                 V6(v6) if v6 == Ipv6Addr::LOCALHOST => true,
                 // https://en.wikipedia.org/wiki/Unique_local_address
                 // Implementation copied from `v6.is_unique_local()`,
