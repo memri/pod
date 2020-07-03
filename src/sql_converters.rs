@@ -16,8 +16,9 @@ pub fn sqlite_row_to_map(row: &Row) -> rusqlite::Result<Map<String, Value>> {
     let mut row_map = Map::new();
     for i in 0..row.column_count() {
         let name = row.column_name(i)?.to_string();
-        let value = sqlite_value_to_json(row.get_raw(i), &name);
-        row_map.insert(name, value);
+        if let Some(value) = sqlite_value_to_json(row.get_raw(i), &name) {
+            row_map.insert(name, value);
+        }
     }
     Ok(row_map)
 }
@@ -32,24 +33,24 @@ pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
     Ok(result)
 }
 
-pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Value {
+pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
     match value {
-        ValueRef::Null => Value::Null,
+        ValueRef::Null => None,
         ValueRef::Integer(i) => {
             if !database_init::BOOL_COLUMNS.contains(column_name) {
-                Value::from(i)
+                Some(Value::from(i))
             } else if i == 0 {
-                Value::from(false)
+                Some(Value::from(false))
             } else if i == 1 {
-                Value::from(true)
+                Some(Value::from(true))
             } else {
                 panic!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i)
             }
         }
-        ValueRef::Real(f) => Value::from(f),
-        ValueRef::Text(t) => Value::from(
+        ValueRef::Real(f) => Some(Value::from(f)),
+        ValueRef::Text(t) => Some(Value::from(
             std::str::from_utf8(t).expect("Non UTF-8 data in TEXT field of the database"),
-        ),
+        )),
         ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
     }
 }
