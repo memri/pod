@@ -10,7 +10,6 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::hash::Hash;
-use DatabaseColumnType::Bool;
 
 /// Constraints:
 ///
@@ -43,12 +42,20 @@ struct DatabaseColumn {
 enum DatabaseColumnType {
     /// UTF-8 string
     Text,
+
     /// Signed 8-byte integer
     Integer,
-    // 8-byte float
+
+    /// 8-byte float
     Real,
-    // Boolean
+
+    /// Boolean
     Bool,
+
+    /// The number of non-leap-nanoseconds since January 1, 1970 UTC.
+    /// Use this database type to denote DateTime.
+    /// Internally stored as Integer and should be passed as Integer.
+    DateTime,
 }
 
 lazy_static! {
@@ -166,7 +173,8 @@ fn generate_sql(
 
     for (column, db_type) in declared_columns {
         let db_type = match db_type {
-            Bool => "INTEGER /* boolean */".to_string(),
+            DatabaseColumnType::Bool => "INTEGER /* boolean */".to_string(),
+            DatabaseColumnType::DateTime => "INTEGER /* datetime */".to_string(),
             db_type => format!("{:?}", db_type).to_uppercase(),
         };
         let creation = format!("ALTER TABLE items ADD {} {};", column, db_type);
