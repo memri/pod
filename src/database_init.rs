@@ -54,7 +54,7 @@ enum DatabaseColumnType {
     /// to the clients, however, and clients should only ever receive/send `true` and `false`.
     Bool,
 
-    /// The number of non-leap-nanoseconds since January 1, 1970 UTC.
+    /// The number of non-leap-milliseconds since January 1, 1970 UTC.
     /// Use this database type to denote DateTime.
     /// Internally stored as Integer and should be passed as Integer.
     DateTime,
