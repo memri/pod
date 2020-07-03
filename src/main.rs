@@ -21,7 +21,6 @@ use std::fs::create_dir_all;
 use std::io::Write;
 use std::net::IpAddr::V4;
 use std::net::IpAddr::V6;
-use std::net::Ipv6Addr;
 use std::path::PathBuf;
 
 mod embedded {
@@ -71,12 +70,14 @@ async fn main() {
         for ip in interface.ips {
             // https://en.wikipedia.org/wiki/Private_network
             let is_private = match ip.ip() {
-                V4(v4) => v4.is_private() || v4.is_loopback(),
-                V6(v6) if v6 == Ipv6Addr::LOCALHOST => true,
+                V4(v4) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
+                V6(v6) if v6.is_loopback() => true,
                 // https://en.wikipedia.org/wiki/Unique_local_address
                 // Implementation copied from `v6.is_unique_local()`,
                 // which is not yet stabilized in Rust
                 V6(v6) if (v6.segments()[0] & 0xfe00) == 0xfc00 => true,
+                // https://en.wikipedia.org/wiki/Link-local_address
+                V6(v6) if (v6.segments()[0] & 0xffc0) == 0xfe80 => true,
                 _ => false,
             };
             if !is_private && env::var_os("INSECURE_USE_PUBLIC_IP").is_some() {
