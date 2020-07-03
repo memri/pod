@@ -6,10 +6,12 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 
 ## WARNING: NOT SECURE WITH PUBLIC IP!!!
 
-The current version of Pod **DOES NOT** guarantee security yet, **DO NOT** use it for production or run it with a public IP.
+The current version of Pod **DOES NOT** guarantee security yet,
+**DO NOT** use it for production or run it with a public IP.
 
-* When attached with a public IP, on start, Pod will give an error and abort;
-* Forcing a public IP requires environment variable `FORCE_SUPER_INSECURE=1` and will receive a warning.
+* When attempting to run with a public IP, Pod will give an error and refuse to start;
+* Setting the environment variable `INSECURE_USE_PUBLIC_IP` to any value
+will allow Pod to start even with a public IP (with the security implications above!).
 
 ## Run in docker
 To run Pod inside docker:
