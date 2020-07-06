@@ -52,11 +52,11 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // GET /v1/all
+    // GET /v1/all_items/
     // Get an array of all nodes.
     let pool = pool_arc.clone();
     let get_all_items = api_version_1
-        .and(warp::path!("all"))
+        .and(warp::path!("all_items"))
         .and(warp::path::end())
         .and(warp::get())
         .map(move || {
@@ -68,7 +68,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // POST /v1/
+    // POST /v1/items/
     // Create a single item.
     // Input: json of the item that needs to be created.
     // Return uid of created item if item is unique.
