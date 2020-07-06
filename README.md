@@ -102,9 +102,9 @@ The schema is also used in iOS and other projects.
 To make it available universally, please submit your schema to the "schema" repository:
 [https://gitlab.memri.io/memri/schema](https://gitlab.memri.io/memri/schema).
 
-Changes made to "schema" repository will allow you re-generating new definitions
+Changes made to "schema" repository will allow you to generate new definitions
 for other projects, and also for Pod.
 You can copy the newly generated JSON to Pod during development.
 
 To make a Merge Reguest with your changes, you have to make it against "schema".
-Please refer to that repo-s documentation on how to work with it and do it best.
+Please refer to that repo's documentation on how to work with it and do it best.
