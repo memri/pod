@@ -163,11 +163,12 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
 }
 
 /// Update an item presuming all dangerous fields were already removed, and "uid" is present
-fn update_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
+    fields.insert("uid".to_string(), uid.into());
     let time_now = Utc::now().timestamp_millis();
     fields.remove("_type");
     fields.remove("dateCreated");
@@ -204,15 +205,22 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     execute_sql(tx, &sql, &fields)
 }
 
+fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
+    let mut fields = HashMap::new();
+    let time_now = Utc::now().timestamp_millis();
+    fields.insert("deleted".to_string(), true.into());
+    fields.insert("dateModified".to_string(), time_now.into());
+    update_item_tx(tx, uid, fields)
+}
+
 fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     debug!("Performing bulk action {:#?}", bulk_action);
     for mut item in bulk_action.create_items {
         item.fields.insert("uid".to_string(), item.uid.into());
         create_item_tx(tx, item.fields)?;
     }
-    for mut item in bulk_action.update_items {
-        item.fields.insert("uid".to_string(), item.uid.into());
-        update_item_tx(tx, item.fields)?;
+    for item in bulk_action.update_items {
+        update_item_tx(tx, item.uid, item.fields)?;
     }
     for mut edge in bulk_action.create_edges {
         edge.fields
@@ -221,6 +229,9 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
             .insert("_target".to_string(), edge._target.into());
         edge.fields.insert("_type".to_string(), edge._type.into());
         create_edge(tx, edge.fields)?;
+    }
+    for edge_uid in bulk_action.delete_items {
+        delete_item_tx(tx, edge_uid)?;
     }
     Ok(())
 }
