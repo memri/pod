@@ -29,9 +29,5 @@ fn test_bulk_action() {
 }
 
 fn check_has_item(result: Option<Vec<Value>>) -> bool {
-    if let Some(items) = result {
-        items.iter().next().is_some()
-    } else {
-        false
-    }
+    result.iter().flatten().next().is_some()
 }
