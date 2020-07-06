@@ -14,6 +14,7 @@ use env_logger::Env;
 use log::info;
 use log::warn;
 use pnet::datalink;
+use r2d2::ManageConnection;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::env;
@@ -48,21 +49,21 @@ async fn main() {
         .parent()
         .expect("Failed to get parent directory for database");
     create_dir_all(sqlite_dir).expect("Failed to create database directory");
-
-    // Create a new rusqlite connection for migration. This is a suboptimal solution for now,
-    // and should be improved later to use the existing connection manager (TODO)
-    let mut conn = rusqlite::Connection::open(&sqlite_file)
-        .expect("Failed to open database for refinery migrations");
-    embedded::migrations::runner()
-        .run(&mut conn)
-        .expect("Failed to run refinery migrations");
-    conn.close().expect("Failed to close connection");
-
-    let sqlite = SqliteConnectionManager::file(&sqlite_file)
+    let sqlite_manager = SqliteConnectionManager::file(&sqlite_file)
         .with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
+
+    let mut refinery_connection = sqlite_manager
+        .connect()
+        .expect("Failed to open a connection for refinery database migrations");
+    // Run "refinery" migrations to bring the core structure of items/edges up-to-date
+    embedded::migrations::runner()
+        .run(&mut refinery_connection)
+        .expect("Failed to run refinery migrations");
+
     let sqlite: Pool<SqliteConnectionManager> =
-        r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
-    // Alter schema based on information from auto-generated iOS JSON schema
+        r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
+    // Run "schema" migrations based on the auto-generated JSON schema.
+    // This creates all optional properties in items table, and adds/removes property indices.
     database_init::init(&sqlite);
 
     // Try to prevent Pod from running on a public IP
