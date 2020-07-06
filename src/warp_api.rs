@@ -72,6 +72,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     // Create a single item.
     // Input: json of the item that needs to be created.
     // Return uid of created item if item is unique.
+    // Returns an error if a uid was specified and an item with this uid already exists.
     let pool = pool_arc.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
