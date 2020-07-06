@@ -106,5 +106,5 @@ Changes made to "schema" repository will allow you to generate new definitions
 for other projects, and also for Pod.
 You can copy the newly generated JSON to Pod during development.
 
-To make a Merge Reguest with your changes, you have to make it against "schema".
+To make a Merge Reguest with your changes, make it against the "schema" repository.
 Please refer to that repo's documentation on how to work with it and do it best.
