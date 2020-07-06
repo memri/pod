@@ -55,15 +55,15 @@ async fn main() {
     let mut refinery_connection = sqlite_manager
         .connect()
         .expect("Failed to open a connection for refinery database migrations");
-    // Create a new rusqlite connection for migration. This is a suboptimal solution for now,
-    // and should be improved later to use the existing connection manager (TODO)
+    // Run "refinery" migrations to bring the core structure of items/edges up-to-date
     embedded::migrations::runner()
         .run(&mut refinery_connection)
         .expect("Failed to run refinery migrations");
 
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
-    // Alter schema based on information from auto-generated iOS JSON schema
+    // Run "schema" migrations based on the auto-generated JSON schema.
+    // This creates all optional properties in items table, and adds/removes indices.
     database_init::init(&sqlite);
 
     // Try to prevent Pod from running on a public IP
