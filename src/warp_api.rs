@@ -14,12 +14,6 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
-    // Get version of cargo project POD.
-    let version = warp::path("version")
-        .and(warp::path::end())
-        .and(warp::get())
-        .map(internal_api::get_project_version);
-
     let mut headers = HeaderMap::new();
     if std::env::var_os("INSECURE_ACCESS").is_some() {
         info!("Adding Access-Control-Allow-Origin header as per environment config");
@@ -27,12 +21,19 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     }
     let headers = warp::reply::with::headers(headers);
 
-    // Set API version
     let api_version_1 = warp::path("v1");
 
     let pool_arc = Arc::new(sqlite_pool);
 
-    // GET API for a single item.
+    // GET /version
+    // Get the version of the Pod.
+    let version = warp::path("version")
+        .and(warp::path::end())
+        .and(warp::get())
+        .map(internal_api::get_project_version);
+
+    // GET /v1/items/uid
+    // Get a single item.
     // Parameter:
     //     uid: uid of requested item, signed 8-byte (64bit) integer.
     // Return an array of items with requested uid.
@@ -51,9 +52,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // GET API for all nodes.
-    // Return an array of all nodes.
-    // Return empty array if nodes not exist.
+    // GET /v1/all
+    // Get an array of all nodes.
     let pool = pool_arc.clone();
     let get_all_items = api_version_1
         .and(warp::path!("all"))
@@ -68,10 +68,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // POST API for a single item.
-    // Input: json of created item within the body.
+    // POST /v1/
+    // Create a single item.
+    // Input: json of the item that needs to be created.
     // Return uid of created item if item is unique.
-    // Return error if item already exists.
     let pool = pool_arc.clone();
     let create_item = api_version_1
         .and(warp::path("items"))
@@ -87,7 +87,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // PUT (update) a single item
+    // PUT /v1/items/uid
+    // Update a single item
     // Input:
     //      - uid of the item to be updated
     //      - json of content to be updated
@@ -107,6 +108,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    // POST /v1/bulk_action/
     // See `internal_api::bulk_action` for more details
     let pool = pool_arc.clone();
     let bulk_action = api_version_1
@@ -123,7 +125,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // DELETE a single item
+    // DELETE /v1/items/uid
+    // Delete a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
         .and(warp::path!("items" / i64))
@@ -138,7 +141,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // CHECK if an item exists with the uri
+    // GET /v1/deprecated/uri_exists/urlencoded_string
+    // Check if an item exists with the uri
     let pool = pool_arc.clone();
     let external_id_exists = api_version_1
         .and(warp::path!("deprecated" / "uri_exists" / String))
@@ -150,6 +154,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             Box::new(warp::reply::json(&exists))
         });
 
+    // POST /v1/search_by_fields/
     // Search items by their fields.
     // Given a JSON like { "author": "Vasili", "_type": "note" }
     // the endpoint will return all entries with exactly the same properties.
@@ -170,7 +175,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // GET API for items with edges.
+    // GET /v1/items_edges/uid
+    // Get item with edges.
     // Parameter:
     //     uid: uid of requested item, signed 8-byte (64bit) integer.
     // Return an array of all properties of the item with requested uid,
@@ -190,8 +196,6 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // Specify APIs.
-    // Specify address and port number to listen to.
     warp::serve(
         version
             .with(&headers)
