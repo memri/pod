@@ -1,4 +1,5 @@
 use crate::api_model::BulkAction;
+use crate::api_model::CreateItem;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
@@ -60,53 +61,14 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
 
 /// Create an item, failing if the `uid` existed before.
 /// The new item will be created with `version = 1`.
-pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<Value> {
+pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<i64> {
     debug!("Creating item {}", json);
-    let mut fields_map = match json {
-        Object(map) => map,
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: "Expected JSON object".to_string(),
-            })
-        }
-    };
-
-    let time_now = Utc::now().timestamp_millis();
-    fields_map.insert("dateCreated".to_string(), time_now.into());
-    fields_map.insert("dateModified".to_string(), time_now.into());
-    fields_map.insert("version".to_string(), Value::from(1));
-
-    let mut sql_body = "INSERT INTO items (".to_string();
-    let mut sql_body_params = "".to_string();
-    let mut first_parameter = true;
-    for (field, value) in &fields_map {
-        validate_field_name(field)?;
-        match value {
-            Value::Array(_) => continue,
-            Value::Object(_) => continue,
-            _ => (),
-        };
-        if !first_parameter {
-            sql_body.push_str(", ");
-            sql_body_params.push_str(", :")
-        };
-        first_parameter = false;
-        sql_body.push_str(field);
-        sql_body_params.push_str(field);
-    }
-    sql_body.push_str(") VALUES (:");
-    sql_body.push_str(sql_body_params.as_str());
-    sql_body.push_str(");");
-
-    let sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
-    let sql_params = borrow_sql_params(&sql_params);
-
-    let conn = sqlite.get()?;
-    let mut stmt = conn.prepare_cached(&sql_body)?;
-    stmt.execute_named(sql_params.as_slice())?;
-    let json = serde_json::json!({"uid": conn.last_insert_rowid()});
-    Ok(json)
+    let create_action: CreateItem = serde_json::from_value(json)?;
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    let result = create_item_tx(&tx, create_action.uid, create_action.fields)?;
+    tx.commit()?;
+    Ok(result)
 }
 
 fn is_array_or_object(value: &Value) -> bool {
@@ -143,11 +105,12 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
 }
 
 /// Create an item presuming consistency checks were already done
-fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+fn create_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<i64> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
+    fields.insert("uid".to_string(), uid.into());
     let time_now = Utc::now().timestamp_millis();
     fields.insert("dateCreated".to_string(), time_now.into());
     fields.insert("dateModified".to_string(), time_now.into());
@@ -159,7 +122,8 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()
     sql.push_str(") VALUES (:");
     write_sql_body(&mut sql, &keys, ", :");
     sql.push_str(");");
-    execute_sql(tx, &sql, &fields)
+    execute_sql(tx, &sql, &fields)?;
+    Ok(tx.last_insert_rowid())
 }
 
 /// Update an item presuming all dangerous fields were already removed, and "uid" is present
@@ -215,9 +179,8 @@ fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
 
 fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     debug!("Performing bulk action {:#?}", bulk_action);
-    for mut item in bulk_action.create_items {
-        item.fields.insert("uid".to_string(), item.uid.into());
-        create_item_tx(tx, item.fields)?;
+    for item in bulk_action.create_items {
+        create_item_tx(tx, item.uid, item.fields)?;
     }
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
