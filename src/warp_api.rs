@@ -32,7 +32,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::get())
         .map(internal_api::get_project_version);
 
-    // GET /v1/items/uid
+    // GET /v1/items/$uid
     // Get a single item.
     // Parameter:
     //     uid: uid of requested item, signed 8-byte (64bit) integer.
@@ -88,7 +88,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // PUT /v1/items/uid
+    // PUT /v1/items/$uid
     // Update a single item
     // Input:
     //      - uid of the item to be updated
@@ -126,7 +126,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // DELETE /v1/items/uid
+    // DELETE /v1/items/$uid
     // Delete a single item
     let pool = pool_arc.clone();
     let delete_item = api_version_1
@@ -142,7 +142,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // GET /v1/deprecated/uri_exists/urlencoded_string
+    // GET /v1/deprecated/uri_exists/$urlencoded_string
     // Check if an item exists with the uri
     let pool = pool_arc.clone();
     let external_id_exists = api_version_1
@@ -176,7 +176,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // GET /v1/items_edges/uid
+    // GET /v1/items_edges/$uid
     // Get item with edges.
     // Parameter:
     //     uid: uid of requested item, signed 8-byte (64bit) integer.
