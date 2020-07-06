@@ -2,15 +2,15 @@
   "types": [
     {
       "name": "AuditAccessLog",
-      "columns": []
+      "properties": []
     },
     {
       "name": "CVUStoredDefinition",
-      "columns": []
+      "properties": []
     },
     {
       "name": "Company",
-      "columns": [
+      "properties": [
         {
           "name": "email",
           "dbtype": "Text",
@@ -20,7 +20,7 @@
     },
     {
       "name": "CreativeWork",
-      "columns": [
+      "properties": [
         {
           "name": "abstract",
           "dbtype": "Text",
@@ -45,15 +45,15 @@
     },
     {
       "name": "DigitalDocument",
-      "columns": []
+      "properties": []
     },
     {
       "name": "Comment",
-      "columns": []
+      "properties": []
     },
     {
       "name": "Note",
-      "columns": [
+      "properties": [
         {
           "name": "title",
           "dbtype": "Text",
@@ -68,7 +68,7 @@
     },
     {
       "name": "MediaObject",
-      "columns": [
+      "properties": [
         {
           "name": "bitrate",
           "dbtype": "Integer",
@@ -103,7 +103,7 @@
     },
     {
       "name": "Audio",
-      "columns": [
+      "properties": [
         {
           "name": "caption",
           "dbtype": "Text",
@@ -118,7 +118,7 @@
     },
     {
       "name": "Photo",
-      "columns": [
+      "properties": [
         {
           "name": "caption",
           "dbtype": "Text",
@@ -138,7 +138,7 @@
     },
     {
       "name": "Video",
-      "columns": [
+      "properties": [
         {
           "name": "caption",
           "dbtype": "Text",
@@ -158,7 +158,7 @@
     },
     {
       "name": "Diet",
-      "columns": [
+      "properties": [
         {
           "name": "type",
           "dbtype": "Text",
@@ -173,11 +173,11 @@
     },
     {
       "name": "Downloader",
-      "columns": []
+      "properties": []
     },
     {
       "name": "File",
-      "columns": [
+      "properties": [
         {
           "name": "uri",
           "dbtype": "Text",
@@ -187,7 +187,7 @@
     },
     {
       "name": "Importer",
-      "columns": [
+      "properties": [
         {
           "name": "name",
           "dbtype": "Text",
@@ -197,7 +197,7 @@
     },
     {
       "name": "ImporterInstance",
-      "columns": [
+      "properties": [
         {
           "name": "name",
           "dbtype": "Text",
@@ -207,15 +207,15 @@
     },
     {
       "name": "Indexer",
-      "columns": []
+      "properties": []
     },
     {
       "name": "IndexerInstance",
-      "columns": []
+      "properties": []
     },
     {
       "name": "Label",
-      "columns": [
+      "properties": [
         {
           "name": "comment",
           "dbtype": "Text",
@@ -230,7 +230,7 @@
     },
     {
       "name": "Location",
-      "columns": [
+      "properties": [
         {
           "name": "latitude",
           "dbtype": "Real",
@@ -245,7 +245,7 @@
     },
     {
       "name": "Address",
-      "columns": [
+      "properties": [
         {
           "name": "city",
           "dbtype": "Text",
@@ -275,11 +275,11 @@
     },
     {
       "name": "Country",
-      "columns": []
+      "properties": []
     },
     {
       "name": "GeoCoordinates",
-      "columns": [
+      "properties": [
         {
           "name": "latitude",
           "dbtype": "Real",
@@ -294,7 +294,7 @@
     },
     {
       "name": "LogItem",
-      "columns": [
+      "properties": [
         {
           "name": "contents",
           "dbtype": "Text",
@@ -309,7 +309,7 @@
     },
     {
       "name": "MedicalCondition",
-      "columns": [
+      "properties": [
         {
           "name": "type",
           "dbtype": "Text",
@@ -319,7 +319,7 @@
     },
     {
       "name": "OnlineProfile",
-      "columns": [
+      "properties": [
         {
           "name": "type",
           "dbtype": "Text",
@@ -334,7 +334,7 @@
     },
     {
       "name": "Person",
-      "columns": [
+      "properties": [
         {
           "name": "email",
           "dbtype": "Text",
@@ -384,11 +384,11 @@
     },
     {
       "name": "PhoneNumber",
-      "columns": []
+      "properties": []
     },
     {
       "name": "PublicKey",
-      "columns": [
+      "properties": [
         {
           "name": "type",
           "dbtype": "Text",
@@ -403,15 +403,15 @@
     },
     {
       "name": "Session",
-      "columns": []
+      "properties": []
     },
     {
       "name": "SessionView",
-      "columns": []
+      "properties": []
     },
     {
       "name": "Website",
-      "columns": [
+      "properties": [
         {
           "name": "type",
           "dbtype": "Text",
