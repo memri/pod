@@ -82,7 +82,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .map(move |body: serde_json::Value| {
             let result = internal_api::create_item(&pool, body);
             let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
+                Ok(result) => {
+                    let json = serde_json::json!({ "uid": result });
+                    Box::new(warp::reply::json(&json))
+                }
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
             };
             boxed
