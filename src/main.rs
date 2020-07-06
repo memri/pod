@@ -63,7 +63,7 @@ async fn main() {
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
     // Run "schema" migrations based on the auto-generated JSON schema.
-    // This creates all optional properties in items table, and adds/removes indices.
+    // This creates all optional properties in items table, and adds/removes property indices.
     database_init::init(&sqlite);
 
     // Try to prevent Pod from running on a public IP
