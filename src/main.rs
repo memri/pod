@@ -5,7 +5,7 @@ extern crate rusqlite;
 mod api_model;
 mod database_init;
 mod error;
-mod internal_api;
+pub mod internal_api;
 mod sql_converters;
 mod warp_api;
 
