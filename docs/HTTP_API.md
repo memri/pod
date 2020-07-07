@@ -82,7 +82,7 @@ and just return the `uid` to the caller.
 ### PUT /v1/items/{uid}
 Update a single item.
 
-* `uid` from the json body will be ignored
+* `uid` from the input json will be ignored
 * `_type` from the input json will be ignored
 * `dateCreated` from the input json will be ignored
 * `dateModified` if not present, will be set by the backend
