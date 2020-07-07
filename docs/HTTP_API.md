@@ -3,14 +3,14 @@ There are various components that communicate with the Pod:
 
 * Clients like iOS app, web app;
 * Indexers that enrich data/photos/other content;
-* Importers/Downloaders that import information from other systems, e.g. from evernote.
+* Importers/Downloaders that import data from other systems, e.g. from evernote.
 
-All of that information goes through Pod HTTP API.
+All of that data goes through Pod HTTP API.
 This page explains the data types that Pod can store, and current API.
 
 
 ## Items
-Items is the main thing that is stored in Pod.
+Items are the main thing that is stored in Pod.
 You could see it as the main holder for Pod-s data.
 
 ### item's mandatory properties
