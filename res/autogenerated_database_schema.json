@@ -1,18 +1,170 @@
 {
   "types": [
     {
-      "name": "AuditAccessLog",
-      "properties": []
+      "name": "AuditItem",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "content",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "action",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "CVUStoredDefinition",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "definition",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "domain",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "query",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "selector",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "Company",
       "properties": [
         {
-          "name": "email",
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
           "dbtype": "Text",
           "indexed": false
         }
@@ -22,12 +174,52 @@
       "name": "CreativeWork",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "abstract",
           "dbtype": "Text",
           "indexed": false
         },
         {
-          "name": "keywords",
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
           "dbtype": "Text",
           "indexed": false
         },
@@ -45,15 +237,207 @@
     },
     {
       "name": "DigitalDocument",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "Comment",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "content",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "Note",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "title",
           "dbtype": "Text",
@@ -63,12 +447,77 @@
           "name": "content",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
     {
       "name": "MediaObject",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "bitrate",
           "dbtype": "Integer",
@@ -105,6 +554,96 @@
       "name": "Audio",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "bitrate",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "fileLocation",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "fileSize",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "caption",
           "dbtype": "Text",
           "indexed": false
@@ -113,12 +652,117 @@
           "name": "transcript",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "bitrate",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "dbtype": "Integer",
+          "indexed": false
         }
       ]
     },
     {
       "name": "Photo",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "bitrate",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "fileLocation",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "fileSize",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "caption",
           "dbtype": "Text",
@@ -130,8 +774,18 @@
           "indexed": false
         },
         {
-          "name": "thumbnail",
+          "name": "name",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "dbtype": "Integer",
           "indexed": false
         }
       ]
@@ -140,6 +794,96 @@
       "name": "Video",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "bitrate",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "fileLocation",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "fileSize",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "caption",
           "dbtype": "Text",
           "indexed": false
@@ -150,7 +894,152 @@
           "indexed": false
         },
         {
-          "name": "thumbnail",
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "width",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "height",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "duration",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Datasource",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "query",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "softProperty",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sortAscending",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "pageCount",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "pageIndex",
+          "dbtype": "Bool",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Device",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "deviceID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "make",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "manufacturer",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "model",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
           "dbtype": "Text",
           "indexed": false
         }
@@ -160,12 +1049,52 @@
       "name": "Diet",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
         {
-          "name": "additions",
+          "name": "addition",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
           "dbtype": "Text",
           "indexed": false
         }
@@ -173,11 +1102,162 @@
     },
     {
       "name": "Downloader",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Edge",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "targetItemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "targetItemID",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "sourceItemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sourceItemID",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "sequence",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "File",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "uri",
           "dbtype": "Text",
@@ -189,17 +1269,107 @@
       "name": "Importer",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dataType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "icon",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "bundleImage",
           "dbtype": "Text",
           "indexed": false
         }
       ]
     },
     {
-      "name": "ImporterInstance",
+      "name": "ImporterRun",
       "properties": [
         {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dataType",
           "dbtype": "Text",
           "indexed": false
         }
@@ -207,22 +1377,174 @@
     },
     {
       "name": "Indexer",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "icon",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "query",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "bundleImage",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "runDestination",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
-      "name": "IndexerInstance",
-      "properties": []
+      "name": "IndexerRun",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "query",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "progress",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "Label",
       "properties": [
         {
-          "name": "comment",
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
           "dbtype": "Text",
           "indexed": false
         },
         {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "color",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
           "dbtype": "Text",
           "indexed": false
         }
@@ -231,6 +1553,41 @@
     {
       "name": "Location",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "latitude",
           "dbtype": "Real",
@@ -246,6 +1603,51 @@
     {
       "name": "Address",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "latitude",
+          "dbtype": "Real",
+          "indexed": false
+        },
+        {
+          "name": "longitude",
+          "dbtype": "Real",
+          "indexed": false
+        },
         {
           "name": "city",
           "dbtype": "Text",
@@ -275,11 +1677,42 @@
     },
     {
       "name": "Country",
-      "properties": []
-    },
-    {
-      "name": "GeoCoordinates",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "latitude",
           "dbtype": "Real",
@@ -289,19 +1722,9 @@
           "name": "longitude",
           "dbtype": "Real",
           "indexed": false
-        }
-      ]
-    },
-    {
-      "name": "LogItem",
-      "properties": [
-        {
-          "name": "contents",
-          "dbtype": "Text",
-          "indexed": false
         },
         {
-          "name": "action",
+          "name": "name",
           "dbtype": "Text",
           "indexed": false
         }
@@ -310,6 +1733,106 @@
     {
       "name": "MedicalCondition",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "NavigationItem",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "title",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sessionName",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sequence",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "type",
           "dbtype": "Text",
@@ -320,6 +1843,41 @@
     {
       "name": "OnlineProfile",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "type",
           "dbtype": "Text",
@@ -335,6 +1893,41 @@
     {
       "name": "Person",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "email",
           "dbtype": "Text",
@@ -374,21 +1967,97 @@
           "name": "armLength",
           "dbtype": "Real",
           "indexed": false
-        },
-        {
-          "name": "age",
-          "dbtype": "Real",
-          "indexed": false
         }
       ]
     },
     {
       "name": "PhoneNumber",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "phoneNumberWithAreaCode",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "PublicKey",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "type",
           "dbtype": "Text",
@@ -398,20 +2067,417 @@
           "name": "key",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
     {
       "name": "Session",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "currentViewIndex",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "editMode",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "showContextPane",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "showFilterPanel",
+          "dbtype": "Bool",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "SessionView",
-      "properties": []
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "currentSessionIndex",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Setting",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "key",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "json",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "SyncState",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "isPartiallyLoaded",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "actionNeeded",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "updatedFields",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "changedInThisSession",
+          "dbtype": "Bool",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "UserState",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "state",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "ViewArguments",
+      "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "state",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
     },
     {
       "name": "Website",
       "properties": [
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalID",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
         {
           "name": "type",
           "dbtype": "Text",
