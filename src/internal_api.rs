@@ -19,6 +19,7 @@ use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::process::Command;
 use std::str;
 use warp::http::status::StatusCode;
 
@@ -378,4 +379,26 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     new_item.insert("allEdges".to_string(), Value::from(new_edges));
     result.push(Value::from(new_item));
     Ok(result)
+}
+
+pub fn run_service(service: String) -> Result<()> {
+    debug!("Executing service {}", service);
+    match service.as_str() {
+        "evernote" => execute_and_forget("docker", &["run", "hello-world"]),
+        "icloud" => execute_and_forget("docker", &["run", "hello-world"]),
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Do not have command for service {}", service),
+            })
+        }
+    }
+    Ok(())
+}
+
+fn execute_and_forget(program: &str, args: &[&str]) {
+    Command::new(program)
+        .args(args)
+        .spawn()
+        .expect("Failed to run the command");
 }
