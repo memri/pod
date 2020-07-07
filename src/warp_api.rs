@@ -159,10 +159,6 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    // POST /v1/exec/$service
-    // Execute the command defined by frontend.
-    // Parameter:
-    //      service: name of the service to be executed
     let execute_service = api_version_1
         .and(warp::path!("run_service" / String))
         .and(warp::path::end())
