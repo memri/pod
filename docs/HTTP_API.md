@@ -63,10 +63,10 @@ Get an array of all items.
 ### POST /v1/items/
 Create a single item.
 
-* Input json MUST have `uid` property
+* `uid` property MUST be present in input JSON
 * `version` property of the input will be ignored if set
-* If `dateCreated` is not set, it will be set by the backend
-* If `dateModified` is not set, it will be set by the backend
+* `dateCreated` if not present, will be set by the backend
+* `dateModified` if not present, will be set by the backend
 
 Returns `uid` of the created item. Returns an error if an `uid` did already exist.
 
@@ -78,7 +78,7 @@ Update a single item.
 * `uid` from the json body will be ignored
 * `_type` from the input json will be ignored
 * `dateCreated` from the input json will be ignored
-* If `dateModified` is not set, it will be set by the backend
+* `dateModified` if not present, will be set by the backend
 * `version` from the input json will be ignored, and in fact will be increased by 1 from previous database value.
 
 ### POST /v1/bulk_action/
