@@ -35,7 +35,7 @@ Additional properties can be set dynamically via the [Schema](../README.md#schem
 ## Edges
 Edges connect items together to form a
 [directed graph](https://en.wikipedia.org/wiki/Directed_graph).
-Pending on design decisions we'll have to make, edges might also possibly
+Pending on design decisions we're going to make, edges might also possibly
 support properties in the future (don't rely on it yet).
 
 ### edge's mandatory properties
