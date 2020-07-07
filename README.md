@@ -67,6 +67,10 @@ You can read about various components of the server:
 * Rust language: [rust-lang.org](https://www.rust-lang.org/)
 
 
+## HTTP API
+Pod's API is documented in detail [here](./docs/HTTP_API.md).
+
+
 ## Database
 Pod uses SQLite database as its storage mechanism.
 
