@@ -21,7 +21,7 @@ fn test_bulk_action() {
     let result2 = get_item_with_edges(&sqlite, 1);
 
     let json = json!({"_type": "Person"});
-    let result3 = search(&sqlite, json);
+    let result3 = search_by_fields(&sqlite, json);
 
     assert_eq!(result1.is_ok(), true);
     assert_eq!(check_has_item(result2.ok()), true);
