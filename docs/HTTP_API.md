@@ -16,11 +16,10 @@ with edges (see below) being the thing that connects different items to form a g
 
 ### item's mandatory properties
 
-* `_type`, that can never be changed once set and represents the type of the item
+* `_type`, case-sensitive item's type. Can never be changed once created
 * `uid`, the unique identifier of the item, signed 64-bit integer
-* `dateCreated`, creation date stored as DateTime (see [Understanding the schema](../README.md))
-* `dateModified`, last modification date **as seen by the client**.
-This property is not controlled by the Pod
+* `dateCreated`, creation date _as seen by the client_, stored as DateTime (see [Understanding the schema](../README.md)). Set by the client by default.
+* `dateModified`, last modification date _as seen by the client_. Set by the client by default.
 * `deleted`, a flag that, if set to `true`, will mean that the item was deleted by the user.
 It is still possible to restore the item later on. Permanent delete will happen later.
 * `version`, a number that is incremented with each update from the client.
@@ -83,7 +82,22 @@ Update a single item.
 * `version` from the input json will be ignored, and in fact will be increased by 1 from previous database value.
 
 ### POST /v1/bulk_action/
-TODO :(
+Perform a bulk of operations simultaneously.
+
+All changes are guaranteed to happen at the same time - or not at all.
+
+Input json:
+```json
+{
+  "create_items": [ { /* structure identical to the create endpoint */ } ],
+  "update_items": [ { /* structure identical to the update endpoint */ } ],
+  "delete_items": [ uid, uid, uid, ...],
+  "create_edges": [
+    { "_source": uid, "_target": uid, "_type": "AnyString", /* other properties can be set */ },
+    ...
+  ],
+}
+```
 
 ### DELETE /v1/items/{uid}
 Mark an item as deleted.
