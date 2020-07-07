@@ -130,7 +130,7 @@ the endpoint will return an array of all items with exactly the same properties.
 
 ### GET /v1/item_with_edges/{uid}
 Get item, with edges of any type pointing from that item,
-and all item-s properties that those edges point to.
+and all item's properties that those edges point to.
 
 ⚠️ UNSTABLE: Currently, the endpoint will return
 an array of 1 item (and linked data) when `uid` exists,
