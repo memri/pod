@@ -49,5 +49,5 @@ pub struct BulkAction {
     #[serde(default)]
     pub create_edges: Vec<CreateEdge>,
     #[serde(default)]
-    pub delete_edges: Vec<CreateEdge>,
+    pub delete_edges: Vec<DeleteEdge>,
 }
