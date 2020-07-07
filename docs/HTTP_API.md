@@ -90,9 +90,7 @@ Update a single item.
 and in fact will be increased by 1 from previous database value.
 
 ### POST /v1/bulk_action/
-Perform a bulk of operations simultaneously.
-
-All changes are guaranteed to happen at the same time - or not at all.
+Perform a bulk of operations atomically.
 
 Input json:
 ```json
