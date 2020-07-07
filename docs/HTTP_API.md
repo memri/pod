@@ -3,22 +3,22 @@ There are various components that communicate with the Pod:
 
 * Clients like iOS app, web app
 * Indexers that enrich data/photos/other content,
-* Importers/Downloaders that import information from other systems, etc.
+* Importers/Downloaders that import information from other systems, e.g. from evernote.
 
 All of that information goes through Pod HTTP API.
-This page explains the data types that Pod can store, and current API that shows what you can and cannot do with the Pod.
+This page explains the data types that Pod can store, and current API.
 
 
 ## Items
 Items is the main thing that is stored in Pod.
-You could see it as the main holder for Pod-s data,
-with edges (see below) being the thing that connects different items to form a graph.
+You could see it as the main holder for Pod-s data.
 
 ### item's mandatory properties
 
 * `_type`, case-sensitive item's type. Can never be changed once created
 * `uid`, the unique identifier of the item, signed 64-bit integer
-* `dateCreated`, creation date _as seen by the client_, stored as DateTime (see [Understanding the schema](../README.md)). Set by the client by default.
+* `dateCreated`, creation date _as seen by the client_, stored as
+DateTime (see [Understanding the schema](../README.md)). Set by the client by default.
 * `dateModified`, last modification date _as seen by the client_. Set by the client by default.
 * `deleted`, a flag that, if set to `true`, will mean that the item was deleted by the user.
 It is still possible to restore the item later on. Permanent delete will happen later.
@@ -31,17 +31,21 @@ Additional properties can be set dynamically via the [Schema](../README.md).
 
 
 ## Edges
-Edges connect items together. Pending on design decisions we'll have to make, edges might possibly also support arbitrary properties in the future (again pending on our discussions in the future, don't rely on it yet).
+Edges connect items together to form a
+[directed graph](https://en.wikipedia.org/wiki/Directed_graph).
+Pending on design decisions we'll have to make, edges might also possibly
+support properties in the future (don't rely on it yet).
 
 ### edge's mandatory properties
 
 * `_source`, the `uid` of the item it points *from*
-* `_target`, the `uid` of the item it points *to*. Note that edges are "directed"/"asymmetrical", e.g. _source and _target are not interchangeable
+* `_target`, the `uid` of the item it points *to*
 * `_type`, the type of the edge. Cannot be modified once created.
 
 ### edge's additional properties (currently hardcoded)
 * `label`, an optional string
-* `sequence`, an optional integer meaning the client-side ordering of items (e.g. items reachable from a "root" item using edges of a particular _type)
+* `sequence`, an optional integer meaning the client-side ordering of items
+(e.g. items reachable from a "root" item using edges of a particular _type)
 
 
 ## API endpoints
@@ -70,7 +74,8 @@ Create a single item.
 
 Returns `uid` of the created item. Returns an error if an `uid` did already exist.
 
-**UNSTABLE**: We might allow creating items without `uid` being explicitly set, and just return the `uid` to the caller in future.
+**UNSTABLE**: We might allow creating items without `uid` being explicitly set,
+and just return the `uid` to the caller in future.
 
 ### PUT /v1/items/{uid}
 Update a single item.
@@ -79,7 +84,8 @@ Update a single item.
 * `_type` from the input json will be ignored
 * `dateCreated` from the input json will be ignored
 * `dateModified` if not present, will be set by the backend
-* `version` from the input json will be ignored, and in fact will be increased by 1 from previous database value.
+* `version` from the input json will be ignored,
+and in fact will be increased by 1 from previous database value.
 
 ### POST /v1/bulk_action/
 Perform a bulk of operations simultaneously.
@@ -121,6 +127,11 @@ Given a json like
 the endpoint will return an array of all items with exactly the same properties.
 
 ### GET /v1/item_with_edges/{uid}
-Get item, with edges of any type pointing from that item, and all item-s properties that those edges point to.
+Get item, with edges of any type pointing from that item,
+and all item-s properties that those edges point to.
 
-**UNSTABLE**: Currently, the endpoint will return an array of 1 item (and linked data) when `uid` exists, or an empty array when this `uid` does not exist. In future, we will return the json object itself when the `uid` exists, or return an HTTP failure otherwise.
+**UNSTABLE**: Currently, the endpoint will return
+an array of 1 item (and linked data) when `uid` exists,
+or an empty array when this `uid` does not exist.
+In future, we will return the json object itself when the `uid` exists,
+or return an HTTP failure otherwise.
