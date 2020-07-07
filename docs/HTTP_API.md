@@ -89,6 +89,8 @@ Update a single item.
 * `version` from the input json will be ignored,
 and in fact will be increased by 1 from previous database value.
 
+Returns an empty array if the operation is successful.
+
 ### POST /v1/bulk_action/
 Perform a bulk of operations atomically.
 
