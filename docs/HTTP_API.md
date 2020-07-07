@@ -107,10 +107,12 @@ Example input json:
 }
 ```
 
+Returns an empty array if the operation is successful.
+
 ### DELETE /v1/items/{uid}
-Mark an item as deleted.
-* Sets `deleted` flag to `true`
-* Sets `dateModified` to the database DateTime
+Mark an item as deleted by:
+* Setting `deleted` flag to `true`
+* Updating `dateModified` (server-s time is taken)
 
 ### GET /v1/deprecated/uri_exists/{uri}
 ⚠️ DEPRECATED Check if an item exists with the `uri`.
