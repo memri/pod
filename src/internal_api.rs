@@ -381,11 +381,11 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
-pub fn execute_service(service: String) -> Result<()> {
+pub fn run_service(service: String) -> Result<()> {
     debug!("Executing service {}", service);
     match service.as_str() {
-        "evernote" => execute("docker", &["run", "hello-world"]),
-        "icloud" => execute("docker", &["run", "hello-world"]),
+        "evernote" => execute_and_forget("docker", &["run", "hello-world"]),
+        "icloud" => execute_and_forget("docker", &["run", "hello-world"]),
         _ => {
             return Err(Error {
                 code: StatusCode::BAD_REQUEST,
@@ -396,7 +396,7 @@ pub fn execute_service(service: String) -> Result<()> {
     Ok(())
 }
 
-fn execute(program: &str, args: &[&str]) {
+fn execute_and_forget(program: &str, args: &[&str]) {
     Command::new(program)
         .args(args)
         .spawn()
