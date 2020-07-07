@@ -124,7 +124,7 @@ or returns `false` successfully if such item does not exist.
 Search items by their fields.
 Given a json like
 ```
-{ "author": "Vasili", "_type": "note" }
+{ "_type": "Label", "color": "#CCFF00" }
 ```
 the endpoint will return an array of all items with exactly the same properties.
 
