@@ -17,12 +17,13 @@ You could see it as the main holder for Pod-s data.
 
 * `_type`, case-sensitive item's type. Can never be changed once created.
 * `uid`, the unique identifier of the item, signed 64-bit integer.
-* `dateCreated`, creation date _as seen by the client_, stored as.
+* `dateCreated`, creation date _as seen by the client_, stored as
 DateTime (see [Understanding the schema](../README.md#understanding-the-schema)).
 Set by the client by default.
 * `dateModified`, last modification date _as seen by the client_. Set by the client by default.
 * `deleted`, a flag that, if set to `true`, will mean that the item was deleted by the user.
-It is still possible to restore the item later on. Permanent delete will happen later.
+It is still possible to restore the item later on.
+Permanent delete will be supported in future, based in deletion date.
 * `version`, a number that is incremented with each update from the client.
 This field is fully controlled by the Pod, all input on it will be ignored and it will always
 store the real number of updates that happened to an item.
