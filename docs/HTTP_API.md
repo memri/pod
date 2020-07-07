@@ -1,4 +1,4 @@
-## About
+# About
 There are various components that communicate with the Pod:
 
 * Clients like iOS app, web app
@@ -18,7 +18,7 @@ You could see it as the main holder for Pod-s data.
 * `_type`, case-sensitive item's type. Can never be changed once created
 * `uid`, the unique identifier of the item, signed 64-bit integer
 * `dateCreated`, creation date _as seen by the client_, stored as
-DateTime (see [Understanding the schema](../README.md)). Set by the client by default.
+DateTime (see [Understanding the schema](../README.md#understanding-the-schema)). Set by the client by default.
 * `dateModified`, last modification date _as seen by the client_. Set by the client by default.
 * `deleted`, a flag that, if set to `true`, will mean that the item was deleted by the user.
 It is still possible to restore the item later on. Permanent delete will happen later.
@@ -27,7 +27,7 @@ This field is fully controlled by the Pod, all input on it will be ignored and i
 store the real number of updates that happened to an item.
 
 ### item's additional properties
-Additional properties can be set dynamically via the [Schema](../README.md).
+Additional properties can be set dynamically via the [Schema](../README.md#schema).
 
 
 ## Edges
@@ -48,7 +48,7 @@ support properties in the future (don't rely on it yet).
 (e.g. items reachable from a "root" item using edges of a particular _type)
 
 
-## API endpoints
+# API
 
 ### GET /version
 Get the version of the Pod. In future, we'll also point to a specific git commit here.
@@ -56,7 +56,7 @@ Get the version of the Pod. In future, we'll also point to a specific git commit
 ### GET /v1/items/{uid}
 Get a single item by it's `uid`.
 
-**UNSTABLE**: currently, we return an empty array if an item is not found,
+⚠️ UNSTABLE: currently, we return an empty array if an item is not found,
 or an array with 1 item if item exists.
 In future, we might return an error if item was not found,
 and the object itself if the item was found.
@@ -74,7 +74,7 @@ Create a single item.
 
 Returns `uid` of the created item. Returns an error if an `uid` did already exist.
 
-**UNSTABLE**: We might allow creating items without `uid` being explicitly set,
+⚠️ UNSTABLE: We might allow creating items without `uid` being explicitly set,
 and just return the `uid` to the caller in future.
 
 ### PUT /v1/items/{uid}
@@ -111,12 +111,10 @@ Mark an item as deleted.
 * Sets `dateModified` to the database DateTime
 
 ### GET /v1/deprecated/uri_exists/{uri}
-Check if an item exists with the `uri`.
+⚠️ DEPRECATED Check if an item exists with the `uri`.
 
-Returns a `true` successfully if such item exists,
-or returns a `false` successfully if such item does not exist.
-
-**DEPRECATED**.
+Returns `true` successfully if such item exists,
+or returns `false` successfully if such item does not exist.
 
 ### POST /v1/search_by_fields/
 Search items by their fields.
@@ -130,7 +128,7 @@ the endpoint will return an array of all items with exactly the same properties.
 Get item, with edges of any type pointing from that item,
 and all item-s properties that those edges point to.
 
-**UNSTABLE**: Currently, the endpoint will return
+⚠️ UNSTABLE: Currently, the endpoint will return
 an array of 1 item (and linked data) when `uid` exists,
 or an empty array when this `uid` does not exist.
 In future, we will return the json object itself when the `uid` exists,
