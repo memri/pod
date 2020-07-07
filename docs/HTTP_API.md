@@ -92,7 +92,7 @@ and in fact will be increased by 1 from previous database value.
 ### POST /v1/bulk_action/
 Perform a bulk of operations atomically.
 
-Input json:
+Example input json:
 ```json
 {
   "create_items": [ { /* structure identical to the create endpoint */ } ],
