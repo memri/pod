@@ -1,7 +1,7 @@
 # About
 There are various components that communicate with the Pod:
 
-* Clients like iOS app, web app
+* Clients like iOS app, web app;
 * Indexers that enrich data/photos/other content,
 * Importers/Downloaders that import information from other systems, e.g. from evernote.
 
