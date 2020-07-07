@@ -381,7 +381,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
-pub fn execute_command(service: String) -> Result<()> {
+pub fn execute_service(service: String) -> Result<()> {
     debug!("Executing service {}", service);
     match service.as_str() {
         "evernote" => execute("docker", &["run", "hello-world"]),
