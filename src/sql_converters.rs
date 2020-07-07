@@ -112,14 +112,18 @@ pub fn json_value_to_sqlite(json: &Value) -> crate::error::Result<ToSqlOutput<'_
 /// characters from 'a' to 'z', 'A' to 'Z'.
 pub fn validate_field_name(field: &str) -> crate::error::Result<()> {
     lazy_static! {
-        static ref REGEXP: Regex = Regex::new(r"^[_a-zA-Z]{1,18}$").expect("Cannot create regex");
+        static ref REGEXP: Regex = Regex::new(r"^[_a-zA-Z]{1,30}$").expect("Cannot create regex");
     }
     if REGEXP.is_match(field) && !BLACKLIST_COLUMN_NAMES.contains(field) {
         Ok(())
     } else {
         Err(crate::error::Error {
             code: StatusCode::BAD_REQUEST,
-            msg: format!("Invalid field (database column) name {}", field),
+            msg: format!(
+                "Item property name {} does not satisfy the format {}",
+                field,
+                REGEXP.as_str()
+            ),
         })
     }
 }

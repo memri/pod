@@ -113,11 +113,8 @@ fn get_column_info(
             .expect("All groups of `group_by` have at least 1 element")
             .name
             .to_string();
-        assert!(
-            validate_field_name(&column_name).is_ok(),
-            "Failed to add invalid column name {}",
-            column_name
-        );
+
+        validate_field_name(&column_name).expect("Failed to add invalid column");
         if MANDATORY_ITEMS_FIELDS.contains(&column_name.as_str()) {
             continue;
         }
