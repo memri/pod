@@ -2,7 +2,7 @@
 There are various components that communicate with the Pod:
 
 * Clients like iOS app, web app;
-* Indexers that enrich data/photos/other content,
+* Indexers that enrich data/photos/other content;
 * Importers/Downloaders that import information from other systems, e.g. from evernote.
 
 All of that information goes through Pod HTTP API.
@@ -15,10 +15,11 @@ You could see it as the main holder for Pod-s data.
 
 ### item's mandatory properties
 
-* `_type`, case-sensitive item's type. Can never be changed once created
-* `uid`, the unique identifier of the item, signed 64-bit integer
-* `dateCreated`, creation date _as seen by the client_, stored as
-DateTime (see [Understanding the schema](../README.md#understanding-the-schema)). Set by the client by default.
+* `_type`, case-sensitive item's type. Can never be changed once created.
+* `uid`, the unique identifier of the item, signed 64-bit integer.
+* `dateCreated`, creation date _as seen by the client_, stored as.
+DateTime (see [Understanding the schema](../README.md#understanding-the-schema)).
+Set by the client by default.
 * `dateModified`, last modification date _as seen by the client_. Set by the client by default.
 * `deleted`, a flag that, if set to `true`, will mean that the item was deleted by the user.
 It is still possible to restore the item later on. Permanent delete will happen later.
