@@ -69,8 +69,8 @@ Get an array of all items.
 ### POST /v1/items/
 Create a single item.
 
-* `uid` property MUST be present in input JSON
-* `version` property of the input will be ignored if set
+* `uid` property MUST be present in input json
+* `version` from the input json will be ignored,
 * `dateCreated` if not present, will be set by the backend
 * `dateModified` if not present, will be set by the backend
 
