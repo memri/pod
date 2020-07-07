@@ -74,6 +74,11 @@ When running Pod, a file named `pod.db` will be created.
 You can use `sqlite3 pod.db` to browse the database locally.
 For example, `.schema` will display the current database schema.
 
+If you want to fill the database with some example data, use:
+```
+sqlite3 data/db/pod.db < res/example_data.sql
+```
+
 Note that the current version of Pod **DOES NOT** use encryption.
 This part will be changed, and a manual import will be needed in the future.
 
