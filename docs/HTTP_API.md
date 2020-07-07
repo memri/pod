@@ -6,7 +6,8 @@ There are various components that communicate with the Pod:
 * Importers/Downloaders that import data from other systems, e.g. from evernote.
 
 All of that data goes through Pod HTTP API.
-This page explains the data types that Pod can store, and current API.
+This document explains the data types that Pod can store,
+and current API that let's you store or retrieve the data.
 
 
 ## Items
