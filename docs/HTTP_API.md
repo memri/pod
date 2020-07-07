@@ -98,10 +98,10 @@ Perform a bulk of operations atomically.
 Example input json:
 ```json
 {
-  "create_items": [ { /* structure identical to the create endpoint */ } ],
-  "update_items": [ { /* structure identical to the update endpoint */ } ],
-  "delete_items": [ uid, uid, uid, ...],
-  "create_edges": [
+  "createItems": [ { /* structure identical to the create endpoint */ } ],
+  "updateItems": [ { /* structure identical to the update endpoint */ } ],
+  "deleteItems": [ uid, uid, uid, ...],
+  "createEdges": [
     { "_source": uid, "_target": uid, "_type": "AnyString", /* other properties can be set */ },
     ...
   ],
