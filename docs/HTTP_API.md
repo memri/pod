@@ -53,14 +53,14 @@ support properties in the future (don't rely on it yet).
 # API
 
 ### GET /version
-Get the version of the Pod. In future, we'll also point to a specific git commit here.
+Get the version of the Pod. In future, it will also point to a specific git commit.
 
 ### GET /v1/items/{uid}
 Get a single item by it's `uid`.
 
-⚠️ UNSTABLE: currently, we return an empty array if an item is not found,
+⚠️ UNSTABLE: currently, the endpoint returns an empty array if an item is not found,
 or an array with 1 item if item exists.
-In future, we might return an error if item was not found,
+In future, the endpoint might return an error if item was not found,
 and the object itself if the item was found.
 
 ### GET /v1/all_items/
@@ -76,8 +76,8 @@ Create a single item.
 
 Returns `uid` of the created item. Returns an error if an `uid` did already exist.
 
-⚠️ UNSTABLE: We might allow creating items without `uid` being explicitly set,
-and just return the `uid` to the caller in future.
+⚠️ UNSTABLE: In future, the endpoint might allow creating items without `uid` being explicitly set,
+and just return the `uid` to the caller.
 
 ### PUT /v1/items/{uid}
 Update a single item.
@@ -133,5 +133,5 @@ and all item-s properties that those edges point to.
 ⚠️ UNSTABLE: Currently, the endpoint will return
 an array of 1 item (and linked data) when `uid` exists,
 or an empty array when this `uid` does not exist.
-In future, we might return the json object itself when the `uid` exists,
+In future, the endpoint might return the json object itself when the `uid` exists,
 or return an HTTP failure otherwise.
