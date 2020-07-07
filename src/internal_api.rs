@@ -10,6 +10,7 @@ use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::validate_field_name;
 use chrono::Utc;
 use log::debug;
+use log::info;
 use r2d2::Pool;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -382,7 +383,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 }
 
 pub fn run_service(service: String) -> Result<()> {
-    debug!("Executing service {}", service);
+    info!("Trying to run {}", service);
     match service.as_str() {
         "evernote" => execute_and_forget("docker", &["run", "hello-world"]),
         "icloud" => execute_and_forget("docker", &["run", "hello-world"]),

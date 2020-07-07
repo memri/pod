@@ -209,7 +209,6 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::post())
         .map(move |service: String| {
-            info!("Trying to run {}", service);
             let result = internal_api::run_service(service);
             let boxed: Box<dyn Reply> = match result {
                 Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
