@@ -1,5 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
+use crate::api_model::DeleteEdge;
 use crate::api_model::UpdateItem;
 use crate::error::Error;
 use crate::error::Result;
@@ -171,24 +172,25 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
 
 /// Delete an edge and all its properties.
 /// WARNING: Deleting an edge is irreversible!!!
-fn delete_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
-    let fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
+fn delete_edge(tx: &Transaction, edges: DeleteEdge) -> Result<()> {
+    let sql =
+        "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;"
+            .to_string();
+    let source = Value::from(edges._source as f64);
+    let target = Value::from(edges._target as f64);
+    let _type = Value::from(edges._type);
+    let mut sql_params = Vec::new();
+    sql_params.push((":_source".to_string(), json_value_to_sqlite(&source)?));
+    sql_params.push((":_target".to_string(), json_value_to_sqlite(&target)?));
+    sql_params.push((":_type".to_string(), json_value_to_sqlite(&_type)?));
+
+    let sql_params: Vec<_> = sql_params
+        .iter()
+        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
         .collect();
-    let mut sql = "DELETE FROM edges WHERE ".to_string();
-    let mut after_first = false;
-    for key in fields.keys() {
-        if after_first {
-            sql.push_str(" AND ");
-        }
-        after_first = true;
-        sql.push_str(key);
-        sql.push_str(" = :");
-        sql.push_str(key);
-    }
-    sql.push_str(";");
-    execute_sql(tx, &sql, &fields)
+    let mut stmt = tx.prepare_cached(&sql)?;
+    stmt.execute_named(&sql_params)?;
+    Ok(())
 }
 
 fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
@@ -218,17 +220,8 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     for edge_uid in bulk_action.delete_items {
         delete_item_tx(tx, edge_uid)?;
     }
-    for mut del_edge in bulk_action.delete_edges {
-        del_edge
-            .fields
-            .insert("_source".to_string(), del_edge._source.into());
-        del_edge
-            .fields
-            .insert("_target".to_string(), del_edge._target.into());
-        del_edge
-            .fields
-            .insert("_type".to_string(), del_edge._type.into());
-        delete_edge(tx, del_edge.fields)?;
+    for del_edge in bulk_action.delete_edges {
+        delete_edge(tx, del_edge)?;
     }
     Ok(())
 }

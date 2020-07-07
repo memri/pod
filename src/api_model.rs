@@ -33,8 +33,6 @@ pub struct DeleteEdge {
     pub _type: String,
     pub _source: i64,
     pub _target: i64,
-    #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
