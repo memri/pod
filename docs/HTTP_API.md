@@ -138,3 +138,7 @@ an array of 1 item (and linked data) when `uid` exists,
 or an empty array when this `uid` does not exist.
 In future, the endpoint might return the json object itself when the `uid` exists,
 or return an HTTP failure otherwise.
+
+### POST /v1/exec/{service}
+Execute a service by its name, e.g. "evernote", "icloud".
+Undefined services will yield 400 BAD_REQUEST error.
