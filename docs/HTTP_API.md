@@ -105,6 +105,10 @@ Example input json:
     { "_source": uid, "_target": uid, "_type": "AnyString", /* other properties can be set */ },
     ...
   ],
+  "deleteEdges": [
+    { "_source": uid, "_target": uid, "_type": "Some Type" },
+    ...
+  ],
 }
 ```
 
