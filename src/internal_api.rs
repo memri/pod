@@ -1,5 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
+use crate::api_model::UpdateItem;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
@@ -38,7 +39,7 @@ pub fn get_project_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Get an item by its `uid`
+/// See HTTP_API.md for details
 pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
@@ -50,6 +51,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<
     Ok(json)
 }
 
+/// See HTTP_API.md for details
 pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value>> {
     debug!("Getting all items");
     let conn = sqlite.get()?;
@@ -57,18 +59,6 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
     let rows = stmt.query(NO_PARAMS)?;
     let json = sqlite_rows_to_json(rows)?;
     Ok(json)
-}
-
-/// Create an item, failing if the `uid` existed before.
-/// The new item will be created with `version = 1`.
-pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<i64> {
-    debug!("Creating item {}", json);
-    let create_action: CreateItem = serde_json::from_value(json)?;
-    let mut conn = sqlite.get()?;
-    let tx = conn.transaction()?;
-    let result = create_item_tx(&tx, create_action.uid, create_action.fields)?;
-    tx.commit()?;
-    Ok(result)
 }
 
 fn is_array_or_object(value: &Value) -> bool {
@@ -112,8 +102,12 @@ fn create_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) ->
         .collect();
     fields.insert("uid".to_string(), uid.into());
     let time_now = Utc::now().timestamp_millis();
-    fields.insert("dateCreated".to_string(), time_now.into());
-    fields.insert("dateModified".to_string(), time_now.into());
+    if !fields.contains_key("dateCreated") {
+        fields.insert("dateCreated".to_string(), time_now.into());
+    }
+    if !fields.contains_key("dateModified") {
+        fields.insert("dateModified".to_string(), time_now.into());
+    }
     fields.insert("version".to_string(), Value::from(1));
 
     let mut sql = "INSERT INTO items (".to_string();
@@ -133,10 +127,14 @@ fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) ->
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
     fields.insert("uid".to_string(), uid.into());
-    let time_now = Utc::now().timestamp_millis();
     fields.remove("_type");
     fields.remove("dateCreated");
-    fields.insert("dateModified".to_string(), time_now.into());
+
+    if !fields.contains_key("dateModified") {
+        let time_now = Utc::now().timestamp_millis();
+        fields.insert("dateModified".to_string(), time_now.into());
+    }
+
     fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
     let mut after_first = false;
@@ -199,9 +197,7 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     Ok(())
 }
 
-/// Perform a bulk of operations simultaneously.
-/// All changes are guaranteed to happen at the same time - or not at all.
-/// See `api_model::BulkActions` for input JSON information.
+/// See HTTP_API.md for details
 pub fn bulk_action(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<()> {
     debug!("Performing bulk action {}", json);
     let bulk_action: BulkAction = serde_json::from_value(json)?;
@@ -212,75 +208,29 @@ pub fn bulk_action(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     Ok(())
 }
 
-/// Update an item with a JSON object.
-/// Json `null` properties will be erased from the database.
-/// Nonexisting properties will cause error.
-/// Reserved properties like "version" will be silently ignored.
-/// All existing edges from the item will be removed,
-/// and new edges will be created to all Objects and Arrays within the JSON, by their `uid`.
-/// The version of the item in the database will be increased `version += 1`.
-pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
-    debug!("Updating item {} with {}", uid, json);
-    let mut fields_map = match json {
-        Object(map) => map,
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: "Expected JSON object".to_string(),
-            })
-        }
-    };
-
-    fields_map.remove("uid");
-    fields_map.remove("_type");
-    fields_map.remove("dateCreated");
-    fields_map.remove("dateModified");
-    fields_map.remove("version");
-
-    let time_now = Utc::now().timestamp_millis();
-    fields_map.insert("dateModified".to_string(), time_now.into());
-
-    let mut sql_body = "UPDATE items SET ".to_string();
-    let mut first_parameter = true;
-    for (field, value) in &fields_map {
-        validate_field_name(field)?;
-        match value {
-            Value::Array(_) => continue,
-            Value::Object(_) => continue,
-            _ => (),
-        };
-        if !first_parameter {
-            sql_body.push_str(", ");
-        };
-        first_parameter = false;
-        sql_body.push_str(field);
-        sql_body.push_str(" = :");
-        sql_body.push_str(field);
-    }
-    sql_body.push_str(", version = version + 1");
-    sql_body.push_str(" WHERE uid = :uid ;");
-
-    let mut sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
-    let uid = Value::from(uid);
-    sql_params.push((":uid".into(), json_value_to_sqlite(&uid)?));
-    let sql_params = borrow_sql_params(&sql_params);
-
-    let conn = sqlite.get()?;
-    let mut stmt = conn.prepare_cached(&sql_body)?;
-    let updated_count = stmt.execute_named(sql_params.as_slice())?;
-    if updated_count > 0 {
-        Ok(())
-    } else {
-        Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: "Update failed, uid not found".to_string(),
-        })
-    }
+/// See HTTP_API.md for details
+pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<i64> {
+    debug!("Creating item {}", json);
+    let create_action: CreateItem = serde_json::from_value(json)?;
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    let result = create_item_tx(&tx, create_action.uid, create_action.fields)?;
+    tx.commit()?;
+    Ok(result)
 }
 
-/// Delete an already existing item.
-/// Return successfully if item existed and was successfully deleted.
-/// Return NOT_FOUND if item does not exist.
+/// See HTTP_API.md for details
+pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
+    debug!("Updating item {} with {}", uid, json);
+    let update_action: UpdateItem = serde_json::from_value(json)?;
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    update_item_tx(&tx, update_action.uid, update_action.fields)?;
+    tx.commit()?;
+    Ok(())
+}
+
+/// See HTTP_API.md for details
 pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
     debug!("Deleting item {}", uid);
     let time_now = Utc::now().timestamp_millis();
@@ -288,10 +238,11 @@ pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<(
     update_item(sqlite, uid, json)
 }
 
-/// Search items by their fields
-///
-/// * `query` - json with the desired fields, e.g. { "author": "Vasili", "_type": "note" }
-pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Vec<Value>> {
+/// See HTTP_API.md for details
+pub fn search_by_fields(
+    sqlite: &Pool<SqliteConnectionManager>,
+    query: Value,
+) -> Result<Vec<Value>> {
     debug!("Query {:?}", query);
     let fields_map = match query {
         Object(map) => map,
@@ -330,8 +281,7 @@ pub fn search(sqlite: &Pool<SqliteConnectionManager>, query: Value) -> Result<Ve
     Ok(json)
 }
 
-/// Get an item by its `uid`, with edges and linked items.
-/// `syncState` is added to linked items.
+/// See HTTP_API.md for details
 pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
     let conn = sqlite.get()?;
