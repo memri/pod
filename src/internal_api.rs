@@ -171,6 +171,17 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     execute_sql(tx, &sql, &fields)
 }
 
+/// Delete an edge when edge exists.
+fn delete_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+    let fields: HashMap<String, Value> = fields
+        .into_iter()
+        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
+        .collect();
+    let mut sql = "DELETE FROM edges WHERE ".to_string();
+    let keys: Vec<_> = fields.keys().collect();
+    write_sql_body(&mut sql, &keys, ", ");
+}
+
 fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let mut fields = HashMap::new();
     let time_now = Utc::now().timestamp_millis();
@@ -197,6 +208,14 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     }
     for edge_uid in bulk_action.delete_items {
         delete_item_tx(tx, edge_uid)?;
+    }
+    for mut edge in bulk_action.delete_edges {
+        edge.fields
+            .insert("_source".to_string(), edge._source.into());
+        edge.fields
+            .insert("_target".to_string(), edge._target.into());
+        edge.fields.insert("_type".to_string(), edge._type.into());
+        delete_edge(tx, edge.fields)?;
     }
     Ok(())
 }
