@@ -131,5 +131,5 @@ and all item-s properties that those edges point to.
 ⚠️ UNSTABLE: Currently, the endpoint will return
 an array of 1 item (and linked data) when `uid` exists,
 or an empty array when this `uid` does not exist.
-In future, we will return the json object itself when the `uid` exists,
+In future, we might return the json object itself when the `uid` exists,
 or return an HTTP failure otherwise.
