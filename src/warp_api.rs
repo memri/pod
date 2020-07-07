@@ -200,6 +200,24 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    // GET /v1/exec/$service
+    // Execute the command defined by frontend.
+    // Parameter:
+    //      service: name of the service to be executed
+    let execute_command = api_version_1
+        .and(warp::path!("execute" / String))
+        .and(warp::path::end())
+        .and(warp::get())
+        .map(move |service: String| {
+            info!("Trying to start {}", service);
+            let result = internal_api::execute_command(service);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
+        });
+
     warp::serve(
         version
             .with(&headers)
@@ -211,7 +229,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(delete_item.with(&headers))
             .or(external_id_exists.with(&headers))
             .or(search.with(&headers))
-            .or(get_item_with_edges.with(&headers)),
+            .or(get_item_with_edges.with(&headers))
+            .or(execute_command.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
