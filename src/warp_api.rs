@@ -172,6 +172,20 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
+    let pool = pool_arc.clone();
+    let run_indexers = api_version_1
+        .and(warp::path!("run_service" / "indexers" / i64))
+        .and(warp::path::end())
+        .and(warp::post())
+        .map(move |uid: i64| {
+            let result = internal_api::run_indexers(&pool, uid);
+            let boxed: Box<dyn Reply> = match result {
+                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
+                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
+            };
+            boxed
+        });
+
     warp::serve(
         version
             .with(&headers)
@@ -184,7 +198,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(external_id_exists.with(&headers))
             .or(search.with(&headers))
             .or(get_item_with_edges.with(&headers))
-            .or(run_importers.with(&headers)),
+            .or(run_importers.with(&headers))
+            .or(run_indexers.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;

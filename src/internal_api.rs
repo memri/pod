@@ -361,12 +361,59 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 pub fn run_importers(data_type: String) -> Result<()> {
     info!("Running importer for {}", data_type);
     match data_type.as_str() {
-        "note" => execute_and_forget("docker", &["run", "hello-world"]),
+        "note" => execute_and_forget(
+            "docker",
+            &[
+                "run",
+                "--rm",
+                "--volume=download-volume:/usr/src/importers/data",
+                "--network=pod_memri-net",
+                "--name=memri-importers_1",
+                "-it",
+                "memri-importers:latest",
+            ],
+        ),
         _ => {
             return Err(Error {
                 code: StatusCode::BAD_REQUEST,
                 msg: format!("Data type {} not supported", data_type),
             })
+        }
+    }
+    Ok(())
+}
+
+pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
+    info!("Running indexer on item {}", uid);
+    let result = get_item(sqlite, uid);
+    if result.iter().next().is_some() {
+        match result.iter().next() {
+            Some(item) => {
+                if !item.is_empty() {
+                    execute_and_forget(
+                        "docker",
+                        &[
+                            "run",
+                            "--rm",
+                            "--network=pod_memri-net",
+                            "--name=memri-indexers_1",
+                            "-it",
+                            "memri-indexers:latest",
+                        ],
+                    );
+                } else {
+                    return Err(Error {
+                        code: StatusCode::BAD_REQUEST,
+                        msg: format!("No item {} found", uid),
+                    });
+                }
+            }
+            _ => {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to get item {}", uid),
+                })
+            }
         }
     }
     Ok(())
