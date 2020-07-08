@@ -30,9 +30,9 @@ pub struct CreateEdge {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DeleteEdge {
-    pub _type: String,
     pub _source: i64,
     pub _target: i64,
+    pub _type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
