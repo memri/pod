@@ -152,6 +152,14 @@ or an empty array when this `uid` does not exist.
 In future, the endpoint might return the json object itself when the `uid` exists,
 or return an HTTP failure otherwise.
 
-### POST /v1/run_service/{service}
-Execute a service by its name, e.g. "evernote", "icloud".
-Undefined services will yield 400 BAD_REQUEST error.
+### POST /v1/run_service/downloaders/{service}/{data_type}
+Run a downloader for different services with different data types, e.g. Evernote with note.
+Unsupported service or data type will yield 400 BAD_REQUEST error.
+
+### POST /v1/run_service/importers/{data_type}
+Run an importer for a given data type, e.g. note.
+Unsupported data type will yield 400 BAD_REQUEST error.
+
+### POST /v1/run_service/indexers/{uid}
+Run an indexer to index an item with the given uid.
+A 400 BAD_REQUEST error is yield when the uid is not found. 
