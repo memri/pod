@@ -359,10 +359,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 }
 
 pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
-    info!(
-        "Running downloader for service {} with {}",
-        service, data_type
-    );
+    info!("Running downloader {} for {}", service, data_type);
     match service.as_str() {
         "evernote" => match data_type.as_str() {
             "note" => execute_and_forget(
@@ -420,29 +417,22 @@ pub fn run_importers(data_type: String) -> Result<()> {
 
 pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
     info!("Running indexer on item {}", uid);
-    let result = get_item(sqlite, uid);
-    match result.iter().next() {
-        Some(item) => {
-            if !item.is_empty() {
-                execute_and_forget(
-                    "docker",
-                    &[
-                        "run",
-                        "--rm",
-                        "--network=pod_memri-net",
-                        "--name=memri-indexers_1",
-                        "-it",
-                        "memri-indexers:latest",
-                    ],
-                );
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("No item {} found", uid),
-                });
-            }
+    let result = get_item(sqlite, uid)?;
+    match result.first() {
+        Some(_item) => {
+            execute_and_forget(
+                "docker",
+                &[
+                    "run",
+                    "--rm",
+                    "--network=pod_memri-net",
+                    "--name=memri-indexers_1",
+                    "-it",
+                    "memri-indexers:latest",
+                ],
+            );
         }
-        _ => {
+        None => {
             return Err(Error {
                 code: StatusCode::BAD_REQUEST,
                 msg: format!("Failed to get item {}", uid),
