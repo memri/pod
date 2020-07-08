@@ -174,8 +174,7 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
 /// WARNING: Deleting an edge is irreversible!!!
 fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<()> {
     let sql =
-        "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;"
-            .to_string();
+        "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;";
     let source = Value::from(edge._source);
     let target = Value::from(edge._target);
     let _type = Value::from(edge._type);
