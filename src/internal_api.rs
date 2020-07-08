@@ -172,24 +172,18 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
 
 /// Delete an edge and all its properties.
 /// WARNING: Deleting an edge is irreversible!!!
-fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<()> {
+fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     let sql =
         "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;";
-    let source = Value::from(edge._source);
-    let target = Value::from(edge._target);
-    let _type = Value::from(edge._type);
-    let mut sql_params = Vec::new();
-    sql_params.push((":_source".to_string(), json_value_to_sqlite(&source)?));
-    sql_params.push((":_target".to_string(), json_value_to_sqlite(&target)?));
-    sql_params.push((":_type".to_string(), json_value_to_sqlite(&_type)?));
-
-    let sql_params: Vec<_> = sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect();
+    let sql_params = vec![
+        (":_source".to_string(), edge._source.into()),
+        (":_target".to_string(), edge._target.into()),
+        (":_type".to_string(), edge._type.into()),
+    ];
+    let sql_params = borrow_sql_params(&sql_params);
     let mut stmt = tx.prepare_cached(&sql)?;
-    stmt.execute_named(&sql_params)?;
-    Ok(())
+    let result = stmt.execute_named(sql_params.as_slice())?;
+    Ok(result)
 }
 
 fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
