@@ -161,5 +161,4 @@ Run an importer for a given data type, e.g. note.
 Unsupported data type will yield 400 BAD_REQUEST error.
 
 ### POST /v1/run_service/indexers/{uid}
-Run an indexer to index an item with the given uid.
-A 400 BAD_REQUEST error is yield when the uid is not found. 
+Run an indexer on an item with the given uid.
