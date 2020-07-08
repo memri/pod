@@ -15,7 +15,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     info!("Starting {} HTTP server", package_name);
 
     let mut headers = HeaderMap::new();
-    if std::env::var_os("INSECURE_ACCESS").is_some() {
+    if std::env::var_os("INSECURE_HTTP_HEADERS").is_some() {
         info!("Adding Access-Control-Allow-Origin header as per environment config");
         headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     }

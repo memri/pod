@@ -58,6 +58,9 @@ Run:
 RUST_LOG=pod=debug,info cargo run
 ```
 
+To set `Access-Control-Allow-Origin` HTTP header to `*`,
+the the environment variable `INSECURE_HTTP_HEADERS` to any value.
+
 You can read about various components of the server:
 
 * Memri project: [blog.memri.io](https://blog.memri.io/)
