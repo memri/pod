@@ -90,7 +90,7 @@ Update a single item.
 * `version` from the input json will be ignored,
 and in fact will be increased by 1 from previous database value.
 
-Returns an empty array if the operation is successful.
+Returns an empty object if the operation is successful.
 
 ### POST /v1/bulk_action/
 Perform a bulk of operations atomically.
@@ -98,8 +98,14 @@ Perform a bulk of operations atomically.
 Example input json:
 ```json
 {
-  "createItems": [ { /* structure identical to the create endpoint */ } ],
-  "updateItems": [ { /* structure identical to the update endpoint */ } ],
+  "createItems": [
+    { /* structure identical to the create endpoint */ },
+    ...
+  ],
+  "updateItems": [
+    { /* structure identical to the update endpoint */ },
+    ...
+  ],
   "deleteItems": [ uid, uid, uid, ...],
   "createEdges": [
     { "_source": uid, "_target": uid, "_type": "AnyString", /* other properties can be set */ },
@@ -113,8 +119,9 @@ Example input json:
   ],
 }
 ```
+If `createEdges` array is not empty, all items in `createItems` MUST have `uid` set.
 
-Returns an empty array if the operation is successful.
+Returns an empty object if the operation is successful.
 
 ### DELETE /v1/items/{uid}
 Mark an item as deleted by:

@@ -6,7 +6,6 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateItem {
-    pub uid: i64,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
 }

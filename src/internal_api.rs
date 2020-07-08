@@ -98,12 +98,11 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
 }
 
 /// Create an item presuming consistency checks were already done
-fn create_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<i64> {
+fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
         .collect();
-    fields.insert("uid".to_string(), uid.into());
     let time_now = Utc::now().timestamp_millis();
     if !fields.contains_key("dateCreated") {
         fields.insert("dateCreated".to_string(), time_now.into());
@@ -196,8 +195,15 @@ fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
 
 fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     debug!("Performing bulk action {:#?}", bulk_action);
+    let edges_will_be_created = !bulk_action.create_edges.is_empty();
     for item in bulk_action.create_items {
-        create_item_tx(tx, item.uid, item.fields)?;
+        if !item.fields.contains_key("uid") && edges_will_be_created {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Creating items without uid in bulk_action is restricted for safety reasons (creating edges might be broken), item: {:?}", item.fields)
+            });
+        }
+        create_item_tx(tx, item.fields)?;
     }
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
@@ -236,7 +242,7 @@ pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Resul
     let create_action: CreateItem = serde_json::from_value(json)?;
     let mut conn = sqlite.get()?;
     let tx = conn.transaction()?;
-    let result = create_item_tx(&tx, create_action.uid, create_action.fields)?;
+    let result = create_item_tx(&tx, create_action.fields)?;
     tx.commit()?;
     Ok(result)
 }
