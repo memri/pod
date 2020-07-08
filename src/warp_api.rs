@@ -159,12 +159,12 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             boxed
         });
 
-    let execute_service = api_version_1
-        .and(warp::path!("run_service" / String))
+    let run_importers = api_version_1
+        .and(warp::path!("run_service" / "importers" / String))
         .and(warp::path::end())
         .and(warp::post())
-        .map(move |service: String| {
-            let result = internal_api::run_service(service);
+        .map(move |data_type: String| {
+            let result = internal_api::run_importers(data_type);
             let boxed: Box<dyn Reply> = match result {
                 Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
                 Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
@@ -184,7 +184,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             .or(external_id_exists.with(&headers))
             .or(search.with(&headers))
             .or(get_item_with_edges.with(&headers))
-            .or(execute_service.with(&headers)),
+            .or(run_importers.with(&headers)),
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
