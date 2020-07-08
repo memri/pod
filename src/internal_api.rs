@@ -172,13 +172,13 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
 
 /// Delete an edge and all its properties.
 /// WARNING: Deleting an edge is irreversible!!!
-fn delete_edge(tx: &Transaction, edges: DeleteEdge) -> Result<()> {
+fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<()> {
     let sql =
         "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;"
             .to_string();
-    let source = Value::from(edges._source as f64);
-    let target = Value::from(edges._target as f64);
-    let _type = Value::from(edges._type);
+    let source = Value::from(edge._source);
+    let target = Value::from(edge._target);
+    let _type = Value::from(edge._type);
     let mut sql_params = Vec::new();
     sql_params.push((":_source".to_string(), json_value_to_sqlite(&source)?));
     sql_params.push((":_target".to_string(), json_value_to_sqlite(&target)?));
