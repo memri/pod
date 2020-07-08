@@ -358,6 +358,41 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
+pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
+    info!(
+        "Running downloader for service {} with {}",
+        service, data_type
+    );
+    match service.as_str() {
+        "evernote" => match data_type.as_str() {
+            "note" => execute_and_forget(
+                "docker",
+                &[
+                    "run",
+                    "--rm",
+                    "--network=pod_memri-net",
+                    "--name=memri-indexers_1",
+                    "-it",
+                    "memri-downloaders:latest",
+                ],
+            ),
+            _ => {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Data type {} not supported", data_type),
+                })
+            }
+        },
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Service {} not supported", service),
+            })
+        }
+    }
+    Ok(())
+}
+
 pub fn run_importers(data_type: String) -> Result<()> {
     info!("Running importer for {}", data_type);
     match data_type.as_str() {
