@@ -2,7 +2,6 @@ use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
 use crate::api_model::UpdateItem;
-use crate::database_init::DATA_TYPES;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
@@ -361,13 +360,14 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 
 pub fn run_importers(data_type: String) -> Result<()> {
     info!("Running importer for {}", data_type);
-    if DATA_TYPES.contains(data_type.as_str()) {
-        execute_and_forget("docker", &["run", "hello-world"]);
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Data type {} not supported", data_type),
-        });
+    match data_type.as_str() {
+        "note" => execute_and_forget("docker", &["run", "hello-world"]),
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Data type {} not supported", data_type),
+            })
+        }
     }
     Ok(())
 }
