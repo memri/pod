@@ -29,6 +29,13 @@ pub struct CreateEdge {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteEdge {
+    pub _type: String,
+    pub _source: i64,
+    pub _target: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BulkAction {
     #[serde(default)]
@@ -39,4 +46,6 @@ pub struct BulkAction {
     pub delete_items: Vec<i64>,
     #[serde(default)]
     pub create_edges: Vec<CreateEdge>,
+    #[serde(default)]
+    pub delete_edges: Vec<DeleteEdge>,
 }

@@ -105,6 +105,12 @@ Example input json:
     { "_source": uid, "_target": uid, "_type": "AnyString", /* other properties can be set */ },
     ...
   ],
+  /* Delete an edge and all its properties */
+  /* WARNING: Deleting is irreversible!!! */
+  "deleteEdges": [ 
+    { "_source": uid, "_target": uid, "_type": "Some Type" },
+    ...
+  ],
 }
 ```
 
