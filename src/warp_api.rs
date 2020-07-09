@@ -6,6 +6,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
 use warp::http::header::HeaderMap;
 use warp::http::header::HeaderValue;
+use warp::reply::Response;
 use warp::Filter;
 use warp::Reply;
 
@@ -37,11 +38,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::get())
         .map(move |uid: i64| {
             let result = internal_api::get_item(&pool, uid);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -51,11 +49,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::get())
         .map(move || {
             let result = internal_api::get_all_items(&pool);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -66,11 +61,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::body::json())
         .map(move |body: serde_json::Value| {
             let result = internal_api::create_item(&pool, body);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -81,11 +73,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::body::json())
         .map(move |uid: i64, body: serde_json::Value| {
             let result = internal_api::update_item(&pool, uid, body);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -96,11 +85,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::body::json())
         .map(move |body: serde_json::Value| {
             let result = internal_api::bulk_action(&pool, body);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -110,11 +96,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::delete())
         .map(move |uid: i64| {
             let result = internal_api::delete_item(&pool, uid);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -123,9 +106,9 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .map(move |external_id: String| {
             let body = serde_json::json!({ "uri": external_id });
-            let result = internal_api::search_by_fields(&pool, body).unwrap();
-            let exists = !result.is_empty();
-            Box::new(warp::reply::json(&exists))
+            let result = internal_api::search_by_fields(&pool, body);
+            let result = result.map(|result| warp::reply::json(&!result.is_empty()));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -138,11 +121,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             let body =
                 serde_json::from_slice(&body).expect("Failed to serialize request body to JSON");
             let result = internal_api::search_by_fields(&pool, body);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let pool = pool_arc.clone();
@@ -152,11 +132,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::get())
         .map(move |uid: i64| {
             let result = internal_api::get_item_with_edges(&pool, uid);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(result) => Box::new(warp::reply::json(&result)),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let run_downloaders = api_version_1
@@ -165,11 +142,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::post())
         .map(move |service: String, data_type: String| {
             let result = internal_api::run_downloaders(service, data_type);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
         });
 
     let run_importers = api_version_1
@@ -178,11 +152,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::post())
         .map(move |data_type: String| {
             let result = internal_api::run_importers(data_type);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
     let pool = pool_arc.clone();
@@ -192,11 +162,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::post())
         .map(move |uid: i64| {
             let result = internal_api::run_indexers(&pool, uid);
-            let boxed: Box<dyn Reply> = match result {
-                Ok(()) => Box::new(warp::reply::json(&serde_json::json!({}))),
-                Err(err) => Box::new(warp::reply::with_status(err.msg, err.code)),
-            };
-            boxed
+            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
     warp::serve(
@@ -217,4 +183,17 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     )
     .run(([0, 0, 0, 0], 3030))
     .await;
+}
+
+fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
+    match result {
+        Err(err) => {
+            let code = err.code.as_str();
+            let code_canon = err.code.canonical_reason().unwrap_or("");
+            let msg = &err.msg;
+            info!("Returning HTTP failure {} {}, {}", code, code_canon, msg);
+            warp::reply::with_status(err.msg, err.code).into_response()
+        }
+        Ok(t) => t.into_response(),
+    }
 }
