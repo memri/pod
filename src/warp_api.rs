@@ -1,6 +1,7 @@
 use crate::internal_api;
 use bytes::Bytes;
 use log::info;
+use log::warn;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
@@ -20,7 +21,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
 
     let mut headers = HeaderMap::new();
     if insecure_http_headers {
-        info!("Adding Access-Control-Allow-Origin header as per environment config");
+        warn!("Adding Access-Control-Allow-Origin header as per environment config");
         headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     }
     let headers = warp::reply::with::headers(headers);
