@@ -485,6 +485,7 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
                     "--name=memri-indexers_1",
                     "--env=POD_ADDRESS=pod_pod_1",
                     &format!("--env=POD_ADDRESS={}", pod_address()),
+                    &format!("--env=RUN_UID={}", uid),
                     "memri-indexers:latest",
                 ],
             );
