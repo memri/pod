@@ -54,6 +54,19 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<
     Ok(json)
 }
 
+fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
+    let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
+    let mut rows = stmt.query_named(&[(":uid", &uid)])?;
+    let result = match rows.next()? {
+        None => false,
+        Some(row) => {
+            let count: isize = row.get(0)?;
+            count > 0
+        }
+    };
+    Ok(result)
+}
+
 /// See HTTP_API.md for details
 pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value>> {
     debug!("Getting all items");
@@ -94,7 +107,10 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
         .collect();
     let mut stmt = tx.prepare_cached(&sql)?;
     stmt.execute_named(&sql_params).map_err(|err| {
-        let msg = format!("Database rusqlite error for parameters: {:?}, {}", fields, err);
+        let msg = format!(
+            "Database rusqlite error for parameters: {:?}, {}",
+            fields, err
+        );
         Error {
             code: StatusCode::BAD_REQUEST,
             msg,
@@ -161,7 +177,16 @@ fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) ->
 }
 
 /// Create an edge presuming consistency checks were already done
-fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
+fn create_edge(
+    tx: &Transaction,
+    _type: String,
+    source: i64,
+    target: i64,
+    mut fields: HashMap<String, Value>,
+) -> Result<()> {
+    fields.insert("_type".to_string(), _type.into());
+    fields.insert("_source".to_string(), source.into());
+    fields.insert("_target".to_string(), target.into());
     let fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
@@ -172,6 +197,18 @@ fn create_edge(tx: &Transaction, fields: HashMap<String, Value>) -> Result<()> {
     sql.push_str(") VALUES (:");
     write_sql_body(&mut sql, &keys, ", :");
     sql.push_str(");");
+    if !check_item_exists(tx, source)? {
+        return Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: format!("Item with source uid {} not found", source),
+        });
+    };
+    if !check_item_exists(tx, target)? {
+        return Err(Error {
+            code: StatusCode::NOT_FOUND,
+            msg: format!("Item with target uid {} not found", source),
+        });
+    };
     execute_sql(tx, &sql, &fields)
 }
 
@@ -214,13 +251,8 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
     }
-    for mut edge in bulk_action.create_edges {
-        edge.fields
-            .insert("_source".to_string(), edge._source.into());
-        edge.fields
-            .insert("_target".to_string(), edge._target.into());
-        edge.fields.insert("_type".to_string(), edge._type.into());
-        create_edge(tx, edge.fields)?;
+    for edge in bulk_action.create_edges {
+        create_edge(tx, edge._type, edge._source, edge._target, edge.fields)?;
     }
     for edge_uid in bulk_action.delete_items {
         delete_item_tx(tx, edge_uid)?;
