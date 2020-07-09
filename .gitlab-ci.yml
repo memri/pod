@@ -1,6 +1,5 @@
-#### The image base should be the same as in Dockerfile
-#### UPDATE: not used for now
-# image: 'rust:slim'
+#### The image base is better to be the same as in Dockerfile
+image: 'rust:slim'
 
 stages:
   - test
@@ -11,17 +10,16 @@ variables:
   APT_CACHE_DIR: $CI_PROJECT_DIR/apt
 
 before_script:
-  # WARNING: dirty work-around:
-  # `libsqlcipher-dev` is right now installed on gitlab-runner (shell) host
-  - dpkg -l libsqlcipher-dev
-  #  - apt-get update -yq
-  #  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
+  - apt-get update -yq
+  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
   - rustup component add rustfmt
   - rustup component add clippy
 
 
 test:
   stage: test
+  tags:
+    - docker
   script:
     - rustc --version
     - cargo --version
