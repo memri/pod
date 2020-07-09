@@ -5,6 +5,7 @@ use log::warn;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
+use warp::http;
 use warp::http::header::HeaderMap;
 use warp::http::header::HeaderValue;
 use warp::http::status::StatusCode;
@@ -169,6 +170,29 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
+    let origin_request = warp::options()
+        .and(warp::header::<String>("origin"))
+        .map(move |origin| {
+            if insecure_http_headers {
+                let builder = http::response::Response::builder()
+                    .status(StatusCode::OK)
+                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                    .header("access-control-allow-headers", "authorization")
+                    .header("access-control-allow-credentials", "true")
+                    .header("access-control-max-age", "300")
+                    .header("access-control-allow-origin", origin);
+                builder
+                    .header("vary", "origin")
+                    .body("".to_string())
+                    .unwrap()
+            } else {
+                http::Response::builder()
+                    .status(StatusCode::METHOD_NOT_ALLOWED)
+                    .body(String::new())
+                    .expect("Failed to return an empty body")
+            }
+        });
+
     let main_filter = version
         .with(&headers)
         .or(get_item.with(&headers))
@@ -182,30 +206,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .or(get_item_with_edges.with(&headers))
         .or(run_downloaders.with(&headers))
         .or(run_importers.with(&headers))
-        .or(run_indexers.with(&headers));
+        .or(run_indexers.with(&headers))
+        .or(origin_request);
 
-    if insecure_http_headers {
-        let origin = warp::options()
-            .and(warp::header::<String>("origin"))
-            .map(|origin| {
-                let builder = warp::http::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                    .header("access-control-allow-headers", "authorization")
-                    .header("access-control-allow-credentials", "true")
-                    .header("access-control-max-age", "300")
-                    .header("access-control-allow-origin", origin);
-                builder
-                    .header("vary", "origin")
-                    .body("".to_string())
-                    .unwrap()
-            });
-        warp::serve(main_filter.or(origin))
-            .run(([0, 0, 0, 0], 3030))
-            .await;
-    } else {
-        warp::serve(main_filter).run(([0, 0, 0, 0], 3030)).await;
-    };
+    warp::serve(main_filter).run(([0, 0, 0, 0], 3030)).await
 }
 
 fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
