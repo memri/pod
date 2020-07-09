@@ -93,7 +93,13 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
         .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
         .collect();
     let mut stmt = tx.prepare_cached(&sql)?;
-    stmt.execute_named(&sql_params)?;
+    stmt.execute_named(&sql_params).map_err(|err| {
+        let msg = format!("Database rusqlite error for parameters: {:?}, {}", fields, err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    })?;
     Ok(())
 }
 
