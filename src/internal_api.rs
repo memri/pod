@@ -406,7 +406,7 @@ fn docker_arguments() -> Vec<String> {
     let env = std::env::var_os("POD_DOCKER_ARGUMENTS");
     let env = env.map(|e| e.into_string().ok()).flatten();
     if let Some(env) = env {
-        env.split("\0").map(|s| s.to_string()).collect()
+        env.split('\0').map(|s| s.to_string()).collect()
     } else {
         vec!["--network=host".to_string()]
     }
