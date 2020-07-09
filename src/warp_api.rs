@@ -6,6 +6,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
 use warp::http::header::HeaderMap;
 use warp::http::header::HeaderValue;
+use warp::http::status::StatusCode;
 use warp::reply::Response;
 use warp::Filter;
 use warp::Reply;
@@ -15,8 +16,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
+    let insecure_http_headers = std::env::var_os("INSECURE_HTTP_HEADERS").is_some();
+
     let mut headers = HeaderMap::new();
-    if std::env::var_os("INSECURE_HTTP_HEADERS").is_some() {
+    if insecure_http_headers {
         info!("Adding Access-Control-Allow-Origin header as per environment config");
         headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     }
@@ -165,24 +168,43 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
-    warp::serve(
-        version
-            .with(&headers)
-            .or(get_item.with(&headers))
-            .or(get_all_items.with(&headers))
-            .or(create_item.with(&headers))
-            .or(bulk_action.with(&headers))
-            .or(update_item.with(&headers))
-            .or(delete_item.with(&headers))
-            .or(external_id_exists.with(&headers))
-            .or(search.with(&headers))
-            .or(get_item_with_edges.with(&headers))
-            .or(run_downloaders.with(&headers))
-            .or(run_importers.with(&headers))
-            .or(run_indexers.with(&headers)),
-    )
-    .run(([0, 0, 0, 0], 3030))
-    .await;
+    let main_filter = version
+        .with(&headers)
+        .or(get_item.with(&headers))
+        .or(get_all_items.with(&headers))
+        .or(create_item.with(&headers))
+        .or(bulk_action.with(&headers))
+        .or(update_item.with(&headers))
+        .or(delete_item.with(&headers))
+        .or(external_id_exists.with(&headers))
+        .or(search.with(&headers))
+        .or(get_item_with_edges.with(&headers))
+        .or(run_downloaders.with(&headers))
+        .or(run_importers.with(&headers))
+        .or(run_indexers.with(&headers));
+
+    if insecure_http_headers {
+        let origin = warp::options()
+            .and(warp::header::<String>("origin"))
+            .map(|origin| {
+                let builder = warp::http::response::Response::builder()
+                    .status(StatusCode::OK)
+                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                    .header("access-control-allow-headers", "authorization")
+                    .header("access-control-allow-credentials", "true")
+                    .header("access-control-max-age", "300")
+                    .header("access-control-allow-origin", origin);
+                builder
+                    .header("vary", "origin")
+                    .body("".to_string())
+                    .unwrap()
+            });
+        warp::serve(main_filter.or(origin))
+            .run(([0, 0, 0, 0], 3030))
+            .await;
+    } else {
+        warp::serve(main_filter).run(([0, 0, 0, 0], 3030)).await;
+    };
 }
 
 fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
