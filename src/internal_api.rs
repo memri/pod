@@ -410,7 +410,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
-fn get_items_with_edges_tx(tx: &Transaction, uids: &Vec<i64>) -> Result<Vec<Value>> {
+fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for uid in uids {
         result.push(get_item_with_edges_tx(tx, *uid)?);
