@@ -12,6 +12,7 @@ services:
         - memri-net
       volumes:
         - ./data/db:/data/db
+        - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   db:

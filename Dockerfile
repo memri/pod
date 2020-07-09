@@ -1,10 +1,10 @@
-FROM ubuntu:latest as cargo-build
+# Second stage of the Dockerfile (below) should use the same base (rust:slim or it's parent)
+FROM rust:slim as cargo-build
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update
-RUN apt-get install -y libsqlcipher-dev cargo
+RUN apt-get update && apt-get install -y libsqlcipher-dev cargo git
 
 WORKDIR /usr/src/pod
 
@@ -25,9 +25,8 @@ COPY src src
 RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 
 
-FROM ubuntu:latest
-RUN apt-get update
-RUN apt-get install -y libsqlcipher-dev
+FROM debian:buster-slim
+RUN apt-get update && apt-get install -y libsqlcipher-dev docker.io
 COPY --from=cargo-build /usr/src/pod/pod pod
 EXPOSE 3030
 CMD ["./pod"]
