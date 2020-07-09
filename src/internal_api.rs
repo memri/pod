@@ -434,23 +434,33 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     Ok(())
 }
 
+fn pod_address() -> String {
+    let env = std::env::var_os("POD_ADDRESS_FOR_INDEXERS");
+    let env = env.map(|e| e.into_string().ok()).flatten();
+    if let Some(env) = env {
+        env
+    } else {
+        "localhost".to_string()
+    }
+}
+
 pub fn run_importers(data_type: String) -> Result<()> {
     info!("Trying to run importer for {}", data_type);
     match data_type.as_str() {
-        "note" => execute_and_forget(
-            "docker",
-            &[
-                "run",
-                "--rm",
-                "--volume=download-volume:/usr/src/importers/data",
-                "--network=pod_memri-net",
-                "--name=memri-importers_1",
-                // TODO: If pod runs in a container, add this env var with the name of the container as value, else
-                // leave this argument out completely
-                "--env=POD_CONTAINER_NAME=pod_pod_1",
-                "memri-importers:latest",
-            ],
-        ),
+        "note" => {
+            execute_and_forget(
+                "docker",
+                &[
+                    "run",
+                    "--rm",
+                    "--volume=download-volume:/usr/src/importers/data",
+                    "--network=pod_memri-net",
+                    "--name=memri-importers_1",
+                    &format!("--env=POD_ADDRESS={}", pod_address()),
+                    "memri-importers:latest",
+                ],
+            )
+        },
         _ => {
             return Err(Error {
                 code: StatusCode::BAD_REQUEST,
@@ -473,10 +483,8 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
                     "--rm",
                     "--network=pod_memri-net",
                     "--name=memri-indexers_1",
-                    // TODO: If pod runs in a container, add this env var with the name of the container as value, else
-                    // leave this argument out completely
-                    "--env=POD_CONTAINER_NAME=pod_pod_1",
-                    &format!("--env=RUN_UID={}", uid),
+                    "--env=POD_ADDRESS=pod_pod_1",
+                    &format!("--env=POD_ADDRESS={}", pod_address()),
                     "memri-indexers:latest",
                 ],
             );

@@ -1,18 +1,20 @@
 version: '3'
 services:
-    pod:
-      build:
-        context: .
-        dockerfile: Dockerfile
-      restart: always
-      image: pod:latest
-      ports:
-        - "3030:3030"
-      networks:
-        - memri-net
-      volumes:
-        - ./data/db:/data/db
-        - /var/run/docker.sock:/var/run/docker.sock
+  pod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    image: pod:latest
+    ports:
+      - "3030:3030"
+    networks:
+      - memri-net
+    volumes:
+      - ./data/db:/data/db
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - POD_ADDRESS_FOR_INDEXERS=pod_pod_1
 
 volumes:
   db:
