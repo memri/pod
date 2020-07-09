@@ -4,6 +4,21 @@
       "name": "AuditItem",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -39,6 +54,11 @@
           "indexed": false
         },
         {
+          "name": "date",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "content",
           "dbtype": "Text",
           "indexed": false
@@ -53,6 +73,21 @@
     {
       "name": "CVUStoredDefinition",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -124,6 +159,21 @@
       "name": "Company",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -174,6 +224,21 @@
       "name": "CreativeWork",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -211,6 +276,21 @@
         {
           "name": "abstract",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -239,6 +319,21 @@
       "name": "DigitalDocument",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -276,6 +371,21 @@
         {
           "name": "abstract",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -304,6 +414,21 @@
       "name": "Comment",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -341,6 +466,21 @@
         {
           "name": "abstract",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -379,6 +519,21 @@
       "name": "Note",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -416,6 +571,21 @@
         {
           "name": "abstract",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -459,6 +629,21 @@
       "name": "MediaObject",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -499,6 +684,21 @@
           "indexed": false
         },
         {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -529,6 +729,11 @@
           "indexed": false
         },
         {
+          "name": "endTime",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "fileLocation",
           "dbtype": "Text",
           "indexed": false
@@ -541,6 +746,11 @@
         {
           "name": "height",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "startTime",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -554,6 +764,21 @@
       "name": "Audio",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -594,6 +819,21 @@
           "indexed": false
         },
         {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -624,6 +864,11 @@
           "indexed": false
         },
         {
+          "name": "endTime",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "fileLocation",
           "dbtype": "Text",
           "indexed": false
@@ -636,6 +881,11 @@
         {
           "name": "height",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "startTime",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -674,6 +924,21 @@
       "name": "Photo",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -714,6 +979,21 @@
           "indexed": false
         },
         {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -744,6 +1024,11 @@
           "indexed": false
         },
         {
+          "name": "endTime",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "fileLocation",
           "dbtype": "Text",
           "indexed": false
@@ -756,6 +1041,11 @@
         {
           "name": "height",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "startTime",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -794,6 +1084,21 @@
       "name": "Video",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -834,6 +1139,21 @@
           "indexed": false
         },
         {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -864,6 +1184,11 @@
           "indexed": false
         },
         {
+          "name": "endTime",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "fileLocation",
           "dbtype": "Text",
           "indexed": false
@@ -876,6 +1201,11 @@
         {
           "name": "height",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "startTime",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -918,6 +1248,21 @@
     {
       "name": "Datasource",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -984,6 +1329,21 @@
       "name": "Device",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1042,12 +1402,37 @@
           "name": "name",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "dateAquired",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateLost",
+          "dbtype": "DateTime",
+          "indexed": false
         }
       ]
     },
     {
       "name": "Diet",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1104,6 +1489,21 @@
       "name": "Downloader",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1143,6 +1543,21 @@
     {
       "name": "Edge",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1224,6 +1639,21 @@
       "name": "File",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1268,6 +1698,21 @@
     {
       "name": "Importer",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1329,6 +1774,21 @@
       "name": "ImporterRun",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1378,6 +1838,21 @@
     {
       "name": "Indexer",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1449,6 +1924,21 @@
       "name": "IndexerRun",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1497,12 +1987,32 @@
           "name": "progress",
           "dbtype": "Integer",
           "indexed": false
+        },
+        {
+          "name": "targetDataType",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
     {
       "name": "Label",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1554,6 +2064,21 @@
       "name": "Location",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1603,6 +2128,21 @@
     {
       "name": "Address",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1679,6 +2219,21 @@
       "name": "Country",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1734,6 +2289,21 @@
       "name": "MedicalCondition",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1783,6 +2353,21 @@
     {
       "name": "NavigationItem",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -1844,6 +2429,21 @@
       "name": "OnlineProfile",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1894,6 +2494,21 @@
       "name": "Person",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -1929,8 +2544,18 @@
           "indexed": false
         },
         {
+          "name": "birthDate",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "email",
           "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "deathDate",
+          "dbtype": "DateTime",
           "indexed": false
         },
         {
@@ -1974,6 +2599,21 @@
       "name": "PhoneNumber",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -2009,7 +2649,7 @@
           "indexed": false
         },
         {
-          "name": "phoneNumberWithAreaCode",
+          "name": "phoneNumber",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2023,6 +2663,21 @@
     {
       "name": "PublicKey",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -2078,6 +2733,21 @@
     {
       "name": "Session",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -2144,6 +2814,21 @@
       "name": "SessionView",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -2189,6 +2874,21 @@
       "name": "Sessions",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -2233,6 +2933,21 @@
     {
       "name": "Setting",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -2283,6 +2998,21 @@
     {
       "name": "SyncState",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
@@ -2344,6 +3074,21 @@
       "name": "UserState",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -2394,6 +3139,21 @@
       "name": "ViewArguments",
       "properties": [
         {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "deleted",
           "dbtype": "Bool",
           "indexed": false
@@ -2443,6 +3203,21 @@
     {
       "name": "Website",
       "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
         {
           "name": "deleted",
           "dbtype": "Bool",
