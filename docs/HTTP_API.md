@@ -46,7 +46,7 @@ support properties in the future (don't rely on it yet).
 * `_type`, the type of the edge. Cannot be modified once created.
 
 ### edge's additional properties (currently hardcoded)
-* `label`, an optional string
+* `edgeLabel`, an optional string
 * `sequence`, an optional integer meaning the client-side ordering of items
 (e.g. items reachable from a "root" item using edges of a particular _type)
 

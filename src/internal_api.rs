@@ -328,7 +328,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     }
 
     let mut stmt_edge = conn.prepare_cached(
-        "SELECT _type, sequence, label, _target FROM edges WHERE _source = :_source",
+        "SELECT _type, sequence, edgeLabel, _target FROM edges WHERE _source = :_source",
     )?;
     let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
     let mut edges = Vec::new();
