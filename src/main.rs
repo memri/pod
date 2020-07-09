@@ -42,6 +42,11 @@ async fn main() {
             )
         })
         .init();
+    info!(
+        "Starting Pod version {} (Cargo version {})",
+        env!("GIT_DESCRIBE"),
+        env!("CARGO_PKG_VERSION")
+    );
 
     let sqlite_file = PathBuf::from("data/db/pod.db");
     info!("Using SQLite database {:?}", sqlite_file);

@@ -20,6 +20,7 @@ RUN set -x && \
 
 # After the dependencies are built, copy the sources and build the real thing.
 COPY res res
+COPY build.rs build.rs
 COPY src src
 RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 
