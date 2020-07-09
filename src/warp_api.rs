@@ -141,6 +141,18 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             respond_with_result(result)
         });
 
+    let pool = pool_arc.clone();
+    let get_items_with_edges = api_version_1
+        .and(warp::path!("items_with_edges"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .and(warp::get())
+        .map(move |body: serde_json::Value| {
+            let result = internal_api::get_items_with_edges(&pool, body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
     let run_downloaders = api_version_1
         .and(warp::path!("run_service" / "downloaders" / String / String))
         .and(warp::path::end())
@@ -204,6 +216,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .or(external_id_exists.with(&headers))
         .or(search.with(&headers))
         .or(get_item_with_edges.with(&headers))
+        .or(get_items_with_edges.with(&headers))
         .or(run_downloaders.with(&headers))
         .or(run_importers.with(&headers))
         .or(run_indexers.with(&headers))

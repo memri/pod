@@ -56,6 +56,7 @@ support properties in the future (don't rely on it yet).
 ### GET /version
 Get the version of the Pod. In future, it will also point to a specific git commit.
 
+
 ### GET /v1/items/{uid}
 Get a single item by it's `uid`.
 
@@ -64,8 +65,10 @@ or an array with 1 item if item exists.
 In future, the endpoint might return an error if item was not found,
 and the object itself if the item was found.
 
+
 ### GET /v1/all_items/
 Get an array of all items.
+
 
 ### POST /v1/items/
 Create a single item.
@@ -80,6 +83,7 @@ Returns `uid` of the created item. Returns an error if an `uid` did already exis
 ⚠️ UNSTABLE: In future, the endpoint might allow creating items without `uid` being explicitly set,
 and just return the `uid` to the caller.
 
+
 ### PUT /v1/items/{uid}
 Update a single item.
 
@@ -91,6 +95,7 @@ Update a single item.
 and in fact will be increased by 1 from previous database value.
 
 Returns an empty object if the operation is successful.
+
 
 ### POST /v1/bulk_action/
 Perform a bulk of operations atomically.
@@ -123,16 +128,19 @@ If `createEdges` array is not empty, all items in `createItems` MUST have `uid` 
 
 Returns an empty object if the operation is successful.
 
+
 ### DELETE /v1/items/{uid}
 Mark an item as deleted by:
 * Setting `deleted` flag to `true`
 * Updating `dateModified` (server-s time is taken)
+
 
 ### GET /v1/deprecated/uri_exists/{uri}
 ⚠️ DEPRECATED Check if an item exists with the `uri`.
 
 Returns `true` successfully if such item exists,
 or returns `false` successfully if such item does not exist.
+
 
 ### POST /v1/search_by_fields/
 Search items by their fields.
@@ -142,17 +150,31 @@ Given a json like
 ```
 the endpoint will return an array of all items with exactly the same properties.
 
+
 ### GET /v1/item_with_edges/{uid}
 Get item, with edges of any type pointing from that item,
 and all item's properties that those edges point to.
+
+
+### GET /v1/items_with_edges
+Given an input array of `uid`-s like
+```
+[1, 20, 30, 100000]
+```
+for each `uid`, find the underlying item, all it's edges and all items that these edges point to.
+
+If at least one of the `uid`-s doesn't exist, return 404 NOT_FOUND for the whole request.
+
 
 ### POST /v1/run_service/downloaders/{service}/{data_type}
 Run a downloader for different services with different data types, e.g. Evernote with note.
 Unsupported service or data type will yield 400 BAD_REQUEST error.
 
+
 ### POST /v1/run_service/importers/{data_type}
 Run an importer for a given data type, e.g. note.
 Unsupported data type will yield 400 BAD_REQUEST error.
+
 
 ### POST /v1/run_service/indexers/{uid}
 Run an indexer on an item with the given uid.
