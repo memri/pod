@@ -1,0 +1,51 @@
+#### The image base should be the same as in Dockerfile
+#### UPDATE: not used for now
+# image: 'rust:slim'
+
+stages:
+  - test
+  - docs
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+  APT_CACHE_DIR: $CI_PROJECT_DIR/apt
+
+before_script:
+  # WARNING: dirty work-around:
+  # `libsqlcipher-dev` is right now installed on gitlab-runner (shell) host
+  - dpkg -l libsqlcipher-dev
+  #  - apt-get update -yq
+  #  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
+  - rustup component add rustfmt
+  - rustup component add clippy
+
+
+test:
+  stage: test
+  script:
+    - rustc --version
+    - cargo --version
+    - cargo fmt --all -- --check
+    - cargo clippy --all-targets --all-features -- -D warnings
+    - cargo test --verbose
+
+pages:
+  stage: docs
+  script:
+    - rm -rf target/doc 2>/dev/null || true
+    - cargo doc --no-deps
+    - mkdir -p public/rustdoc
+    - mv -T target/doc public/rustdoc
+    - echo '<a href="./rustdoc/pod">rustdoc</a>' > public/index.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+
+cache:
+  paths:
+    - apt/
+    - cargo/
+    - target/
+
