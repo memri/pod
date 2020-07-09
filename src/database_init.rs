@@ -102,7 +102,7 @@ fn get_column_info(
     let mut column_indexes = HashMap::new();
     let mut declared_columns = HashMap::new();
 
-    let all_items_columns: HashSet<String> = get_all_columns_gragma("items", conn)
+    let all_items_columns: HashSet<String> = get_all_columns_pragma("items", conn)
         .expect("Failed to get items column information using PRAGMA");
 
     let columns = parsed_schema.types.iter().flat_map(|t| &t.properties);
@@ -147,7 +147,7 @@ fn get_column_info(
 //
 // Note that the approach of querying `pragma_table_info`
 // does not work on older sqlcipher versions (ubuntu 20.04 still uses sqlcipher 3.4).
-fn get_all_columns_gragma(
+fn get_all_columns_pragma(
     table: &str,
     conn: &PooledConnection<SqliteConnectionManager>,
 ) -> rusqlite::Result<HashSet<String>> {
