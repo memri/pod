@@ -1,10 +1,11 @@
+# The image base should be the same as in .gitlab-ci.yml
 # Second stage of the Dockerfile (below) should use the same base (rust:slim or it's parent)
 FROM rust:slim as cargo-build
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y libsqlcipher-dev cargo git
+RUN apt-get update && apt-get install -y libsqlcipher-dev git
 
 WORKDIR /usr/src/pod
 
