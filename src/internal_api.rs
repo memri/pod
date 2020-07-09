@@ -445,7 +445,9 @@ pub fn run_importers(data_type: String) -> Result<()> {
                 "--volume=download-volume:/usr/src/importers/data",
                 "--network=pod_memri-net",
                 "--name=memri-importers_1",
-                "-it",
+                // TODO: If pod runs in a container, add this env var with the name of the container as value, else
+                // leave this argument out completely
+                "--env=POD_CONTAINER_NAME=pod_pod_1",
                 "memri-importers:latest",
             ],
         ),
@@ -471,7 +473,10 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
                     "--rm",
                     "--network=pod_memri-net",
                     "--name=memri-indexers_1",
-                    "-it",
+                    // TODO: If pod runs in a container, add this env var with the name of the container as value, else
+                    // leave this argument out completely
+                    "--env=POD_CONTAINER_NAME=pod_pod_1",
+                    &format!("--env=RUN_UID={}", uid),
                     "memri-indexers:latest",
                 ],
             );
