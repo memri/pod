@@ -406,17 +406,20 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     info!("Trying to run downloader {} for {}", service, data_type);
     match service.as_str() {
         "evernote" => match data_type.as_str() {
-            "note" => execute_and_forget(
-                "docker",
-                &[
-                    "run",
-                    "--rm",
-                    "--network=pod_memri-net",
-                    "--name=memri-indexers_1",
-                    "-it",
-                    "memri-downloaders:latest",
-                ],
-            ),
+            "note" => {
+                Command::new("docker")
+                    .args(&[
+                        "run",
+                        "--rm",
+                        "--network=pod_memri-net",
+                        "--name=memri-indexers_1",
+                        "-it",
+                        "memri-downloaders:latest",
+                    ])
+                    .args(&docker_arguments())
+                    .spawn()
+                    .expect("Failed to run downloader");
+            }
             _ => {
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -434,13 +437,13 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     Ok(())
 }
 
-fn pod_address() -> String {
-    let env = std::env::var_os("POD_ADDRESS_FOR_INDEXERS");
+fn docker_arguments() -> Vec<String> {
+    let env = std::env::var_os("POD_DOCKER_ARGUMENTS");
     let env = env.map(|e| e.into_string().ok()).flatten();
     if let Some(env) = env {
-        env
+        env.split("\0").map(|s| s.to_string()).collect()
     } else {
-        "localhost".to_string()
+        vec!["--net=host".to_string()]
     }
 }
 
@@ -448,19 +451,19 @@ pub fn run_importers(data_type: String) -> Result<()> {
     info!("Trying to run importer for {}", data_type);
     match data_type.as_str() {
         "note" => {
-            execute_and_forget(
-                "docker",
-                &[
+            Command::new("docker")
+                .args(&[
                     "run",
                     "--rm",
                     "--volume=download-volume:/usr/src/importers/data",
                     "--network=pod_memri-net",
                     "--name=memri-importers_1",
-                    &format!("--env=POD_ADDRESS={}", pod_address()),
                     "memri-importers:latest",
-                ],
-            )
-        },
+                ])
+                .args(&docker_arguments())
+                .spawn()
+                .expect("Failed to run importer");
+        }
         _ => {
             return Err(Error {
                 code: StatusCode::BAD_REQUEST,
@@ -476,19 +479,19 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
     let result = get_item(sqlite, uid)?;
     match result.first() {
         Some(_item) => {
-            execute_and_forget(
-                "docker",
-                &[
+            Command::new("docker")
+                .args(&[
                     "run",
                     "--rm",
                     "--network=pod_memri-net",
                     "--name=memri-indexers_1",
                     "--env=POD_ADDRESS=pod_pod_1",
-                    &format!("--env=POD_ADDRESS={}", pod_address()),
                     &format!("--env=RUN_UID={}", uid),
                     "memri-indexers:latest",
-                ],
-            );
+                ])
+                .args(&docker_arguments())
+                .spawn()
+                .expect("Failed to run indexer");
         }
         None => {
             return Err(Error {
@@ -498,11 +501,4 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
         }
     }
     Ok(())
-}
-
-fn execute_and_forget(program: &str, args: &[&str]) {
-    Command::new(program)
-        .args(args)
-        .spawn()
-        .expect("Failed to run the command");
 }
