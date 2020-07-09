@@ -408,7 +408,7 @@ fn docker_arguments() -> Vec<String> {
     if let Some(env) = env {
         env.split("\0").map(|s| s.to_string()).collect()
     } else {
-        vec!["--net=host".to_string()]
+        vec!["--network=host".to_string()]
     }
 }
 
@@ -420,11 +420,7 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
                 Command::new("docker")
                     .arg("run")
                     .args(&docker_arguments())
-                    .args(&[
-                        "--rm",
-                        "--name=memri-indexers_1",
-                        "-it",
-                    ])
+                    .args(&["--rm", "--name=memri-indexers_1", "-it"])
                     .args(&["memri-downloaders:latest"])
                     .spawn()
                     .expect("Failed to run downloader");
