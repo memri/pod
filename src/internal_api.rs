@@ -418,7 +418,10 @@ fn get_items_with_edges_tx(tx: &Transaction, uids: &Vec<i64>) -> Result<Vec<Valu
     Ok(result)
 }
 
-pub fn get_items_with_edges(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<Vec<Value>> {
+pub fn get_items_with_edges(
+    sqlite: &Pool<SqliteConnectionManager>,
+    json: Value,
+) -> Result<Vec<Value>> {
     debug!("Getting items with edges {}", json);
     let mut conn = sqlite.get()?;
     let tx = conn.transaction()?;
