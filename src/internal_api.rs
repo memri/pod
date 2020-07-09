@@ -200,13 +200,19 @@ fn create_edge(
     if !check_item_exists(tx, source)? {
         return Err(Error {
             code: StatusCode::NOT_FOUND,
-            msg: format!("Item with source uid {} not found", source),
+            msg: format!(
+                "Failed to create edge {} {}->{} because source uid is not found",
+                _type, source, target
+            ),
         });
     };
     if !check_item_exists(tx, target)? {
         return Err(Error {
             code: StatusCode::NOT_FOUND,
-            msg: format!("Item with target uid {} not found", source),
+            msg: format!(
+                "Failed to create edge {} {}->{} because target uid is not found",
+                _type, source, target
+            ),
         });
     };
     execute_sql(tx, &sql, &fields)
