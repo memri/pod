@@ -402,21 +402,30 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
+fn docker_arguments() -> Vec<String> {
+    let env = std::env::var_os("POD_DOCKER_ARGUMENTS");
+    let env = env.map(|e| e.into_string().ok()).flatten();
+    if let Some(env) = env {
+        env.split("\0").map(|s| s.to_string()).collect()
+    } else {
+        vec!["--net=host".to_string()]
+    }
+}
+
 pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     info!("Trying to run downloader {} for {}", service, data_type);
     match service.as_str() {
         "evernote" => match data_type.as_str() {
             "note" => {
                 Command::new("docker")
+                    .arg("run")
+                    .args(&docker_arguments())
                     .args(&[
-                        "run",
                         "--rm",
-                        "--network=pod_memri-net",
                         "--name=memri-indexers_1",
                         "-it",
-                        "memri-downloaders:latest",
                     ])
-                    .args(&docker_arguments())
+                    .args(&["memri-downloaders:latest"])
                     .spawn()
                     .expect("Failed to run downloader");
             }
@@ -437,30 +446,19 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     Ok(())
 }
 
-fn docker_arguments() -> Vec<String> {
-    let env = std::env::var_os("POD_DOCKER_ARGUMENTS");
-    let env = env.map(|e| e.into_string().ok()).flatten();
-    if let Some(env) = env {
-        env.split("\0").map(|s| s.to_string()).collect()
-    } else {
-        vec!["--net=host".to_string()]
-    }
-}
-
 pub fn run_importers(data_type: String) -> Result<()> {
     info!("Trying to run importer for {}", data_type);
     match data_type.as_str() {
         "note" => {
             Command::new("docker")
+                .arg("run")
+                .args(&docker_arguments())
                 .args(&[
-                    "run",
                     "--rm",
                     "--volume=download-volume:/usr/src/importers/data",
-                    "--network=pod_memri-net",
                     "--name=memri-importers_1",
-                    "memri-importers:latest",
                 ])
-                .args(&docker_arguments())
+                .args(&["memri-importers:latest"])
                 .spawn()
                 .expect("Failed to run importer");
         }
@@ -480,16 +478,14 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
     match result.first() {
         Some(_item) => {
             Command::new("docker")
-                .args(&[
-                    "run",
-                    "--rm",
-                    "--network=pod_memri-net",
-                    "--name=memri-indexers_1",
-                    "--env=POD_ADDRESS=pod_pod_1",
-                    &format!("--env=RUN_UID={}", uid),
-                    "memri-indexers:latest",
-                ])
+                .arg("run")
                 .args(&docker_arguments())
+                .args(&[
+                    "--rm",
+                    "--name=memri-indexers_1",
+                    &format!("--env=RUN_UID={}", uid),
+                ])
+                .args(&["memri-indexers:latest"])
                 .spawn()
                 .expect("Failed to run indexer");
         }

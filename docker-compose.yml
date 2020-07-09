@@ -14,7 +14,7 @@ services:
       - ./data/db:/data/db
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - POD_DOCKER_ARGUMENTS=--env=POD_ADDRESS=pod_pod_1
+      - POD_DOCKER_ARGUMENTS=--net=pod_memri-net,--env=POD_ADDRESS=pod_pod_1
 
 volumes:
   db:
