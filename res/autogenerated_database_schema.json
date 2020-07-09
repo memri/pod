@@ -1917,6 +1917,11 @@
           "name": "runDestination",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "indexerClass",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
