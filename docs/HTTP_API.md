@@ -158,7 +158,7 @@ and all item's properties that those edges point to.
 
 ### GET /v1/items_with_edges
 Given an input array of `uid`-s like
-```
+```json
 [1, 20, 30, 100000]
 ```
 for each `uid`, find the underlying item, all it's edges and all items that these edges point to.
