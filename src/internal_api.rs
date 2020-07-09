@@ -410,6 +410,27 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
     Ok(result)
 }
 
+fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
+    let mut result = Vec::new();
+    for uid in uids {
+        result.push(get_item_with_edges_tx(tx, *uid)?);
+    }
+    Ok(result)
+}
+
+pub fn get_items_with_edges(
+    sqlite: &Pool<SqliteConnectionManager>,
+    json: Value,
+) -> Result<Vec<Value>> {
+    debug!("Getting items with edges {}", json);
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    let uids: Vec<i64> = serde_json::from_value(json)?;
+    let result = get_items_with_edges_tx(&tx, &uids)?;
+    tx.commit()?;
+    Ok(result)
+}
+
 fn docker_arguments() -> Vec<String> {
     if std::env::var_os("POD_IS_IN_DOCKER").is_some() {
         vec![
