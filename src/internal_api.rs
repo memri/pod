@@ -403,12 +403,24 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
 }
 
 fn docker_arguments() -> Vec<String> {
-    let env = std::env::var_os("POD_DOCKER_ARGUMENTS");
-    let env = env.map(|e| e.into_string().ok()).flatten();
-    if let Some(env) = env {
-        env.split('\0').map(|s| s.to_string()).collect()
+    if std::env::var_os("POD_IS_IN_DOCKER").is_some() {
+        vec![
+            "--network=pod_memri-net".to_string(),
+            "--env=POD_ADDRESS=pod_pod_1".to_string(),
+        ]
     } else {
-        vec!["--network=host".to_string()]
+        // The indexers/importers/downloaders need to have access to the host
+        // This is currently done differently on MacOS and Linux
+        // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
+        let pod_address = if cfg!(target_os = "linux") {
+            "localhost"
+        } else {
+            "host.docker.internal"
+        };
+        vec![
+            format!("--env=POD_ADDRESS={}", pod_address),
+            "--network=host".to_string(),
+        ]
     }
 }
 
