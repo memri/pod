@@ -146,7 +146,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path!("items_with_edges"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .and(warp::get())
+        .and(warp::post())
         .map(move |body: serde_json::Value| {
             let result = internal_api::get_items_with_edges(&pool, body);
             let result = result.map(|result| warp::reply::json(&result));

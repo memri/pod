@@ -156,7 +156,7 @@ Get item, with edges of any type pointing from that item,
 and all item's properties that those edges point to.
 
 
-### GET /v1/items_with_edges
+### POST /v1/items_with_edges
 Given an input array of `uid`-s like
 ```json
 [1, 20, 30, 100000]
