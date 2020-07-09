@@ -354,18 +354,24 @@ pub fn search_by_fields(
 }
 
 /// See HTTP_API.md for details
-pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
-    debug!("Getting item {}", uid);
-    let conn = sqlite.get()?;
-
-    let mut stmt_item = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
+    let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
-    let mut items = Vec::new();
-    while let Some(row) = item_rows.next()? {
-        items.push(sqlite_row_to_map(row)?);
-    }
+    let mut item = match item_rows.next()? {
+        Some(row) => sqlite_row_to_map(row)?,
+        None => {
+            return Err(Error {
+                code: StatusCode::NOT_FOUND,
+                msg: format!("Item with uid {} not found", uid),
+            })
+        }
+    };
+    assert!(
+        item_rows.next()?.is_none(),
+        "Impossible to get multiple results for a single uid"
+    );
 
-    let mut stmt_edge = conn.prepare_cached(
+    let mut stmt_edge = tx.prepare_cached(
         "SELECT _type, sequence, edgeLabel, _target FROM edges WHERE _source = :_source",
     )?;
     let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
@@ -381,7 +387,7 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
             .expect("Failed to get _target")
             .as_i64()
             .expect("Failed to get value as i64");
-        let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
+        let mut stmt = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
         edge.remove("_target");
         while let Some(row) = rows.next()? {
@@ -391,14 +397,16 @@ pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> 
         new_edges.push(edge);
     }
 
-    let mut result = Vec::new();
-    let mut new_item = match items.into_iter().next() {
-        Some(first) => first,
-        None => return Ok(result),
-    };
+    item.insert("allEdges".to_string(), Value::from(new_edges));
+    Ok(item.into())
+}
 
-    new_item.insert("allEdges".to_string(), Value::from(new_edges));
-    result.push(Value::from(new_item));
+pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Value> {
+    debug!("Getting item with edges {}", uid);
+    let mut conn = sqlite.get()?;
+    let tx = conn.transaction()?;
+    let result = get_item_with_edges_tx(&tx, uid)?;
+    tx.commit()?;
     Ok(result)
 }
 

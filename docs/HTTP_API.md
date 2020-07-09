@@ -146,12 +146,6 @@ the endpoint will return an array of all items with exactly the same properties.
 Get item, with edges of any type pointing from that item,
 and all item's properties that those edges point to.
 
-⚠️ UNSTABLE: Currently, the endpoint will return
-an array of 1 item (and linked data) when `uid` exists,
-or an empty array when this `uid` does not exist.
-In future, the endpoint might return the json object itself when the `uid` exists,
-or return an HTTP failure otherwise.
-
 ### POST /v1/run_service/downloaders/{service}/{data_type}
 Run a downloader for different services with different data types, e.g. Evernote with note.
 Unsupported service or data type will yield 400 BAD_REQUEST error.

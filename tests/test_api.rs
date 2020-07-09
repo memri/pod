@@ -23,9 +23,9 @@ fn test_bulk_action() {
     let json = json!({"_type": "Person"});
     let result3 = search_by_fields(&sqlite, json);
 
-    assert_eq!(result1.is_ok(), true);
-    assert_eq!(check_has_item(result2.ok()), true);
-    assert_eq!(check_has_item(result3.ok()), true);
+    assert!(result1.is_ok());
+    assert!(result2.is_ok());
+    assert!(check_has_item(result3.ok()));
 }
 
 fn check_has_item(result: Option<Vec<Value>>) -> bool {
