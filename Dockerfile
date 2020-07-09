@@ -22,6 +22,7 @@ RUN set -x && \
 COPY res res
 COPY build.rs build.rs
 COPY src src
+COPY .git .git
 RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 
 
