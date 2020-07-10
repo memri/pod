@@ -4,6 +4,7 @@ extern crate rusqlite;
 
 mod api_model;
 pub mod database_init;
+mod database_migrate_refinery;
 mod error;
 pub mod internal_api;
 mod sql_converters;
@@ -14,7 +15,6 @@ use env_logger::Env;
 use log::info;
 use log::warn;
 use pnet::datalink;
-use r2d2::ManageConnection;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::env;
@@ -23,11 +23,6 @@ use std::io::Write;
 use std::net::IpAddr::V4;
 use std::net::IpAddr::V6;
 use std::path::PathBuf;
-
-mod embedded {
-    use refinery::embed_migrations;
-    embed_migrations!("./res/migrations");
-}
 
 #[tokio::main]
 async fn main() {
@@ -57,13 +52,7 @@ async fn main() {
     let sqlite_manager = SqliteConnectionManager::file(&sqlite_file)
         .with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
 
-    let mut refinery_connection = sqlite_manager
-        .connect()
-        .expect("Failed to open a connection for refinery database migrations");
-    // Run "refinery" migrations to bring the core structure of items/edges up-to-date
-    embedded::migrations::runner()
-        .run(&mut refinery_connection)
-        .expect("Failed to run refinery migrations");
+    database_migrate_refinery::migrate(&sqlite_manager);
 
     let sqlite: Pool<SqliteConnectionManager> =
         r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
