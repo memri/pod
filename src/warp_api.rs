@@ -190,7 +190,10 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
                     let builder = http::response::Response::builder()
                         .status(StatusCode::OK)
                         .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                        .header("access-control-allow-headers", "authorization")
+                        .header(
+                            "access-control-allow-headers",
+                            "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+                        )
                         .header("access-control-allow-credentials", "true")
                         .header("access-control-max-age", "300")
                         .header("access-control-allow-origin", "*");
