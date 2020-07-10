@@ -16,15 +16,12 @@ variables:
 # as opposed to doing it in a reproducible fashion
 #
 #  - apt-get update -yq
-#  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev buildah
-#  - cargo fmt --version || rustup component add rustfmt
-#  - cargo clippy -V || rustup component add clippy
+#  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev libssl-dev pkg-config
+before_script:
+  - rustup component add rustfmt
+  - rustup component add clippy
+  - cargo install --force cargo-audit
 
-
-rustfmt:
-  stage: test
-  script:
-    - cargo fmt --all -- --check
 
 test:
   stage: test
@@ -33,7 +30,9 @@ test:
       - cargo/
       - target/
   script:
+    - cargo fmt --all -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
+    - cargo audit
     - cargo test
 
 pages:
