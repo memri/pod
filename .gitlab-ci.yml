@@ -10,12 +10,14 @@ variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
   APT_CACHE_DIR: $CI_PROJECT_DIR/apt
 
+# WARNING:
+# Project currently uses a dirty work-around:
+# it installs dependencies/components on GitLab shell runner,
+# as opposed to doing it in a reproducible fashion
+#
+#  - apt-get update -yq
+#  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev buildah
 before_script:
-  # WARNING: dirty work-around:
-  # `libsqlcipher-dev` is right now installed on gitlab-runner (shell) host
-  - dpkg -l libsqlcipher-dev
-  #  - apt-get update -yq
-  #  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
   - rustup component add rustfmt
   - rustup component add clippy
 

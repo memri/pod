@@ -14,7 +14,6 @@ use chrono::Utc;
 use log::debug;
 use log::info;
 use r2d2::Pool;
-use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
@@ -26,20 +25,11 @@ use std::process::Command;
 use std::str;
 use warp::http::status::StatusCode;
 
-/// Check if item exists by uid
-pub fn _check_item_exist(
-    conn: &PooledConnection<SqliteConnectionManager>,
-    uid: i64,
-) -> Result<bool> {
-    let sql = format!("SELECT COUNT(*) FROM items WHERE uid = {};", uid);
-    let result: i64 = conn.query_row(&sql, NO_PARAMS, |row| row.get(0))?;
-    Ok(result != 0)
-}
-
 /// Get project version as seen by Cargo.
-pub fn get_project_version() -> &'static str {
-    debug!("Returning API version...");
-    env!("CARGO_PKG_VERSION")
+pub fn get_project_version() -> String {
+    let git = env!("GIT_DESCRIBE");
+    let cargo = env!("CARGO_PKG_VERSION");
+    format!("{}-cargo{})", git, cargo)
 }
 
 /// See HTTP_API.md for details
