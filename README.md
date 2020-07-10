@@ -16,8 +16,7 @@ will allow Pod to start even with a public IP (with the security implications ab
 ## Run in docker
 To run Pod inside docker:
 ```sh
-docker-compose build
-docker-compose up
+docker-compose up --build
 ```
 
 
