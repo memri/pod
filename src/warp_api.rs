@@ -192,7 +192,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
                         .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
                         .header(
                             "access-control-allow-headers",
-                            "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+                            "Origin, X-Requested-With, Content-Type, Accept",
                         )
                         .header("access-control-allow-credentials", "true")
                         .header("access-control-max-age", "300")
