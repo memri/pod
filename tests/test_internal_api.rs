@@ -1,8 +1,8 @@
 extern crate pod;
 
 use lazy_static::lazy_static;
-use pod::database_init;
 use pod::database_migrate_refinery;
+use pod::database_migrate_schema;
 use pod::internal_api::*;
 use r2d2::ManageConnection;
 use r2d2::Pool;
@@ -32,7 +32,7 @@ lazy_static! {
 
         let sqlite: Pool<SqliteConnectionManager> =
             r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
-        database_init::init(&sqlite);
+        database_migrate_schema::migrate(&sqlite);
         sqlite
     };
 }

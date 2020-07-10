@@ -1,4 +1,4 @@
-use crate::database_init;
+use crate::database_migrate_schema;
 use crate::error::Error;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -37,7 +37,7 @@ pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value>
     match value {
         ValueRef::Null => None,
         ValueRef::Integer(i) => {
-            if !database_init::BOOL_COLUMNS.contains(column_name) {
+            if !database_migrate_schema::BOOL_COLUMNS.contains(column_name) {
                 Some(Value::from(i))
             } else if i == 0 {
                 Some(Value::from(false))
