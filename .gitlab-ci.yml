@@ -17,9 +17,8 @@ variables:
 #
 #  - apt-get update -yq
 #  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev buildah
-before_script:
-  - rustup component add rustfmt
-  - rustup component add clippy
+#  - cargo fmt --version || rustup component add rustfmt
+#  - cargo clippy -V || rustup component add clippy
 
 
 rustfmt:
