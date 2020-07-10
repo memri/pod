@@ -24,6 +24,7 @@ before_script:
 
 rustfmt:
   stage: test
+  cache: {}
   script:
     - cargo fmt --all -- --check
 
