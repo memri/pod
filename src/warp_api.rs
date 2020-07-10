@@ -182,28 +182,29 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
-    let origin_request = warp::options()
-        .and(warp::header::<String>("origin"))
-        .map(move |_origin| {
-            if insecure_http_headers {
-                let builder = http::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                    .header("access-control-allow-headers", "authorization")
-                    .header("access-control-allow-credentials", "true")
-                    .header("access-control-max-age", "300")
-                    .header("access-control-allow-origin", "*");
-                builder
-                    .header("vary", "origin")
-                    .body("".to_string())
-                    .unwrap()
-            } else {
-                http::Response::builder()
-                    .status(StatusCode::METHOD_NOT_ALLOWED)
-                    .body(String::new())
-                    .expect("Failed to return an empty body")
-            }
-        });
+    let origin_request =
+        warp::options()
+            .and(warp::header::<String>("origin"))
+            .map(move |_origin| {
+                if insecure_http_headers {
+                    let builder = http::response::Response::builder()
+                        .status(StatusCode::OK)
+                        .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                        .header("access-control-allow-headers", "authorization")
+                        .header("access-control-allow-credentials", "true")
+                        .header("access-control-max-age", "300")
+                        .header("access-control-allow-origin", "*");
+                    builder
+                        .header("vary", "origin")
+                        .body("".to_string())
+                        .unwrap()
+                } else {
+                    http::Response::builder()
+                        .status(StatusCode::METHOD_NOT_ALLOWED)
+                        .body(String::new())
+                        .expect("Failed to return an empty body")
+                }
+            });
 
     let main_filter = version
         .with(&headers)
