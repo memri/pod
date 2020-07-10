@@ -24,18 +24,25 @@ before_script:
 
 rustfmt:
   stage: test
-  cache: {}
   script:
     - cargo fmt --all -- --check
 
 test:
   stage: test
+  cache:
+    paths:
+      - cargo/
+      - target/
   script:
     - cargo clippy --all-targets --all-features -- -D warnings
-    - cargo test --verbose
+    - cargo test
 
 pages:
   stage: docs
+  cache:
+    paths:
+      - cargo/
+      - target/
   script:
     - rm -rf target/doc 2>/dev/null || true
     - cargo doc --no-deps
@@ -47,10 +54,3 @@ pages:
       - public
   only:
     - master
-
-cache:
-  paths:
-    - apt/
-    - cargo/
-    - target/
-
