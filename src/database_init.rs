@@ -38,25 +38,14 @@ struct DatabaseColumn {
     dbtype: DatabaseColumnType,
 }
 
+/// See `README.md#understanding-the-schema` to understand possible
+/// property types and their meaning
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq)]
 enum DatabaseColumnType {
-    /// UTF-8 string
     Text,
-
-    /// Signed 8-byte integer
     Integer,
-
-    /// 8-byte IEEE floating point number
     Real,
-
-    /// Boolean
-    /// Internally, booleans are stored as Integers 0 and 1. This is never exposed
-    /// to the clients, however, and clients should only ever receive/send `true` and `false`.
     Bool,
-
-    /// The number of non-leap-milliseconds since January 1, 1970 UTC.
-    /// Use this database type to denote DateTime.
-    /// Internally stored as Integer and should be passed as Integer.
     DateTime,
 }
 
