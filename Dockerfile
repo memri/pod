@@ -11,6 +11,7 @@ WORKDIR /usr/src/pod
 
 COPY Cargo.toml Cargo.toml
 COPY Cargo.lock Cargo.lock
+RUN apt-get update && apt-get install -y libsqlcipher-dev git
 RUN set -x && \
   mkdir -p src && \
   echo "fn main() {println!(\"broken\")}" > src/main.rs && \
@@ -21,7 +22,6 @@ RUN set -x && \
 
 #### After the dependencies are built, copy the sources and build the real thing.
 
-RUN apt-get update && apt-get install -y libsqlcipher-dev git
 COPY res res
 COPY build.rs build.rs
 COPY src src
