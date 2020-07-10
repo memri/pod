@@ -64,6 +64,7 @@ You can read about various components of the server:
 
 * Memri project: [blog.memri.io](https://blog.memri.io/)
 * SQLite: [sqlite.org](https://sqlite.org)
+* Sqlcipher: [zetetic.net/sqlcipher](https://www.zetetic.net/sqlcipher/open-source/)
 * Rusqlite database driver: [github.com/rusqlite/rusqlite](https://github.com/rusqlite/rusqlite)
 * Warp HTTP engine: [github.com/seanmonstar/warp](https://github.com/seanmonstar/warp)
 * Rust language: [rust-lang.org](https://www.rust-lang.org/)
