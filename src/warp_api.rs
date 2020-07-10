@@ -184,7 +184,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
 
     let origin_request = warp::options()
         .and(warp::header::<String>("origin"))
-        .map(move |origin| {
+        .map(move |_origin| {
             if insecure_http_headers {
                 let builder = http::response::Response::builder()
                     .status(StatusCode::OK)
@@ -192,7 +192,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
                     .header("access-control-allow-headers", "authorization")
                     .header("access-control-allow-credentials", "true")
                     .header("access-control-max-age", "300")
-                    .header("access-control-allow-origin", origin);
+                    .header("access-control-allow-origin", "*");
                 builder
                     .header("vary", "origin")
                     .body("".to_string())
