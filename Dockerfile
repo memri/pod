@@ -5,13 +5,14 @@ FROM rust:slim as cargo-build
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /usr/src/pod
+RUN apt-get update && apt-get install -y docker.io git && rm -rf /var/lib/apt/lists/*
 
 
 #### Compile dependencies and cache them in a docker layer
 
 COPY Cargo.toml Cargo.toml
 COPY Cargo.lock Cargo.lock
-RUN apt-get update && apt-get install -y libsqlcipher-dev git
+RUN apt-get update && apt-get install -y libsqlcipher-dev && rm -rf /var/lib/apt/lists/*
 RUN set -x && \
   mkdir -p src && \
   echo "fn main() {println!(\"broken\")}" > src/main.rs && \
@@ -32,8 +33,9 @@ RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 #### After Pod has been built, create a small docker image with just the Pod
 
 FROM debian:buster-slim
+COPY --from=cargo-build /usr/bin/docker /usr/bin/docker
 COPY --from=cargo-build /usr/src/pod/pod pod
-RUN apt-get update && apt-get install -y libsqlcipher-dev docker.io
+RUN apt-get update && apt-get install -y libsqlcipher-dev && rm -rf /var/lib/apt/lists/*
 
 # Check that library versions match (sqlcipher, libc, etc)
 RUN ./pod --version
