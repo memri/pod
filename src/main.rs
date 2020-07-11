@@ -3,8 +3,8 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 
 mod api_model;
-pub mod database_init;
 mod database_migrate_refinery;
+pub mod database_migrate_schema;
 mod error;
 pub mod internal_api;
 mod sql_converters;
@@ -58,7 +58,7 @@ async fn main() {
         r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
     // Run "schema" migrations based on the auto-generated JSON schema.
     // This creates all optional properties in items table, and adds/removes property indices.
-    database_init::init(&sqlite);
+    database_migrate_schema::migrate(&sqlite);
 
     // Try to prevent Pod from running on a public IP
     for interface in datalink::interfaces() {
