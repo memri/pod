@@ -11,7 +11,7 @@ services:
     networks:
       - memri-net
     volumes:
-      - ./data/db:/data/db
+      - ./data/db:/home/memri-pod/data/db
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - POD_IS_IN_DOCKER=true

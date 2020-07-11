@@ -35,12 +35,12 @@ FROM debian:buster-slim
 
 RUN groupadd --gid 1000 memri-pod
 RUN useradd --uid 1000 --gid memri-pod --create-home memri-pod
-WORKDIR /home/memri-pod/bin/
+WORKDIR /home/memri-pod/
 COPY --from=cargo-build /usr/src/pod/pod .
 RUN chown memri-pod:memri-pod pod
 RUN apt-get update && apt-get install -y libsqlcipher-dev docker.io
 RUN usermod --append --groups docker memri-pod
 USER memri-pod
-RUN ./pod --version 1> /dev/null 2>&1
+RUN ./bin/pod --version 1> /dev/null 2>&1
 EXPOSE 3030
-CMD ["./pod"]
+CMD ["./bin/pod"]
