@@ -34,5 +34,9 @@ RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 FROM debian:buster-slim
 COPY --from=cargo-build /usr/src/pod/pod pod
 RUN apt-get update && apt-get install -y libsqlcipher-dev docker.io
+
+# Check that library versions match (sqlcipher, libc, etc)
+RUN ./pod --version
+
 EXPOSE 3030
 CMD ["./pod"]
