@@ -32,11 +32,15 @@ RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 #### After Pod has been built, create a small docker image with just the Pod
 
 FROM debian:buster-slim
-COPY --from=cargo-build /usr/src/pod/pod pod
+
+RUN groupadd --gid 1000 memri-pod
+RUN useradd --uid 1000 --gid memri-pod --create-home memri-pod
+WORKDIR /home/memri-pod/bin/
+COPY --from=cargo-build /usr/src/pod/pod .
+RUN chown memri-pod:memri-pod pod
 RUN apt-get update && apt-get install -y libsqlcipher-dev docker.io
-
-# Check that library versions match (sqlcipher, libc, etc)
-RUN ./pod --version
-
+RUN usermod --append --groups docker memri-pod
+USER memri-pod
+RUN ./pod --version 1> /dev/null 2>&1
 EXPOSE 3030
 CMD ["./pod"]
