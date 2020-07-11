@@ -42,6 +42,10 @@ async fn main() {
         env!("GIT_DESCRIBE"),
         env!("CARGO_PKG_VERSION")
     );
+    if std::env::args().any(|a| a == "--version" || a == "--help") {
+        eprintln!("Done");
+        std::process::exit(0)
+    };
 
     let sqlite_file = PathBuf::from("data/db/pod.db");
     info!("Using SQLite database {:?}", sqlite_file);
