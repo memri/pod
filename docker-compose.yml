@@ -15,8 +15,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - POD_IS_IN_DOCKER=true
-      # Uncomment insecure http headers below if you want to set Access-Control-Allow-Origin to *
-      # - INSECURE_HTTP_HEADERS=true
 
 volumes:
   db:
