@@ -18,13 +18,9 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
-    let insecure_http_headers = std::env::var_os("INSECURE_HTTP_HEADERS").is_some();
-
     let mut headers = HeaderMap::new();
-    if insecure_http_headers {
-        warn!("Adding Access-Control-Allow-Origin header as per environment config");
-        headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
-    }
+    warn!("Always adding the insecure Access-Control-Allow-Origin header for development purposes");
+    headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     let headers = warp::reply::with::headers(headers);
 
     let api_version_1 = warp::path("v1");
@@ -186,27 +182,20 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         warp::options()
             .and(warp::header::<String>("origin"))
             .map(move |_origin| {
-                if insecure_http_headers {
-                    let builder = http::response::Response::builder()
-                        .status(StatusCode::OK)
-                        .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                        .header(
-                            "access-control-allow-headers",
-                            "Origin, X-Requested-With, Content-Type, Accept",
-                        )
-                        .header("access-control-allow-credentials", "true")
-                        .header("access-control-max-age", "300")
-                        .header("access-control-allow-origin", "*");
-                    builder
-                        .header("vary", "origin")
-                        .body("".to_string())
-                        .unwrap()
-                } else {
-                    http::Response::builder()
-                        .status(StatusCode::METHOD_NOT_ALLOWED)
-                        .body(String::new())
-                        .expect("Failed to return an empty body")
-                }
+                let builder = http::response::Response::builder()
+                    .status(StatusCode::OK)
+                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                    .header(
+                        "access-control-allow-headers",
+                        "Origin, X-Requested-With, Content-Type, Accept",
+                    )
+                    .header("access-control-allow-credentials", "true")
+                    .header("access-control-max-age", "300")
+                    .header("access-control-allow-origin", "*");
+                builder
+                    .header("vary", "origin")
+                    .body("".to_string())
+                    .unwrap()
             });
 
     let main_filter = version
@@ -235,7 +224,7 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
             let code = err.code.as_str();
             let code_canon = err.code.canonical_reason().unwrap_or("");
             let msg = &err.msg;
-            info!("Returning HTTP failure {} {}, {}", code, code_canon, msg);
+            info!("Returning HTTP failure {} {}: {}", code, code_canon, msg);
             warp::reply::with_status(err.msg, err.code).into_response()
         }
         Ok(t) => t.into_response(),
