@@ -64,6 +64,8 @@ lazy_static! {
         let mut result = get_columns_of_type(DatabaseColumnType::Integer);
         result.insert("uid".to_string());
         result.insert("version".to_string());
+        result.insert("_source".to_string());
+        result.insert("_target".to_string());
         result
     };
 }

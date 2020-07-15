@@ -2,7 +2,7 @@ use warp::http::status::StatusCode;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Error {
     pub code: StatusCode,
     pub msg: String,

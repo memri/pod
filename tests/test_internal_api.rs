@@ -3,6 +3,7 @@ extern crate pod;
 use lazy_static::lazy_static;
 use pod::database_migrate_refinery;
 use pod::database_migrate_schema;
+use pod::error::Error;
 use pod::internal_api::*;
 use r2d2::ManageConnection;
 use r2d2::Pool;
@@ -47,18 +48,22 @@ fn test_bulk_action() {
         "createEdges": [{"_type": "friend", "_source": 1, "_target": 2}]
     });
 
-    let result1 = bulk_action(&sqlite, json);
+    let bulk = bulk_action(&sqlite, json);
 
-    let result2 = get_item_with_edges(&sqlite, 1);
+    let edges = get_item_with_edges(&sqlite, 1);
 
     let json = json!({"_type": "Person"});
-    let result3 = search_by_fields(&sqlite, json);
+    let search = search_by_fields(&sqlite, json);
 
-    assert!(result1.is_ok());
-    assert!(result2.is_ok());
-    assert!(check_has_item(result3.ok()));
+    assert_eq!(bulk, Ok(()));
+    assert!(
+        edges.is_ok(),
+        "get items with edges failed with: {:?}",
+        edges
+    );
+    assert!(check_has_item(search));
 }
 
-fn check_has_item(result: Option<Vec<Value>>) -> bool {
+fn check_has_item(result: Result<Vec<Value>, Error>) -> bool {
     result.iter().flatten().next().is_some()
 }
