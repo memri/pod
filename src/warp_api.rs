@@ -105,6 +105,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let external_id_exists = api_version_1
         .and(warp::path!("deprecated" / "uri_exists" / String))
         .and(warp::path::end())
+        .and(warp::get())
         .map(move |external_id: String| {
             let body = serde_json::json!({ "uri": external_id });
             let result = internal_api::search_by_fields(&pool, body);
@@ -141,8 +142,8 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     let get_items_with_edges = api_version_1
         .and(warp::path!("items_with_edges"))
         .and(warp::path::end())
-        .and(warp::body::json())
         .and(warp::post())
+        .and(warp::body::json())
         .map(move |body: serde_json::Value| {
             let result = internal_api::get_items_with_edges(&pool, body);
             let result = result.map(|result| warp::reply::json(&result));
