@@ -1,6 +1,13 @@
 use crate::database_migrate_schema;
 use crate::error::Error;
+use database_migrate_schema::ALL_COLUMN_TYPES;
+use database_migrate_schema::BOOL_COLUMNS;
+use database_migrate_schema::DATE_TIME_COLUMNS;
+use database_migrate_schema::INTEGER_COLUMNS;
+use database_migrate_schema::REAL_COLUMNS;
+use database_migrate_schema::TEXT_COLUMNS;
 use lazy_static::lazy_static;
+use log::warn;
 use regex::Regex;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
@@ -59,14 +66,13 @@ pub fn fields_mapping_to_owned_sql_params(
     fields_map: &Map<String, serde_json::Value>,
 ) -> crate::error::Result<Vec<(String, ToSqlOutput)>> {
     let mut sql_params = Vec::new();
-    for (field, value) in fields_map {
-        match value {
-            Value::Array(_) => continue,
-            Value::Object(_) => continue,
-            _ => (),
+    for (key, value) in fields_map {
+        if value.is_array() || value.is_object() {
+            continue;
         };
-        let field = format!(":{}", field);
-        sql_params.push((field, json_value_to_sqlite(value)?));
+        let value = json_value_to_sqlite(value, key)?;
+        let key = format!(":{}", key);
+        sql_params.push((key, value));
     }
     Ok(sql_params)
 }
@@ -80,15 +86,42 @@ pub fn borrow_sql_params<'a>(
         .collect()
 }
 
-pub fn json_value_to_sqlite(json: &Value) -> crate::error::Result<ToSqlOutput<'_>> {
+pub fn json_value_to_sqlite<'a>(
+    json: &'a Value,
+    column: &str,
+) -> crate::error::Result<ToSqlOutput<'a>> {
     match json {
         Value::Null => Ok(ToSqlOutput::Borrowed(ValueRef::Null)),
-        Value::String(s) => Ok(ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes()))),
-        Value::Number(n) => {
+        Value::String(s) if TEXT_COLUMNS.contains(column) => {
+            Ok(ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes())))
+        }
+        Value::Number(n) if INTEGER_COLUMNS.contains(column) => {
+            if let Some(int) = n.as_i64() {
+                Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
+            } else {
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, column),
+                })
+            }
+        }
+        Value::Number(n) if REAL_COLUMNS.contains(column) => {
+            if let Some(int) = n.as_f64() {
+                Ok(ToSqlOutput::Borrowed(ValueRef::Real(int)))
+            } else {
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, column),
+                })
+            }
+        }
+        Value::Bool(b) if BOOL_COLUMNS.contains(column) => Ok((if *b { 1 } else { 0 }).into()),
+        Value::Number(n) if DATE_TIME_COLUMNS.contains(column) => {
             if let Some(int) = n.as_i64() {
                 Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
             } else if let Some(float) = n.as_f64() {
-                Ok(ToSqlOutput::Borrowed(ValueRef::Real(float)))
+                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, column);
+                Ok((float.round() as i64).into())
             } else {
                 Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -96,15 +129,25 @@ pub fn json_value_to_sqlite(json: &Value) -> crate::error::Result<ToSqlOutput<'_
                 })
             }
         }
-        Value::Bool(b) => Ok((if *b { 1 } else { 0 }).into()),
-        Value::Array(arr) => Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Cannot convert JSON array to an SQL parameter: {:?}", arr),
-        }),
-        Value::Object(obj) => Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Cannot convert JSON object to an SQL parameter: {:?}", obj),
-        }),
+        _ => {
+            if let Some(dbtype) = ALL_COLUMN_TYPES.get(column) {
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!(
+                        "Failed to parse json value {} to {:?} ({})",
+                        json, dbtype, column
+                    ),
+                })
+            } else {
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!(
+                        "Failed to insert json value {} to property {}, reason: not defined in schema",
+                        json, column
+                    ),
+                })
+            }
+        }
     }
 }
 

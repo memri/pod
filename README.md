@@ -106,6 +106,11 @@ to the clients, however, and clients should only ever receive/send `true` and `f
 Use this database type to denote DateTime.
 Internally stored as Integer and should be passed as Integer.
 
+All column definitions of the same case-insensitive name MUST have the same type and indexing.
+All column names MUST consist of `a-zA-Z_` characters only, and start with `a-zA-Z`.
+All type names MUST consist of `a-zA-Z_` characters only,
+and start with `a-zA-Z` (same as column names).
+
 ### Changing the schema locally
 If you want to make local changes to the schema while developing
 new functionality, you can edit the schema directly.

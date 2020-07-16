@@ -89,7 +89,7 @@ fn write_sql_body(sql: &mut String, keys: &[&String], separator: &str) {
 fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
     let mut sql_params = Vec::new();
     for (key, value) in fields {
-        sql_params.push((format!(":{}", key), json_value_to_sqlite(value)?));
+        sql_params.push((format!(":{}", key), json_value_to_sqlite(value, key)?));
     }
     let sql_params: Vec<_> = sql_params
         .iter()
