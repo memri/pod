@@ -515,13 +515,11 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
                 .args(&["memri-indexers:latest"])
                 .spawn()
                 .expect("Failed to run indexer");
+            Ok(())
         }
-        None => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Failed to get item {}", uid),
-            })
-        }
+        None => Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to get item {}", uid),
+        }),
     }
-    Ok(())
 }
