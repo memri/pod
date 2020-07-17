@@ -151,10 +151,11 @@ fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
     Ok(())
 }
 
+type IndexedAndDeclaredProperties = (HashMap<String, bool>, HashMap<String, SchemaPropertyType>);
 fn get_column_info(
     schema: &DatabaseSchema,
     conn: &PooledConnection<SqliteConnectionManager>,
-) -> Result<(HashMap<String, bool>, HashMap<String, SchemaPropertyType>), String> {
+) -> Result<IndexedAndDeclaredProperties, String> {
     validate_schema(&schema)?;
     let mut column_indexes = HashMap::new();
     let mut declared_columns = HashMap::new();
