@@ -62,7 +62,8 @@ async fn main() {
         r2d2::Pool::new(sqlite_manager).expect("Failed to create r2d2 SQLite connection pool");
     // Run "schema" migrations based on the auto-generated JSON schema.
     // This creates all optional properties in items table, and adds/removes property indices.
-    database_migrate_schema::migrate(&sqlite);
+    database_migrate_schema::migrate(&sqlite)
+        .unwrap_or_else(|err| panic!("Failed to migrate schema, {}", err));
 
     // Try to prevent Pod from running on a public IP
     for interface in datalink::interfaces() {

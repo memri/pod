@@ -9,7 +9,7 @@ use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
-use crate::sql_converters::validate_field_name;
+use crate::sql_converters::validate_property_name;
 use chrono::Utc;
 use log::debug;
 use log::info;
@@ -113,7 +113,7 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
 fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
         .collect();
     let time_now = Utc::now().timestamp_millis();
     if !fields.contains_key("dateCreated") {
@@ -138,7 +138,7 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i6
 fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
         .collect();
     fields.insert("uid".to_string(), uid.into());
     fields.remove("_type");
@@ -179,7 +179,7 @@ fn create_edge(
     fields.insert("_target".to_string(), target.into());
     let fields: HashMap<String, Value> = fields
         .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_field_name(k).is_ok())
+        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
         .collect();
     let mut sql = "INSERT INTO edges (".to_string();
     let keys: Vec<_> = fields.keys().collect();
@@ -318,7 +318,7 @@ pub fn search_by_fields(
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
     for (field, value) in &fields_map {
-        validate_field_name(field)?;
+        validate_property_name(field)?;
         match value {
             Value::Array(_) => continue,
             Value::Object(_) => continue,
