@@ -38,7 +38,7 @@ COPY --from=cargo-build /usr/src/pod/pod pod
 RUN apt-get update && apt-get install -y libsqlcipher-dev && rm -rf /var/lib/apt/lists/*
 
 # Check that library versions match (sqlcipher, libc, etc)
-RUN ./pod --version
+RUN ./pod --version 1>/dev/null 2>&1
 
 EXPOSE 3030
 CMD ["./pod"]
