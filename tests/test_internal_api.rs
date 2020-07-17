@@ -33,7 +33,8 @@ lazy_static! {
 
         let sqlite: Pool<SqliteConnectionManager> =
             r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
-        database_migrate_schema::migrate(&sqlite);
+        database_migrate_schema::migrate(&sqlite)
+            .unwrap_or_else(|err| panic!("Failed to migrate schema, {}", err));
         sqlite
     };
 }

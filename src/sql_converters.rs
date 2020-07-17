@@ -153,7 +153,7 @@ pub fn json_value_to_sqlite<'a>(
 
 /// Field name is valid only if it contains less than or equal to 18 characters and
 /// characters from 'a' to 'z', 'A' to 'Z'.
-pub fn validate_field_name(field: &str) -> crate::error::Result<()> {
+pub fn validate_property_name(field: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex = Regex::new(r"^[_a-zA-Z]{1,30}$").expect("Cannot create regex");
     }
