@@ -1,4 +1,5 @@
 use crate::internal_api;
+use crate::services_api;
 use bytes::Bytes;
 use log::info;
 use log::warn;
@@ -155,7 +156,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::post())
         .map(move |service: String, data_type: String| {
-            let result = internal_api::run_downloaders(service, data_type);
+            let result = services_api::run_downloaders(service, data_type);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
@@ -165,7 +166,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::post())
         .map(move |data_type: String| {
-            let result = internal_api::run_importers(data_type);
+            let result = services_api::run_importers(data_type);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
@@ -175,7 +176,7 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .and(warp::path::end())
         .and(warp::post())
         .map(move |uid: i64| {
-            let result = internal_api::run_indexers(&pool, uid);
+            let result = services_api::run_indexers(&pool, uid);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
