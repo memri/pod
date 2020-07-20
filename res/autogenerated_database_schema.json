@@ -24,7 +24,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -94,7 +94,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -179,7 +179,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -244,7 +244,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -279,21 +279,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -306,11 +291,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         }
       ]
@@ -339,7 +319,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -374,6 +354,31 @@
           "indexed": false
         },
         {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "dateCreated",
           "dbtype": "DateTime",
           "indexed": false
@@ -384,8 +389,43 @@
           "indexed": false
         },
         {
-          "name": "datePublished",
-          "dbtype": "DateTime",
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -404,8 +444,23 @@
           "indexed": false
         },
         {
-          "name": "version",
-          "dbtype": "Integer",
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "topic",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "receiver",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "encrypted",
+          "dbtype": "Bool",
           "indexed": false
         }
       ]
@@ -434,7 +489,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -469,6 +524,41 @@
           "indexed": false
         },
         {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "content",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
           "name": "dateCreated",
           "dbtype": "DateTime",
           "indexed": false
@@ -479,8 +569,43 @@
           "indexed": false
         },
         {
-          "name": "datePublished",
-          "dbtype": "DateTime",
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -499,17 +624,167 @@
           "indexed": false
         },
         {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sender",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatJid",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatReceiver",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "EmailMessage",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
           "name": "version",
           "dbtype": "Integer",
           "indexed": false
         },
         {
-          "name": "content",
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "license",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "text",
           "dbtype": "Text",
           "indexed": false
         },
         {
           "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sender",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatJid",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatReceiver",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "sender",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatJid",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "chatReceiver",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "subject",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "date",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "importFrom",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "importTo",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "importCC",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "importReplyTo",
           "dbtype": "Text",
           "indexed": false
         }
@@ -539,7 +814,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -574,21 +849,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -601,11 +861,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -649,7 +904,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -684,21 +939,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -711,11 +951,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -784,7 +1019,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -819,21 +1054,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -846,11 +1066,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -944,7 +1159,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -979,21 +1194,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1006,11 +1206,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -1104,7 +1299,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1139,21 +1334,6 @@
           "indexed": false
         },
         {
-          "name": "dateCreated",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "dateModified",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
-          "name": "datePublished",
-          "dbtype": "DateTime",
-          "indexed": false
-        },
-        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1166,11 +1346,6 @@
         {
           "name": "text",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "version",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -1269,7 +1444,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1349,7 +1524,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1404,7 +1579,7 @@
           "indexed": false
         },
         {
-          "name": "dateAquired",
+          "name": "dateAcquired",
           "dbtype": "DateTime",
           "indexed": false
         },
@@ -1439,7 +1614,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1509,7 +1684,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1564,7 +1739,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1632,6 +1807,11 @@
           "name": "version",
           "dbtype": "Integer",
           "indexed": false
+        },
+        {
+          "name": "edgeLabel",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
@@ -1659,7 +1839,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1719,7 +1899,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1794,7 +1974,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1859,7 +2039,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1949,7 +2129,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2024,7 +2204,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2089,7 +2269,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2154,7 +2334,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2217,6 +2397,11 @@
           "name": "type",
           "dbtype": "Text",
           "indexed": false
+        },
+        {
+          "name": "locationAutoLookupHash",
+          "dbtype": "Text",
+          "indexed": false
         }
       ]
     },
@@ -2244,7 +2429,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2314,7 +2499,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2379,7 +2564,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2454,7 +2639,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2519,7 +2704,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2597,6 +2782,26 @@
           "name": "armLength",
           "dbtype": "Real",
           "indexed": false
+        },
+        {
+          "name": "displayName",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "nameQuality",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "enablePresence",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "enableReceipts",
+          "dbtype": "Bool",
+          "indexed": false
         }
       ]
     },
@@ -2624,7 +2829,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2689,7 +2894,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2759,7 +2964,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2839,7 +3044,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2899,7 +3104,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2959,7 +3164,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3024,7 +3229,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3099,7 +3304,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3164,7 +3369,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3229,7 +3434,7 @@
           "indexed": false
         },
         {
-          "name": "externalID",
+          "name": "externalId",
           "dbtype": "Text",
           "indexed": false
         },
