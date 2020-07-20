@@ -321,7 +321,7 @@ const BLACKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
 ];
 
 lazy_static! {
-    pub static ref BLACKLIST_COLUMN_NAMES: HashSet<String> = {
+    static ref BLACKLIST_COLUMN_NAMES: HashSet<String> = {
         BLACKLIST_COLUMN_NAMES_ARRAY
             .iter()
             .map(|w| w.to_string())
