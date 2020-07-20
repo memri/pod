@@ -46,7 +46,7 @@ fn test_bulk_action() {
     let json = json!({
         "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
         "updateItems": [{"uid": 1, "_type": "Person1"}],
-        "createEdges": [{"_type": "friend", "_source": 1, "_target": 2}]
+        "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
     });
 
     let bulk = bulk_action(&sqlite, json);
