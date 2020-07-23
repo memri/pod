@@ -1,34 +1,16 @@
-#### The image base should be the same as in Dockerfile
-#### UPDATE: not used for now
-# image: 'rust:slim'
+# WARNING:
+# Project currently GitLab shell runner state instead of proper caching.
+#
+# If you have any ideas on how to make the gitlab runner
+# both isolated (not having access to docker and thus `root`) and properly cached, please tell!
+# Merge request or send an email or send a Slack message.
 
 stages:
   - test
   - docs
 
-variables:
-  CARGO_HOME: $CI_PROJECT_DIR/cargo
-  APT_CACHE_DIR: $CI_PROJECT_DIR/apt
-
-# WARNING:
-# Project currently uses a dirty work-around:
-# it installs dependencies/components on GitLab shell runner,
-# as opposed to doing it in a reproducible fashion
-#
-#  - apt-get update -yq
-#  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev libssl-dev pkg-config
-before_script:
-  - rustup component add rustfmt
-  - rustup component add clippy
-  - cargo install --force cargo-audit
-
-
 test:
   stage: test
-  cache:
-    paths:
-      - cargo/
-      - target/
   script:
     - cargo fmt --all -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
@@ -37,10 +19,6 @@ test:
 
 pages:
   stage: docs
-  cache:
-    paths:
-      - cargo/
-      - target/
   script:
     - rm -rf target/doc 2>/dev/null || true
     - cargo doc --no-deps
