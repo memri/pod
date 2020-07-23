@@ -135,11 +135,11 @@ Mark an item as deleted by:
 * Updating `dateModified` (server-s time is taken)
 
 
-### GET /v1/deprecated/uri_exists/{uri}
-⚠️ DEPRECATED Check if an item exists with the `uri`.
+### GET /v1/deprecated/external_id_exists/{uri}
+⚠️ DEPRECATED Check if an item exists with the `externalId`.
 
-Returns `true` successfully if such item exists,
-or returns `false` successfully if such item does not exist.
+Returns `true` if such an item does exist,
+or returns `false` if such an item does not exist.
 
 
 ### POST /v1/search_by_fields/

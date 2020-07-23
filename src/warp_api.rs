@@ -102,10 +102,9 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
             respond_with_result(result)
         });
 
-    // TODO: change endpoint to external_id_exists, instead of uri_exists
     let pool = pool_arc.clone();
     let external_id_exists = api_version_1
-        .and(warp::path!("deprecated" / "uri_exists" / String))
+        .and(warp::path!("deprecated" / "external_id_exists" / String))
         .and(warp::path::end())
         .and(warp::get())
         .map(move |external_id: String| {
