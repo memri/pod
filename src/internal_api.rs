@@ -380,7 +380,10 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
         edge.remove("_target");
         while let Some(row) = rows.next()? {
-            edge.insert("_target".to_string(), Value::from(sqlite_row_to_map(row, true)?));
+            edge.insert(
+                "_target".to_string(),
+                Value::from(sqlite_row_to_map(row, true)?),
+            );
         }
         new_edges.push(edge);
     }
