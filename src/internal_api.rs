@@ -38,7 +38,7 @@ pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let rows = stmt.query_named(&[(":uid", &uid)])?;
 
-    let json = sqlite_rows_to_json(rows)?;
+    let json = sqlite_rows_to_json(rows, true)?;
     Ok(json)
 }
 
@@ -61,7 +61,7 @@ pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached("SELECT * FROM items")?;
     let rows = stmt.query(NO_PARAMS)?;
-    let json = sqlite_rows_to_json(rows)?;
+    let json = sqlite_rows_to_json(rows, true)?;
     Ok(json)
 }
 
@@ -337,7 +337,7 @@ pub fn search_by_fields(
     let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached(&sql_body)?;
     let rows = stmt.query_named(sql_params.as_slice())?;
-    let json = sqlite_rows_to_json(rows)?;
+    let json = sqlite_rows_to_json(rows, true)?;
     Ok(json)
 }
 
@@ -346,7 +346,7 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
     let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
     let mut item = match item_rows.next()? {
-        Some(row) => sqlite_row_to_map(row)?,
+        Some(row) => sqlite_row_to_map(row, false)?,
         None => {
             return Err(Error {
                 code: StatusCode::NOT_FOUND,
@@ -365,7 +365,7 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
     let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
     let mut edges = Vec::new();
     while let Some(row) = edge_rows.next()? {
-        edges.push(sqlite_row_to_map(row)?);
+        edges.push(sqlite_row_to_map(row, false)?);
     }
 
     let mut new_edges = Vec::new();
@@ -379,9 +379,8 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
         edge.remove("_target");
         while let Some(row) = rows.next()? {
-            edge.insert("_target".to_string(), Value::from(sqlite_row_to_map(row)?));
+            edge.insert("_target".to_string(), Value::from(sqlite_row_to_map(row, true)?));
         }
-        edge.insert("_partial".to_string(), Value::Bool(true));
         new_edges.push(edge);
     }
 

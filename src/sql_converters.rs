@@ -19,7 +19,7 @@ use serde_json::Value;
 use std::collections::HashSet;
 use warp::http::status::StatusCode;
 
-pub fn sqlite_row_to_map(row: &Row) -> rusqlite::Result<Map<String, Value>> {
+pub fn sqlite_row_to_map(row: &Row, partial: bool) -> rusqlite::Result<Map<String, Value>> {
     let mut row_map = Map::new();
     for i in 0..row.column_count() {
         let name = row.column_name(i)?.to_string();
@@ -27,14 +27,16 @@ pub fn sqlite_row_to_map(row: &Row) -> rusqlite::Result<Map<String, Value>> {
             row_map.insert(name, value);
         }
     }
+    if partial {
+        row_map.insert("_partial".to_string(), Value::from(true));
+    }
     Ok(row_map)
 }
 
-/// Convert an SQLite result set into array of JSON objects
-pub fn sqlite_rows_to_json(mut rows: Rows) -> rusqlite::Result<Vec<Value>> {
+pub fn sqlite_rows_to_json(mut rows: Rows, partial: bool) -> rusqlite::Result<Vec<Value>> {
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let json_object = sqlite_row_to_map(row)?;
+        let json_object = sqlite_row_to_map(row, partial)?;
         result.push(Value::from(json_object));
     }
     Ok(result)
