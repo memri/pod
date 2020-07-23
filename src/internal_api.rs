@@ -172,6 +172,7 @@ fn create_edge(
     target: i64,
     mut fields: HashMap<String, Value>,
 ) -> Result<()> {
+    update_item_tx(tx, source, HashMap::new())?;
     fields.insert("_type".to_string(), _type.as_str().into());
     fields.insert("_source".to_string(), source.into());
     fields.insert("_target".to_string(), target.into());
