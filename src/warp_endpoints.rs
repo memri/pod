@@ -15,7 +15,6 @@ use crate::services_api;
 use blake2::digest::Update;
 use blake2::digest::VariableOutput;
 use blake2::VarBlake2b;
-use hex;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
