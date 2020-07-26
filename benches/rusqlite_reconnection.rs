@@ -23,7 +23,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("reopening SQLite connections in a loop", |b| {
         b.iter(open_file_connection)
-
     });
 
     std::fs::remove_file(db_address).unwrap();
