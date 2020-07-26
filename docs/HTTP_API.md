@@ -75,9 +75,10 @@ When you need to calculate the hash to send to Pod, you can use one of the libra
 [example](https://github.com/jedisct1/libsodium.js/blob/master/test/sodium_utils.js#L113)),
 [swift](https://github.com/jedisct1/swift-sodium/blob/master/Sodium/GenericHash.swift),
 [rust](https://crates.io/crates/blake2),
-[libsodium](https://doc.libsodium.org/hashing/generic_hashing).
+[libsodium](https://doc.libsodium.org/hashing/generic_hashing),
+CLI `b2sum --length=256`.
 During development, you can also just send any request to the Pod and see it's logs,
-which will contain the owner check denial along with the expected hash.
+which will contain the owner denial along with the expected hash.
 Additionally, you can use the word "ANY" for owner list in Pod, which will make Pod accept
 requests from any owner -- so called multi-tenancy.
 

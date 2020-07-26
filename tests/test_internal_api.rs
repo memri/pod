@@ -33,7 +33,7 @@ lazy_static! {
 
         let sqlite: Pool<SqliteConnectionManager> =
             r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
-        database_migrate_schema::migrate(&sqlite)
+        database_migrate_schema::migrate(&mut refinery_connection)
             .unwrap_or_else(|err| panic!("Failed to migrate schema, {}", err));
         sqlite
     };
@@ -41,7 +41,7 @@ lazy_static! {
 
 #[test]
 fn test_bulk_action() {
-    let sqlite = &SQLITE;
+    let sqlite: &Pool<SqliteConnectionManager> = &SQLITE;
 
     let json = json!({
         "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
@@ -49,18 +49,31 @@ fn test_bulk_action() {
         "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
     });
 
-    let bulk = bulk_action(&sqlite, json);
+    let mut conn = sqlite.get().unwrap();
 
-    let edges = get_item_with_edges(&sqlite, 1);
+    let bulk = {
+        let tx = conn.transaction().unwrap();
+        let result = bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
+        tx.commit().unwrap();
+        result
+    };
+
+    let with_edges = {
+        let tx = conn.transaction().unwrap();
+        get_item_with_edges_tx(&tx, 1)
+    };
 
     let json = json!({"_type": "Person"});
-    let search = search_by_fields(&sqlite, json);
+    let search = {
+        let tx = conn.transaction().unwrap();
+        search_by_fields(&tx, json)
+    };
 
     assert_eq!(bulk, Ok(()));
     assert!(
-        edges.is_ok(),
+        with_edges.is_ok(),
         "get items with edges failed with: {:?}",
-        edges
+        with_edges
     );
     assert!(check_has_item(search));
 }

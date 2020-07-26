@@ -15,6 +15,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - POD_IS_IN_DOCKER=true
+      # - POD_OWNER_HASHES=your-client's-key-hash
 
 volumes:
   db:

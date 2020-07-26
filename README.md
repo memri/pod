@@ -4,14 +4,6 @@ Pod is the open-source backend for [Memri](https://memri.io/) project.
 
 It's written in Rust and provides an HTTP interface for use by the clients.
 
-## WARNING: NOT SECURE WITH PUBLIC IP!!!
-
-The current version of Pod **DOES NOT** guarantee security yet,
-**DO NOT** use it for production or run it with a public IP.
-
-* When attempting to run with a public IP, Pod will give an error and refuse to start;
-* Setting the environment variable `INSECURE_USE_PUBLIC_IP` to any value
-will allow Pod to start even with a public IP (with the security implications above!).
 
 ## Run in docker
 To run Pod inside docker:
@@ -44,7 +36,7 @@ If you develop Pod, you might want to have faster build turn-around.
 
 Use this to incrementally compile the project (after installing [cargo-watch](https://github.com/passcod/cargo-watch)):
 ```sh
-cargo watch --ignore /docs --ignore /data
+cargo watch --ignore docs
 ```
 
 To build (debug version):

@@ -1,7 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
-use crate::api_model::UpdateItem;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
@@ -12,8 +11,7 @@ use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::validate_property_name;
 use chrono::Utc;
 use log::debug;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
@@ -23,17 +21,14 @@ use std::collections::HashMap;
 use std::str;
 use warp::http::status::StatusCode;
 
-/// Get project version as seen by Cargo.
 pub fn get_project_version() -> String {
     let git = env!("GIT_DESCRIBE");
     let cargo = env!("CARGO_PKG_VERSION");
     format!("{}-cargo{})", git, cargo)
 }
 
-/// See HTTP_API.md for details
-pub fn get_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Vec<Value>> {
+pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
-    let conn = sqlite.get()?;
 
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let rows = stmt.query_named(&[(":uid", &uid)])?;
@@ -55,10 +50,8 @@ fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
     Ok(result)
 }
 
-/// See HTTP_API.md for details
-pub fn get_all_items(sqlite: &Pool<SqliteConnectionManager>) -> Result<Vec<Value>> {
+pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
     debug!("Getting all items");
-    let conn = sqlite.get()?;
     let mut stmt = conn.prepare_cached("SELECT * FROM items")?;
     let rows = stmt.query(NO_PARAMS)?;
     let json = sqlite_rows_to_json(rows, true)?;
@@ -107,8 +100,7 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
     Ok(())
 }
 
-/// Create an item presuming consistency checks were already done
-fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
+pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -132,8 +124,7 @@ fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i6
     Ok(tx.last_insert_rowid())
 }
 
-/// Update an item presuming all dangerous fields were already removed, and "uid" is present
-fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
+pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -164,7 +155,6 @@ fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) ->
     execute_sql(tx, &sql, &fields)
 }
 
-/// Create an edge presuming consistency checks were already done
 fn create_edge(
     tx: &Transaction,
     _type: String,
@@ -207,9 +197,7 @@ fn create_edge(
     execute_sql(tx, &sql, &fields)
 }
 
-/// Delete an edge and all its properties.
-/// WARNING: Deleting an edge is irreversible!!!
-fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
+fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     let sql =
         "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;";
     let sql_params = vec![
@@ -223,7 +211,7 @@ fn delete_edge(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     Ok(result)
 }
 
-fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
+pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let mut fields = HashMap::new();
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
@@ -231,7 +219,7 @@ fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     update_item_tx(tx, uid, fields)
 }
 
-fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
+pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     debug!("Performing bulk action {:#?}", bulk_action);
     let edges_will_be_created = !bulk_action.create_edges.is_empty();
     for item in bulk_action.create_items {
@@ -253,57 +241,20 @@ fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
         delete_item_tx(tx, edge_uid)?;
     }
     for del_edge in bulk_action.delete_edges {
-        delete_edge(tx, del_edge)?;
+        delete_edge_tx(tx, del_edge)?;
     }
     Ok(())
 }
 
-/// See HTTP_API.md for details
-pub fn bulk_action(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<()> {
-    debug!("Performing bulk action {}", json);
-    let bulk_action: BulkAction = serde_json::from_value(json)?;
-    let mut conn = sqlite.get()?;
-    let tx = conn.transaction()?;
-    bulk_action_tx(&tx, bulk_action)?;
-    tx.commit()?;
-    Ok(())
-}
-
-/// See HTTP_API.md for details
-pub fn create_item(sqlite: &Pool<SqliteConnectionManager>, json: Value) -> Result<i64> {
-    debug!("Creating item {}", json);
-    let create_action: CreateItem = serde_json::from_value(json)?;
-    let mut conn = sqlite.get()?;
+pub fn create_item(conn: &mut Connection, create_action: CreateItem) -> Result<i64> {
+    debug!("Creating item {:?}", create_action);
     let tx = conn.transaction()?;
     let result = create_item_tx(&tx, create_action.fields)?;
     tx.commit()?;
     Ok(result)
 }
 
-/// See HTTP_API.md for details
-pub fn update_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64, json: Value) -> Result<()> {
-    debug!("Updating item {} with {}", uid, json);
-    let update_action: UpdateItem = serde_json::from_value(json)?;
-    let mut conn = sqlite.get()?;
-    let tx = conn.transaction()?;
-    update_item_tx(&tx, update_action.uid, update_action.fields)?;
-    tx.commit()?;
-    Ok(())
-}
-
-/// See HTTP_API.md for details
-pub fn delete_item(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
-    debug!("Deleting item {}", uid);
-    let time_now = Utc::now().timestamp_millis();
-    let json = serde_json::json!({ "deleted": true, "dateModified": time_now, });
-    update_item(sqlite, uid, json)
-}
-
-/// See HTTP_API.md for details
-pub fn search_by_fields(
-    sqlite: &Pool<SqliteConnectionManager>,
-    query: Value,
-) -> Result<Vec<Value>> {
+pub fn search_by_fields(tx: &Transaction, query: Value) -> Result<Vec<Value>> {
     debug!("Searching by fields {:?}", query);
     let fields_map = match query {
         Object(map) => map,
@@ -335,14 +286,12 @@ pub fn search_by_fields(
 
     let sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
     let sql_params = borrow_sql_params(&sql_params);
-    let conn = sqlite.get()?;
-    let mut stmt = conn.prepare_cached(&sql_body)?;
+    let mut stmt = tx.prepare_cached(&sql_body)?;
     let rows = stmt.query_named(sql_params.as_slice())?;
     let json = sqlite_rows_to_json(rows, true)?;
     Ok(json)
 }
 
-/// See HTTP_API.md for details
 pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
     let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
@@ -392,32 +341,10 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
     Ok(item.into())
 }
 
-pub fn get_item_with_edges(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<Value> {
-    debug!("Getting item with edges {}", uid);
-    let mut conn = sqlite.get()?;
-    let tx = conn.transaction()?;
-    let result = get_item_with_edges_tx(&tx, uid)?;
-    tx.commit()?;
-    Ok(result)
-}
-
-fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
+pub fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for uid in uids {
         result.push(get_item_with_edges_tx(tx, *uid)?);
     }
-    Ok(result)
-}
-
-pub fn get_items_with_edges(
-    sqlite: &Pool<SqliteConnectionManager>,
-    json: Value,
-) -> Result<Vec<Value>> {
-    debug!("Getting items with edges {}", json);
-    let mut conn = sqlite.get()?;
-    let tx = conn.transaction()?;
-    let uids: Vec<i64> = serde_json::from_value(json)?;
-    let result = get_items_with_edges_tx(&tx, &uids)?;
-    tx.commit()?;
     Ok(result)
 }
