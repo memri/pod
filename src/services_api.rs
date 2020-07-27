@@ -1,35 +1,14 @@
+use crate::configuration::pod_is_in_docker;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
 use log::info;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::Connection;
+use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
-fn docker_arguments() -> Vec<String> {
-    if std::env::var_os("POD_IS_IN_DOCKER").is_some() {
-        vec![
-            "--network=pod_memri-net".to_string(),
-            "--env=POD_ADDRESS=pod_pod_1".to_string(),
-        ]
-    } else {
-        // The indexers/importers/downloaders need to have access to the host
-        // This is currently done differently on MacOS and Linux
-        // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-        let pod_address = if cfg!(target_os = "linux") {
-            "localhost"
-        } else {
-            "host.docker.internal"
-        };
-        vec![
-            format!("--env=POD_ADDRESS={}", pod_address),
-            "--network=host".to_string(),
-        ]
-    }
-}
-
-pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
+pub fn run_downloader(service: String, data_type: String) -> Result<()> {
     info!("Trying to run downloader {} for {}", service, data_type);
     match service.as_str() {
         "evernote" => match data_type.as_str() {
@@ -59,7 +38,7 @@ pub fn run_downloaders(service: String, data_type: String) -> Result<()> {
     Ok(())
 }
 
-pub fn run_importers(data_type: String) -> Result<()> {
+pub fn run_importer(data_type: String) -> Result<()> {
     info!("Trying to run importer for {}", data_type);
     match data_type.as_str() {
         "note" => {
@@ -85,9 +64,9 @@ pub fn run_importers(data_type: String) -> Result<()> {
     Ok(())
 }
 
-pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<()> {
+pub fn run_indexers(conn: &Connection, uid: i64) -> Result<()> {
     info!("Trying to run indexer on item {}", uid);
-    let result = internal_api::get_item(sqlite, uid)?;
+    let result = internal_api::get_item(conn.deref(), uid)?;
     match result.first() {
         Some(_item) => {
             Command::new("docker")
@@ -107,5 +86,27 @@ pub fn run_indexers(sqlite: &Pool<SqliteConnectionManager>, uid: i64) -> Result<
             code: StatusCode::BAD_REQUEST,
             msg: format!("Failed to get item {}", uid),
         }),
+    }
+}
+
+fn docker_arguments() -> Vec<String> {
+    if pod_is_in_docker() {
+        vec![
+            "--network=pod_memri-net".to_string(),
+            "--env=POD_ADDRESS=pod_pod_1".to_string(),
+        ]
+    } else {
+        // The indexers/importers/downloaders need to have access to the host
+        // This is currently done differently on MacOS and Linux
+        // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
+        let pod_address = if cfg!(target_os = "linux") {
+            "localhost"
+        } else {
+            "host.docker.internal"
+        };
+        vec![
+            format!("--env=POD_ADDRESS={}", pod_address),
+            "--network=host".to_string(),
+        ]
     }
 }

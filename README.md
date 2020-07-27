@@ -4,14 +4,6 @@ Pod is the open-source backend for [Memri](https://memri.io/) project.
 
 It's written in Rust and provides an HTTP interface for use by the clients.
 
-## WARNING: NOT SECURE WITH PUBLIC IP!!!
-
-The current version of Pod **DOES NOT** guarantee security yet,
-**DO NOT** use it for production or run it with a public IP.
-
-* When attempting to run with a public IP, Pod will give an error and refuse to start;
-* Setting the environment variable `INSECURE_USE_PUBLIC_IP` to any value
-will allow Pod to start even with a public IP (with the security implications above!).
 
 ## Run in docker
 To run Pod inside docker:
@@ -22,7 +14,7 @@ docker-compose up --build
 
 ## Local build/run
 
-In order to build Pod locally, you need Rust and `sqlcipher`:
+In order to build Pod locally, you need Rust and sqlcipher:
 
 * On MacOS: `brew install rust sqlcipher`
 * On ArchLinux: `pacman -S --needed rust sqlcipher`
@@ -38,13 +30,18 @@ After this, you can run Pod with:
 cargo run --release
 ```
 
+Or with some development defaults:
+```
+./examples/run_development.sh
+```
+
 
 ## Development
-During development, you might want to have faster build turn-around.
+If you develop Pod, you might want to have faster build turn-around.
 
 Use this to incrementally compile the project (after installing [cargo-watch](https://github.com/passcod/cargo-watch)):
 ```sh
-cargo watch
+cargo watch --ignore docs
 ```
 
 To build (debug version):
@@ -74,17 +71,15 @@ Pod's API is documented in detail [here](./docs/HTTP_API.md).
 ## Database
 Pod uses SQLite database as its storage mechanism.
 
-When running Pod, a file named `pod.db` will be created.
-You can use `sqlite3 pod.db` to browse the database locally.
+When running Pod, a file named `data/db/*.db` will be created.
+You can use the following command to browse the database locally:
+```
+sqlcipher -cmd "PRAGMA key = \"x'yourDatabaseKey'\";" data/db/*.db
+```
 For example, `.schema` will display the current database schema.
 
-If you want to fill the database with some example data, use:
-```
-sqlite3 data/db/pod.db < res/example_data.sql
-```
-
-Note that the current version of Pod **DOES NOT** use encryption.
-This part will be changed, and a manual import will be needed in the future.
+If you want to fill the database with some example data, execute
+`res/example_data.sql` inside the database.
 
 
 ## Schema
@@ -99,17 +94,17 @@ Valid types for properties are, at the moment:
 
 * `Text` UTF-8 string.
 * `Integer` Signed 8-byte integer.
-* `Real` 8-byte IEEE floating point number.
+* `Real` 8-byte IEEE floating-point number.
 * `Bool` Boolean. Internally, booleans are stored as Integers 0 and 1. This is never exposed
 to the clients, however, and clients should only ever receive/send `true` and `false`.
-* `DateTime` The number of non-leap-milliseconds since January 1, 1970 UTC.
+* `DateTime` The number of non-leap-milliseconds since 00:00 UTC on January 1, 1970.
 Use this database type to denote DateTime.
 Internally stored as Integer and should be passed as Integer.
 
 All column definitions of the same case-insensitive name MUST have the same type and indexing.
 All column names MUST consist of `a-zA-Z_` characters only, and start with `a-zA-Z`.
-All type names MUST consist of `a-zA-Z_` characters only,
-and start with `a-zA-Z` (same as column names).
+All type names MUST consist of `a-zA-Z_` characters only, and start with `a-zA-Z`
+(same as column names).
 
 ### Changing the schema locally
 If you want to make local changes to the schema while developing
@@ -124,7 +119,7 @@ To make it available universally, please submit your schema to the "schema" repo
 [https://gitlab.memri.io/memri/schema](https://gitlab.memri.io/memri/schema).
 
 Changes made to "schema" repository will allow you to generate new definitions
-for other projects, and also for Pod.
+for other projects, and for Pod.
 You can copy the newly generated JSON to Pod during development.
 
 You can contribute to the schemas by making a Merge Requests for the "schema" repository.

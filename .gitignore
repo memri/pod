@@ -4,8 +4,6 @@ target/
 # IDE-s
 .idea/
 
-# database file
-/data/db/*.db
+# User-generated files (database, files, etc)
+/data/
 
-# user files (in future)
-/data/files

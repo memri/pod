@@ -1,17 +1,14 @@
-use r2d2::ManageConnection;
-use r2d2_sqlite::SqliteConnectionManager;
+use crate::error::Result;
+use refinery::Runner;
+use rusqlite::Connection;
 
 pub mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("./res/migrations");
 }
 
-pub fn migrate(sqlite: &SqliteConnectionManager) {
-    let mut refinery_connection = sqlite
-        .connect()
-        .expect("Failed to open a connection for refinery database migrations");
-    // Run "refinery" migrations to bring the core structure of items/edges up-to-date
-    embedded::migrations::runner()
-        .run(&mut refinery_connection)
-        .expect("Failed to run refinery migrations");
+/// Run "refinery" migrations to bring the core structure of items/edges up-to-date
+pub fn migrate(conn: &mut Connection) -> Result<()> {
+    let runner: Runner = embedded::migrations::runner();
+    runner.run(conn).map(|_report| ()).map_err(|e| e.into())
 }

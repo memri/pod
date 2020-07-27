@@ -8,16 +8,17 @@ authors = [
   "Youp Mickers (copyright transferred to Polis) <polisyoup@gmail.com>",
 ]
 edition = "2018"
-publish = false # Since the project does not have a licence yet, prevent accidental publishing.
+publish = false # Prevent accidental publishing
 
 
 [dependencies]
+blake2 = "0.9.0"
 bytes = "0.5.6"
 chrono = { version = "0.4.13", features = ["serde"] }
 env_logger = "0.7.1"
+hex = "0.4.2"
 lazy_static = "1.4.0"
 log = "0.4.11"
-pnet = "0.26.0"
 r2d2 = "0.8.9"
 r2d2_sqlite = "0.16.0"
 refinery = { version = "0.3.0", features = ["rusqlite"] }
@@ -28,6 +29,15 @@ serde_json = "1.0.56"
 tokio = { version = "0.2.22", features = ["macros"] }
 warp = { version = "0.2.4", default-features = false, features = ["tls"] }
 
+
+[dev-dependencies]
+criterion = "0.3.3"
+
+
 [profile.release]
 lto = true
+
+[[bench]]
+name = "rusqlite_reconnection"
+harness = false
 

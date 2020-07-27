@@ -1,11 +1,25 @@
+use crate::api_model::BulkAction;
+use crate::api_model::CreateItem;
+use crate::api_model::PayloadWrapper;
+use crate::api_model::RunDownloader;
+use crate::api_model::RunImporter;
+use crate::api_model::RunIndexer;
+use crate::api_model::UpdateItem;
+use crate::configuration;
 use crate::internal_api;
-use crate::services_api;
-use bytes::Bytes;
+use crate::warp_endpoints;
+use log::error;
 use log::info;
 use log::warn;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
+use serde_json::Value;
+use std::collections::HashSet;
+use std::net::IpAddr;
+use std::net::SocketAddr;
+use std::ops::Deref;
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
+use std::sync::RwLock;
 use warp::http;
 use warp::http::header::HeaderMap;
 use warp::http::header::HeaderValue;
@@ -15,7 +29,7 @@ use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
+pub async fn run_server() {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
@@ -24,159 +38,135 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
     headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     let headers = warp::reply::with::headers(headers);
 
-    let api_version_1 = warp::path("v1");
+    let api_defaults = warp::path("v2")
+        .and(warp::body::content_length_limit(1024 * 32))
+        .and(warp::post());
 
-    let pool_arc = Arc::new(sqlite_pool);
+    let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
 
     let version = warp::path("version")
         .and(warp::path::end())
         .and(warp::get())
         .map(internal_api::get_project_version);
 
-    let pool = pool_arc.clone();
-    let get_item = api_version_1
-        .and(warp::path!("items" / i64))
+    let init_db = initialized_databases_arc.clone();
+    let get_item = api_defaults
+        .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
-        .and(warp::get())
-        .map(move |uid: i64| {
-            let result = internal_api::get_item(&pool, uid);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let get_all_items = api_version_1
-        .and(warp::path!("all_items"))
-        .and(warp::path::end())
-        .and(warp::get())
-        .map(move || {
-            let result = internal_api::get_all_items(&pool);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let create_item = api_version_1
-        .and(warp::path("items"))
-        .and(warp::path::end())
-        .and(warp::post())
         .and(warp::body::json())
-        .map(move |body: serde_json::Value| {
-            let result = internal_api::create_item(&pool, body);
+        .map(move |owner: String, body: PayloadWrapper<i64>| {
+            let result = warp_endpoints::get_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
 
-    let pool = pool_arc.clone();
-    let update_item = api_version_1
-        .and(warp::path!("items" / i64))
+    let init_db = initialized_databases_arc.clone();
+    let get_all_items = api_defaults
+        .and(warp::path!(String / "get_all_items"))
         .and(warp::path::end())
-        .and(warp::put())
         .and(warp::body::json())
-        .map(move |uid: i64, body: serde_json::Value| {
-            let result = internal_api::update_item(&pool, uid, body);
+        .map(move |owner: String, body: PayloadWrapper<()>| {
+            let result = warp_endpoints::get_all_items(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let create_item = api_defaults
+        .and(warp::path!(String / "create_item"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
+            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let update_item = api_defaults
+        .and(warp::path!(String / "update_item"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<UpdateItem>| {
+            let result = warp_endpoints::update_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
 
-    let pool = pool_arc.clone();
-    let bulk_action = api_version_1
-        .and(warp::path!("bulk_action"))
+    let init_db = initialized_databases_arc.clone();
+    let bulk_action = api_defaults
+        .and(warp::path!(String / "bulk_action"))
         .and(warp::path::end())
-        .and(warp::post())
         .and(warp::body::json())
-        .map(move |body: serde_json::Value| {
-            let result = internal_api::bulk_action(&pool, body);
+        .map(move |owner: String, body: PayloadWrapper<BulkAction>| {
+            let result = warp_endpoints::bulk_action(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
 
-    let pool = pool_arc.clone();
-    let delete_item = api_version_1
-        .and(warp::path!("items" / i64))
+    let init_db = initialized_databases_arc.clone();
+    let delete_item = api_defaults
+        .and(warp::path!(String / "delete_item"))
         .and(warp::path::end())
-        .and(warp::delete())
-        .map(move |uid: i64| {
-            let result = internal_api::delete_item(&pool, uid);
-            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let external_id_exists = api_version_1
-        .and(warp::path!("deprecated" / "uri_exists" / String))
-        .and(warp::path::end())
-        .and(warp::get())
-        .map(move |external_id: String| {
-            let body = serde_json::json!({ "uri": external_id });
-            let result = internal_api::search_by_fields(&pool, body);
-            let result = result.map(|result| warp::reply::json(&!result.is_empty()));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let search = api_version_1
-        .and(warp::path("search_by_fields"))
-        .and(warp::path::end())
-        .and(warp::post())
-        .and(warp::body::bytes())
-        .map(move |body: Bytes| {
-            let body =
-                serde_json::from_slice(&body).expect("Failed to serialize request body to JSON");
-            let result = internal_api::search_by_fields(&pool, body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let get_item_with_edges = api_version_1
-        .and(warp::path!("item_with_edges" / i64))
-        .and(warp::path::end())
-        .and(warp::get())
-        .map(move |uid: i64| {
-            let result = internal_api::get_item_with_edges(&pool, uid);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let pool = pool_arc.clone();
-    let get_items_with_edges = api_version_1
-        .and(warp::path!("items_with_edges"))
-        .and(warp::path::end())
-        .and(warp::post())
         .and(warp::body::json())
-        .map(move |body: serde_json::Value| {
-            let result = internal_api::get_items_with_edges(&pool, body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let run_downloaders = api_version_1
-        .and(warp::path!("run_service" / "downloaders" / String / String))
-        .and(warp::path::end())
-        .and(warp::post())
-        .map(move |service: String, data_type: String| {
-            let result = services_api::run_downloaders(service, data_type);
+        .map(move |owner: String, body: PayloadWrapper<i64>| {
+            let result = warp_endpoints::delete_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
 
-    let run_importers = api_version_1
-        .and(warp::path!("run_service" / "importers" / String))
+    let init_db = initialized_databases_arc.clone();
+    let search = api_defaults
+        .and(warp::path!(String / "search_by_fields"))
         .and(warp::path::end())
-        .and(warp::post())
-        .map(move |data_type: String| {
-            let result = services_api::run_importers(data_type);
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<Value>| {
+            let result = warp_endpoints::search_by_fields(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let get_items_with_edges = api_defaults
+        .and(warp::path!(String / "get_items_with_edges"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<Vec<i64>>| {
+            let result = warp_endpoints::get_items_with_edges(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let run_downloaders = api_defaults
+        // //! In fact, any type that implements `FromStr` can be used, in any order:
+        // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
+        .and(warp::path!(String / "run_downloader"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<RunDownloader>| {
+            let result = warp_endpoints::run_downloader(owner, init_db.deref(), body);
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let run_importers = api_defaults
+        .and(warp::path!(String / "run_importer"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
+            let result = warp_endpoints::run_importer(owner, init_db.deref(), body);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
-    let pool = pool_arc.clone();
-    let run_indexers = api_version_1
-        .and(warp::path!("run_service" / "indexers" / i64))
+    let init_db = initialized_databases_arc.clone();
+    let run_indexers = api_defaults
+        .and(warp::path!(String / "run_indexer"))
         .and(warp::path::end())
-        .and(warp::post())
-        .map(move |uid: i64| {
-            let result = services_api::run_indexers(&pool, uid);
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<RunIndexer>| {
+            let result = warp_endpoints::run_indexer(owner, init_db.deref(), body);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
@@ -208,16 +198,74 @@ pub async fn run_server(sqlite_pool: Pool<SqliteConnectionManager>) {
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
-        .or(external_id_exists.with(&headers))
         .or(search.with(&headers))
-        .or(get_item_with_edges.with(&headers))
         .or(get_items_with_edges.with(&headers))
         .or(run_downloaders.with(&headers))
         .or(run_importers.with(&headers))
         .or(run_indexers.with(&headers))
         .or(origin_request);
 
-    warp::serve(main_filter).run(([0, 0, 0, 0], 3030)).await
+    if let Some(cert) = configuration::https_certificate_file() {
+        let addr = configuration::pod_address().unwrap_or_else(|| "0.0.0.0:3030".to_string());
+        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
+            error!("Failed to parse desired hosting address {}, {}", addr, err);
+            std::process::exit(1)
+        });
+        let cert_path = format!("{}.crt", cert);
+        let key_path = format!("{}.key", cert);
+        if !PathBuf::from_str(&cert_path)
+            .map(|p| p.exists())
+            .unwrap_or(false)
+        {
+            error!("Certificate public key {} not found", cert_path);
+            std::process::exit(1)
+        }
+        if !PathBuf::from_str(&key_path)
+            .map(|p| p.exists())
+            .unwrap_or(false)
+        {
+            error!("Certificate private key {} not found", cert_path);
+            std::process::exit(1)
+        }
+        warp::serve(main_filter)
+            .tls()
+            .cert_path(cert_path)
+            .key_path(key_path)
+            .run(addr)
+            .await;
+    } else {
+        warn!(
+            "Https certificate files not configured. It is best recommended to only \
+            run Pod with encryption. To set up certificates once you obtained them, \
+            set {} environment variable to the path \
+            of the certificates (without .crt and .key suffixes)",
+            configuration::HTTPS_CERTIFICATE_ENV_NAME
+        );
+        if !configuration::use_insecure_non_tls() {
+            error!(
+                "Refusing to run pod without TLS (https). If you want to override this, \
+                start pod with environment variable {} set to any value.",
+                configuration::USE_INSECURE_NON_TLS_ENV_NAME
+            );
+            std::process::exit(1)
+        }
+        let addr = configuration::pod_address().unwrap_or_else(|| "127.0.0.1:3030".to_string());
+        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
+            error!("Failed to parse desired hosting address {}, {}", addr, err);
+            std::process::exit(1);
+        });
+        if check_public_ip(addr.ip()) {
+            warn!(
+                "The server is asked to run on a public IP {} without https encryption. \
+                This is discouraged as an intermediary (even your router on a local network) \
+                could spoof the traffic sent to the server and do a MiTM attack.\
+                Please consider using Pod with https encryption, \
+                or run it on a non-public network.",
+                addr
+            );
+        };
+        warp::serve(main_filter).run(addr).await
+    }
 }
 
 fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
@@ -230,5 +278,21 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
             warp::reply::with_status(err.msg, err.code).into_response()
         }
         Ok(t) => t.into_response(),
+    }
+}
+
+fn check_public_ip(addr: IpAddr) -> bool {
+    match addr {
+        IpAddr::V4(v4) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
+        IpAddr::V6(v6) if v6.is_loopback() => true,
+        // https://en.wikipedia.org/wiki/Unique_local_address
+        // Implementation copied from `v6.is_unique_local()`,
+        // which is not yet stabilized in Rust
+        IpAddr::V6(v6) if (v6.segments()[0] & 0xfe00) == 0xfc00 => true,
+        // https://en.wikipedia.org/wiki/Link-local_address
+        // Implementation copied from `v6.is_unicast_link_local()`,
+        // which is not yet stabilized in Rust
+        IpAddr::V6(v6) if (v6.segments()[0] & 0xffc0) == 0xfe80 => true,
+        _ => false,
     }
 }

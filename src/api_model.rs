@@ -48,3 +48,33 @@ pub struct BulkAction {
     #[serde(default)]
     pub delete_edges: Vec<DeleteEdge>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PayloadWrapper<T> {
+    pub database_key: String,
+    pub payload: T,
+}
+
+//
+// Services:
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RunDownloader {
+    pub service: String,
+    pub data_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RunImporter {
+    pub data_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RunIndexer {
+    pub uid: i64,
+}

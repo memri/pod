@@ -42,7 +42,7 @@ pub fn sqlite_rows_to_json(mut rows: Rows, partial: bool) -> rusqlite::Result<Ve
     Ok(result)
 }
 
-pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
+fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
     match value {
         ValueRef::Null => None,
         ValueRef::Integer(i) => {
@@ -153,28 +153,31 @@ pub fn json_value_to_sqlite<'a>(
     }
 }
 
-/// Field name is valid only if it contains less than or equal to 18 characters and
-/// characters from 'a' to 'z', 'A' to 'Z'.
-pub fn validate_property_name(field: &str) -> crate::error::Result<()> {
+pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex = Regex::new(r"^[_a-zA-Z]{1,30}$").expect("Cannot create regex");
     }
-    if REGEXP.is_match(field) && !BLACKLIST_COLUMN_NAMES.contains(field) {
-        Ok(())
-    } else {
+    if BLOCKLIST_COLUMN_NAMES.contains(property) {
+        Err(crate::error::Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Blocklisted item property {}", property),
+        })
+    } else if !REGEXP.is_match(property) {
         Err(crate::error::Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!(
                 "Item property name {} does not satisfy the format {}",
-                field,
+                property,
                 REGEXP.as_str()
             ),
         })
+    } else {
+        Ok(())
     }
 }
 
 // Taken from the official documentation https://www.sqlite.org/lang_keywords.html
-const BLACKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
+const BLOCKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
     "ABORT",
     "ACTION",
     "ADD",
@@ -323,8 +326,8 @@ const BLACKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
 ];
 
 lazy_static! {
-    static ref BLACKLIST_COLUMN_NAMES: HashSet<String> = {
-        BLACKLIST_COLUMN_NAMES_ARRAY
+    static ref BLOCKLIST_COLUMN_NAMES: HashSet<String> = {
+        BLOCKLIST_COLUMN_NAMES_ARRAY
             .iter()
             .map(|w| w.to_string())
             .collect()
