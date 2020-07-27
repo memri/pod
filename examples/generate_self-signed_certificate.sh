@@ -11,5 +11,6 @@ if test -f data/pod.crt && test -f data/pod.key; then
   exit 0
 fi
 
+mkdir -p data/
 exec openssl req -x509 -newkey rsa:4096 -keyout data/pod.key -out data/pod.crt -days 365 -nodes -subj "/C=US/ST=Oregon/L=Portland/O=Company Name/OU=Org/CN=www.example.com"
 
