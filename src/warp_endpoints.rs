@@ -1,10 +1,11 @@
-use crate::api_model::BulkAction;
+use crate::action_api;
 use crate::api_model::CreateItem;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
+use crate::api_model::{Action, BulkAction};
 use crate::configuration;
 use crate::database_migrate_refinery;
 use crate::database_migrate_schema;
@@ -144,6 +145,18 @@ pub fn run_indexer(
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     services_api::run_indexers(&conn, body.payload.uid)
+}
+
+pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
+    check_owner(&owner)?;
+    match body.payload.action_type.as_str() {
+        "matrix_login" => action_api::matrix_login(body.payload.content),
+        "get_joined_rooms" => action_api::get_joined_rooms(body.payload.content),
+        _ => Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: "Unexpected action".to_string(),
+        }),
+    }
 }
 
 //

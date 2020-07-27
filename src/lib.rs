@@ -1,5 +1,6 @@
 // Fake simple library interface to allow integration tests to work
 
+pub mod action_api;
 mod api_model;
 pub mod configuration;
 pub mod database_migrate_refinery;

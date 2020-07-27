@@ -2,6 +2,7 @@ extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rusqlite;
 
+mod action_api;
 mod api_model;
 mod configuration;
 mod database_migrate_refinery;

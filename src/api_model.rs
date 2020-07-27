@@ -78,3 +78,10 @@ pub struct RunImporter {
 pub struct RunIndexer {
     pub uid: i64,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Action {
+    pub action_type: String,
+    pub content: Value,
+}

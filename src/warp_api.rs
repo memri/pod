@@ -1,3 +1,4 @@
+use crate::api_model::Action;
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::PayloadWrapper;
@@ -170,6 +171,16 @@ pub async fn run_server() {
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
+    let do_action = api_defaults
+        .and(warp::path!(String / "do_action"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<Action>| {
+            let result = warp_endpoints::do_action(owner, body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
     let origin_request =
         warp::options()
             .and(warp::header::<String>("origin"))
@@ -203,6 +214,7 @@ pub async fn run_server() {
         .or(run_downloaders.with(&headers))
         .or(run_importers.with(&headers))
         .or(run_indexers.with(&headers))
+        .or(do_action.with(&headers))
         .or(origin_request);
 
     if let Some(cert) = configuration::https_certificate_file() {

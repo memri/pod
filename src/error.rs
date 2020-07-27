@@ -77,3 +77,13 @@ impl<T> From<std::sync::PoisonError<T>> for Error {
         }
     }
 }
+
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Error {
+        let msg = format!("HTTP reqwest error {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
