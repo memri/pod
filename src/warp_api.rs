@@ -5,13 +5,19 @@ use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
+use crate::configuration;
 use crate::internal_api;
 use crate::warp_endpoints;
+use log::error;
 use log::info;
 use log::warn;
 use serde_json::Value;
 use std::collections::HashSet;
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::ops::Deref;
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::RwLock;
 use warp::http;
@@ -199,7 +205,67 @@ pub async fn run_server() {
         .or(run_indexers.with(&headers))
         .or(origin_request);
 
-    warp::serve(main_filter).run(([0, 0, 0, 0], 3030)).await
+    if let Some(cert) = configuration::https_certificate_file() {
+        let addr = configuration::pod_address().unwrap_or_else(|| "0.0.0.0:3030".to_string());
+        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
+            error!("Failed to parse desired hosting address {}, {}", addr, err);
+            std::process::exit(1)
+        });
+        let cert_path = format!("{}.crt", cert);
+        let key_path = format!("{}.key", cert);
+        if !PathBuf::from_str(&cert_path)
+            .map(|p| p.exists())
+            .unwrap_or(false)
+        {
+            error!("Certificate public key {} not found", cert_path);
+            std::process::exit(1)
+        }
+        if !PathBuf::from_str(&key_path)
+            .map(|p| p.exists())
+            .unwrap_or(false)
+        {
+            error!("Certificate private key {} not found", cert_path);
+            std::process::exit(1)
+        }
+        warp::serve(main_filter)
+            .tls()
+            .cert_path(cert_path)
+            .key_path(key_path)
+            .run(addr)
+            .await;
+    } else {
+        warn!(
+            "Https certificate files not configured. It is best recommended to only \
+            run Pod with encryption. To set up certificates once you obtained them, \
+            set {} environment variable to the path \
+            of the certificates (without .crt and .key suffixes)",
+            configuration::HTTPS_CERTIFICATE_ENV_NAME
+        );
+        if !configuration::use_insecure_non_tls() {
+            error!(
+                "Refusing to run pod without TLS (https). If you want to override this, \
+                start pod with environment variable {} set to any value.",
+                configuration::USE_INSECURE_NON_TLS_ENV_NAME
+            );
+            std::process::exit(1)
+        }
+        let addr = configuration::pod_address().unwrap_or_else(|| "127.0.0.1:3030".to_string());
+        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
+            error!("Failed to parse desired hosting address {}, {}", addr, err);
+            std::process::exit(1);
+        });
+        if check_public_ip(addr.ip()) {
+            warn!(
+                "The server is asked to run on a public IP {} without https encryption. \
+                This is discouraged as an intermediary (even your router on a local network) \
+                could spoof the traffic sent to the server and do a MiTM attack.\
+                Please consider using Pod with https encryption, \
+                or run it on a non-public network.",
+                addr
+            );
+        };
+        warp::serve(main_filter).run(addr).await
+    }
 }
 
 fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
@@ -212,5 +278,21 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
             warp::reply::with_status(err.msg, err.code).into_response()
         }
         Ok(t) => t.into_response(),
+    }
+}
+
+fn check_public_ip(addr: IpAddr) -> bool {
+    match addr {
+        IpAddr::V4(v4) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
+        IpAddr::V6(v6) if v6.is_loopback() => true,
+        // https://en.wikipedia.org/wiki/Unique_local_address
+        // Implementation copied from `v6.is_unique_local()`,
+        // which is not yet stabilized in Rust
+        IpAddr::V6(v6) if (v6.segments()[0] & 0xfe00) == 0xfc00 => true,
+        // https://en.wikipedia.org/wiki/Link-local_address
+        // Implementation copied from `v6.is_unicast_link_local()`,
+        // which is not yet stabilized in Rust
+        IpAddr::V6(v6) if (v6.segments()[0] & 0xffc0) == 0xfe80 => true,
+        _ => false,
     }
 }
