@@ -30,6 +30,11 @@ After this, you can run Pod with:
 cargo run --release
 ```
 
+Or with some development defaults:
+```
+./examples/run_development.sh
+```
+
 
 ## Development
 If you develop Pod, you might want to have faster build turn-around.
