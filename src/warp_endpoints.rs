@@ -154,6 +154,10 @@ pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
         "get_joined_rooms" => action_api::get_joined_rooms(body.payload.content),
         "get_joined_members" => action_api::get_joined_members(body.payload.content),
         "send_messages" => action_api::send_messages(body.payload.content),
+        "sync_events" => action_api::sync_events(body.payload.content),
+        "create_filter" => action_api::create_filter(body.payload.content),
+        "get_filter" => action_api::get_filter(body.payload.content),
+        "get_messages" => action_api::get_messages(body.payload.content),
         _ => Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: "Unexpected action".to_string(),
