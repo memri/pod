@@ -152,6 +152,7 @@ pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
     match body.payload.action_type.as_str() {
         "matrix_login" => action_api::matrix_login(body.payload.content),
         "get_joined_rooms" => action_api::get_joined_rooms(body.payload.content),
+        "get_joined_members" => action_api::get_joined_members(body.payload.content),
         _ => Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: "Unexpected action".to_string(),
