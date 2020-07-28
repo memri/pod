@@ -1,0 +1,1 @@
+curl -k -v -X POST -H "Content-Type: application/json" "https://localhost:3030/v2/2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99/bulk_action/" -d @examples/whatsapp_data/whatsapp_example_data.json
