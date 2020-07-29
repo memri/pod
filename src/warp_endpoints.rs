@@ -63,9 +63,9 @@ pub fn update_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)?;
+    internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)?;
     tx.commit()?;
-    Ok(result)
+    Ok(())
 }
 
 pub fn bulk_action(
@@ -75,9 +75,9 @@ pub fn bulk_action(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::bulk_action_tx(&tx, body.payload)?;
+    internal_api::bulk_action_tx(&tx, body.payload)?;
     tx.commit()?;
-    Ok(result)
+    Ok(())
 }
 
 pub fn delete_item(
@@ -87,9 +87,9 @@ pub fn delete_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::delete_item_tx(&tx, body.payload)?;
+    internal_api::delete_item_tx(&tx, body.payload)?;
     tx.commit()?;
-    Ok(result)
+    Ok(())
 }
 
 pub fn search_by_fields(
