@@ -39,7 +39,7 @@ pub async fn run_server() {
     let headers = warp::reply::with::headers(headers);
 
     let api_defaults = warp::path("v2")
-        .and(warp::body::content_length_limit(1024 * 32))
+        .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
