@@ -51,9 +51,9 @@ pub fn create_item(
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::create_item_tx(&tx, body.payload.fields);
+    let result = internal_api::create_item_tx(&tx, body.payload.fields)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn update_item(
@@ -63,9 +63,9 @@ pub fn update_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields);
+    let result = internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn bulk_action(
@@ -75,9 +75,9 @@ pub fn bulk_action(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::bulk_action_tx(&tx, body.payload);
+    let result = internal_api::bulk_action_tx(&tx, body.payload)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn delete_item(
@@ -87,9 +87,9 @@ pub fn delete_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::delete_item_tx(&tx, body.payload);
+    let result = internal_api::delete_item_tx(&tx, body.payload)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn search_by_fields(
@@ -99,9 +99,9 @@ pub fn search_by_fields(
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::search_by_fields(&tx, body.payload);
+    let result = internal_api::search_by_fields(&tx, body.payload)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn get_items_with_edges(
@@ -111,9 +111,9 @@ pub fn get_items_with_edges(
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     let tx = conn.transaction()?;
-    let result = internal_api::get_items_with_edges_tx(&tx, &body.payload);
+    let result = internal_api::get_items_with_edges_tx(&tx, &body.payload)?;
     tx.commit()?;
-    result
+    Ok(result)
 }
 
 pub fn run_downloader(
