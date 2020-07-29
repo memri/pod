@@ -40,7 +40,7 @@ pub async fn run_server() {
     let headers = warp::reply::with::headers(headers);
 
     let api_defaults = warp::path("v2")
-        .and(warp::body::content_length_limit(1024 * 32))
+        .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
@@ -246,27 +246,22 @@ pub async fn run_server() {
             .run(addr)
             .await;
     } else {
-        warn!(
-            "Https certificate files not configured. It is best recommended to only \
-            run Pod with encryption. To set up certificates once you obtained them, \
-            set {} environment variable to the path \
-            of the certificates (without .crt and .key suffixes)",
-            configuration::HTTPS_CERTIFICATE_ENV_NAME
-        );
-        if !configuration::use_insecure_non_tls() {
-            error!(
-                "Refusing to run pod without TLS (https). If you want to override this, \
-                start pod with environment variable {} set to any value.",
-                configuration::USE_INSECURE_NON_TLS_ENV_NAME
-            );
-            std::process::exit(1)
-        }
         let addr = configuration::pod_address().unwrap_or_else(|| "127.0.0.1:3030".to_string());
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1);
         });
-        if check_public_ip(addr.ip()) {
+        let is_loopback = addr.ip().is_loopback();
+        if !is_loopback {
+            warn!(
+                "Https certificate files not configured. It is best recommended to only \
+                run Pod with encryption. To set up certificates once you obtained them, \
+                set {} environment variable to the path \
+                of the certificates (without .crt and .key suffixes)",
+                configuration::HTTPS_CERTIFICATE_ENV_NAME
+            );
+        }
+        if !is_loopback && check_public_ip(addr.ip()) {
             warn!(
                 "The server is asked to run on a public IP {} without https encryption. \
                 This is discouraged as an intermediary (even your router on a local network) \
@@ -276,6 +271,14 @@ pub async fn run_server() {
                 addr
             );
         };
+        if !is_loopback && !configuration::use_insecure_non_tls() {
+            error!(
+                "Refusing to run pod without TLS (https). If you want to override this, \
+                start pod with environment variable {} set to any value.",
+                configuration::USE_INSECURE_NON_TLS_ENV_NAME
+            );
+            std::process::exit(1)
+        }
         warp::serve(main_filter).run(addr).await
     }
 }

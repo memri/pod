@@ -30,23 +30,18 @@ After this, you can run Pod with:
 cargo run --release
 ```
 
-Or with some development defaults:
+Or the easy-to-use development version:
 ```
 ./examples/run_development.sh
 ```
 
 
-## Development
+## Pod development
 If you develop Pod, you might want to have faster build turn-around.
 
 Use this to incrementally compile the project (after installing [cargo-watch](https://github.com/passcod/cargo-watch)):
 ```sh
-cargo watch --ignore docs
-```
-
-To build (debug version):
-```sh
-cargo build
+cargo watch --ignore docs -s 'cargo check'
 ```
 
 Run:

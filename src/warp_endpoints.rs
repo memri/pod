@@ -20,6 +20,7 @@ use lazy_static::lazy_static;
 use log::error;
 use log::info;
 use rusqlite::Connection;
+use rusqlite::Transaction;
 use serde_json::Value;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -51,10 +52,9 @@ pub fn create_item(
     body: PayloadWrapper<CreateItem>,
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::create_item_tx(&tx, body.payload.fields);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::create_item_tx(&tx, body.payload.fields)
+    })
 }
 
 pub fn update_item(
@@ -63,10 +63,9 @@ pub fn update_item(
     body: PayloadWrapper<UpdateItem>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)
+    })
 }
 
 pub fn bulk_action(
@@ -75,10 +74,9 @@ pub fn bulk_action(
     body: PayloadWrapper<BulkAction>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::bulk_action_tx(&tx, body.payload);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::bulk_action_tx(&tx, body.payload)
+    })
 }
 
 pub fn delete_item(
@@ -87,10 +85,9 @@ pub fn delete_item(
     body: PayloadWrapper<i64>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::delete_item_tx(&tx, body.payload);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::delete_item_tx(&tx, body.payload)
+    })
 }
 
 pub fn search_by_fields(
@@ -99,10 +96,9 @@ pub fn search_by_fields(
     body: PayloadWrapper<Value>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::search_by_fields(&tx, body.payload);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::search_by_fields(&tx, body.payload)
+    })
 }
 
 pub fn get_items_with_edges(
@@ -111,11 +107,14 @@ pub fn get_items_with_edges(
     body: PayloadWrapper<Vec<i64>>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    let tx = conn.transaction()?;
-    let result = internal_api::get_items_with_edges_tx(&tx, &body.payload);
-    tx.commit()?;
-    result
+    in_transaction(&mut conn, |tx| {
+        internal_api::get_items_with_edges_tx(&tx, &body.payload)
+    })
 }
+
+//
+// Services
+//
 
 pub fn run_downloader(
     owner: String,
@@ -168,6 +167,16 @@ pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
 //
 // helper functions:
 //
+
+fn in_transaction<T, F: FnOnce(&Transaction) -> Result<T>>(
+    conn: &mut Connection,
+    func: F,
+) -> Result<T> {
+    let tx = conn.transaction()?;
+    let result = func(&tx)?; // Note that this function needs to exit early in case of error
+    tx.commit()?;
+    Ok(result)
+}
 
 /// Two methods combined into one to prevent creating a database connection without owner checks.
 /// As additional failsafe to the fact that non-owners don't have the database key.
