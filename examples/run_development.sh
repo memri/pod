@@ -9,4 +9,7 @@ fi
 
 examples/generate_self-signed_certificate.sh
 
-POD_OWNER_HASHES=ANY POD_HTTPS_CERTIFICATE=./data/pod RUST_LOG=pod=debug,info exec cargo run
+POD_OWNER_HASHES=ANY \
+  POD_HTTPS_CERTIFICATE=./data/pod \
+  INSECURE_HTTP_HEADERS=1 \
+  RUST_LOG=pod=debug,info exec cargo run
