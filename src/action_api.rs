@@ -30,22 +30,6 @@ fn get_next_batch(json: &Value) -> String {
         .to_string()
 }
 
-fn get_user_id(json: &Value) -> String {
-    json.get("userId")
-        .expect("Failed to get userId")
-        .as_str()
-        .expect("Failed to get &str")
-        .to_string()
-}
-
-fn get_filter_id(json: &Value) -> String {
-    json.get("filterId")
-        .expect("Failed to get filterId")
-        .as_str()
-        .expect("Failed to get &str")
-        .to_string()
-}
-
 pub fn matrix_register(json: Value) -> Result<Value> {
     let client = reqwest::blocking::Client::new();
     let url = format!("{}/register", MATRIX_BASE);
@@ -117,19 +101,6 @@ pub fn send_messages(json: Value) -> Result<Value> {
     Ok(serde_json::from_str(res.text()?.as_str())?)
 }
 
-pub fn create_filter(json: Value) -> Result<Value> {
-    let client = reqwest::blocking::Client::new();
-    let user_id = get_user_id(&json);
-    let access_token = get_access_token(&json);
-    let message_body = get_message_body(&json);
-    let url = format!(
-        "{}/user/{}/filter?access_token={}",
-        MATRIX_BASE, user_id, access_token
-    );
-    let res = client.post(&url).json(message_body).send()?;
-    Ok(serde_json::from_str(res.text()?.as_str())?)
-}
-
 pub fn sync_events(json: Value) -> Result<Value> {
     let client = reqwest::blocking::Client::new();
     let next_batch = get_next_batch(&json);
@@ -137,19 +108,6 @@ pub fn sync_events(json: Value) -> Result<Value> {
     let url = format!(
         "{}/sync?since={}&access_token={}",
         MATRIX_BASE, next_batch, access_token
-    );
-    let res = client.get(&url).send()?;
-    Ok(serde_json::from_str(res.text()?.as_str())?)
-}
-
-pub fn get_filter(json: Value) -> Result<Value> {
-    let client = reqwest::blocking::Client::new();
-    let user_id = get_user_id(&json);
-    let filter_id = get_filter_id(&json);
-    let access_token = get_access_token(&json);
-    let url = format!(
-        "{}/user/{}/filter/{}?access_token={}",
-        MATRIX_BASE, user_id, filter_id, access_token
     );
     let res = client.get(&url).send()?;
     Ok(serde_json::from_str(res.text()?.as_str())?)

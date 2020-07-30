@@ -175,7 +175,7 @@ pub async fn run_server() {
         .and(warp::path!(String / "do_action"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<Action>| {
+        .map(move |owner: String, body: Action| {
             let result = warp_endpoints::do_action(owner, body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)

@@ -146,20 +146,18 @@ pub fn run_indexer(
     services_api::run_indexers(&conn, body.payload.uid)
 }
 
-pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
+pub fn do_action(owner: String, body: Action) -> Result<Value> {
     check_owner(&owner)?;
-    match body.payload.action_type.as_str() {
-        "matrix_register" => action_api::matrix_register(body.payload.content),
-        "matrix_login" => action_api::matrix_login(body.payload.content),
-        "create_room" => action_api::create_room(body.payload.content),
-        "get_joined_rooms" => action_api::get_joined_rooms(body.payload.content),
-        "invite_user_to_join" => action_api::invite_user_to_join(body.payload.content),
-        "get_joined_members" => action_api::get_joined_members(body.payload.content),
-        "send_messages" => action_api::send_messages(body.payload.content),
-        "sync_events" => action_api::sync_events(body.payload.content),
-        "create_filter" => action_api::create_filter(body.payload.content),
-        "get_filter" => action_api::get_filter(body.payload.content),
-        "get_messages" => action_api::get_messages(body.payload.content),
+    match body.action_type.as_str() {
+        "matrix_register" => action_api::matrix_register(body.content),
+        "matrix_login" => action_api::matrix_login(body.content),
+        "create_room" => action_api::create_room(body.content),
+        "get_joined_rooms" => action_api::get_joined_rooms(body.content),
+        "invite_user_to_join" => action_api::invite_user_to_join(body.content),
+        "get_joined_members" => action_api::get_joined_members(body.content),
+        "send_messages" => action_api::send_messages(body.content),
+        "sync_events" => action_api::sync_events(body.content),
+        "get_messages" => action_api::get_messages(body.content),
         _ => Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: "Unexpected action".to_string(),
