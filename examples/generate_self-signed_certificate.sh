@@ -1,7 +1,7 @@
 #!/bin/bash -euET
 # You can use this to generate a self-signed certificate for Pod during development
 
-if !test -e Cargo.toml; then
+if ! test -e Cargo.toml; then
   echo "Please run this script from Pod-s main directory."
   exit 1
 fi
