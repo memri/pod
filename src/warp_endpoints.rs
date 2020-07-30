@@ -149,8 +149,11 @@ pub fn run_indexer(
 pub fn do_action(owner: String, body: PayloadWrapper<Action>) -> Result<Value> {
     check_owner(&owner)?;
     match body.payload.action_type.as_str() {
+        "matrix_register" => action_api::matrix_register(body.payload.content),
         "matrix_login" => action_api::matrix_login(body.payload.content),
+        "create_room" => action_api::create_room(body.payload.content),
         "get_joined_rooms" => action_api::get_joined_rooms(body.payload.content),
+        "invite_user_to_join" => action_api::invite_user_to_join(body.payload.content),
         "get_joined_members" => action_api::get_joined_members(body.payload.content),
         "send_messages" => action_api::send_messages(body.payload.content),
         "sync_events" => action_api::sync_events(body.payload.content),
