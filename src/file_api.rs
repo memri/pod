@@ -7,7 +7,7 @@ use rusqlite::Transaction;
 use sha2::Digest;
 use sha2::Sha256;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 use warp::http::status::StatusCode;
