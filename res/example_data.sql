@@ -1,7 +1,7 @@
 -- This is an example data that you can insert into Pod for testing purposes.
 
--- Use it as:
---   sqlite3 data/db/pod.db < res/example_data.sql
+-- Use it for example as:
+--   sqlcipher -cmd "PRAGMA key = \"x'2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99'\";" data/db/*.db < res/example_data.sql
 
 INSERT INTO items (uid, _type, dateCreated, dateModified, deleted, version, firstName, gender, lastName) VALUES
   (1, "Person", 0, 0, 0, 1, "John", "male", "Doe"),

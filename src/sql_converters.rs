@@ -155,7 +155,8 @@ pub fn json_value_to_sqlite<'a>(
 
 pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
     lazy_static! {
-        static ref REGEXP: Regex = Regex::new(r"^[_a-zA-Z]{1,30}$").expect("Cannot create regex");
+        static ref REGEXP: Regex =
+            Regex::new(r"^[_a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
     }
     if BLOCKLIST_COLUMN_NAMES.contains(property) {
         Err(crate::error::Error {
