@@ -31,8 +31,7 @@ pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Resul
             msg: "Calculated file sha256 hash differs from expected".to_string(),
         });
     };
-    let file = media_dir()?;
-    let file = file.join(owner).join(&expected_sha256);
+    let file = file_path(&owner, &expected_sha256)?;
     let mut file = File::create(file).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
         msg: format!("Failed to create target file, {}", err),
@@ -45,8 +44,7 @@ pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Resul
 }
 
 pub fn get_file(owner: &str, sha256: &str) -> Result<Vec<u8>> {
-    let file = media_dir()?;
-    let file = file.join(owner).join(sha256);
+    let file = file_path(owner, sha256)?;
     let file = std::fs::read(file).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
         msg: format!("Failed to read data from target file, {}", err),
@@ -55,9 +53,13 @@ pub fn get_file(owner: &str, sha256: &str) -> Result<Vec<u8>> {
 }
 
 fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
-    let file = media_dir()?;
-    let file = file.join(owner).join(sha256);
+    let file = file_path(owner, sha256)?;
     Ok(file.exists())
+}
+
+fn file_path(owner: &str, sha256: &str) -> Result<PathBuf> {
+    let result = media_dir()?;
+    Ok(result.join(owner).join(sha256))
 }
 
 fn media_dir() -> Result<PathBuf> {
