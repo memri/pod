@@ -1294,7 +1294,12 @@
           "indexed": false
         },
         {
-          "name": "uri",
+          "name": "sha256",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "filename",
           "dbtype": "Text",
           "indexed": false
         }
@@ -2610,6 +2615,66 @@
         },
         {
           "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Resource",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "url",
           "dbtype": "Text",
           "indexed": false
         }
