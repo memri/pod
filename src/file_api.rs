@@ -28,7 +28,7 @@ pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Resul
         if err.raw_os_error() == Some(libc::EEXIST) {
             Error {
                 code: StatusCode::CONFLICT,
-                msg: format!("File already exists"),
+                msg: "File already exists".to_string(),
             }
         } else {
             Error {
