@@ -154,11 +154,9 @@ pub fn upload_file(
     expected_sha256: String,
     body: Bytes,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    in_transaction(&mut conn, |tx| {
-        file_api::upload_file(tx, owner, expected_sha256, body)
-    })
+    file_api::upload_file(owner, expected_sha256, body)
 }
 
 pub fn get_file(

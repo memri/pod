@@ -3,7 +3,6 @@ use crate::error::Error;
 use crate::error::Result;
 use bytes::Bytes;
 use log::warn;
-use rusqlite::Transaction;
 use sha2::Digest;
 use sha2::Sha256;
 use std::fs::File;
@@ -12,12 +11,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use warp::http::status::StatusCode;
 
-pub fn upload_file(
-    _tx: &Transaction,
-    owner: String,
-    expected_sha256: String,
-    body: Bytes,
-) -> Result<()> {
+pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Result<()> {
     if file_exists_on_disk(&owner, &expected_sha256)? {
         return Err(Error {
             code: StatusCode::CONFLICT,
