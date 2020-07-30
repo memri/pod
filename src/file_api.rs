@@ -5,22 +5,13 @@ use bytes::Bytes;
 use log::warn;
 use sha2::Digest;
 use sha2::Sha256;
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 use warp::http::status::StatusCode;
 
 pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Result<()> {
-    if file_exists_on_disk(&owner, &expected_sha256)? {
-        return Err(Error {
-            code: StatusCode::CONFLICT,
-            msg: format!(
-                "File with the specified sha256 already exists: {}",
-                expected_sha256
-            ),
-        });
-    };
     let expected_sha256_vec = hex::decode(&expected_sha256)?;
     let mut real_sha256 = Sha256::new();
     real_sha256.update(&body);
@@ -32,9 +23,19 @@ pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Resul
         });
     };
     let file = file_path(&owner, &expected_sha256)?;
-    let mut file = File::create(file).map_err(|err| Error {
-        code: StatusCode::INTERNAL_SERVER_ERROR,
-        msg: format!("Failed to create target file, {}", err),
+    let file = OpenOptions::new().write(true).create_new(true).open(file);
+    let mut file = file.map_err(|err| {
+        if err.raw_os_error() == Some(libc::EEXIST) {
+            Error {
+                code: StatusCode::CONFLICT,
+                msg: format!("File already exists"),
+            }
+        } else {
+            Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR,
+                msg: format!("Failed to create target file, {}", err),
+            }
+        }
     })?;
     file.write_all(&body).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -50,11 +51,6 @@ pub fn get_file(owner: &str, sha256: &str) -> Result<Vec<u8>> {
         msg: format!("Failed to read data from target file, {}", err),
     })?;
     Ok(file)
-}
-
-fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
-    let file = file_path(owner, sha256)?;
-    Ok(file.exists())
 }
 
 fn file_path(owner: &str, sha256: &str) -> Result<PathBuf> {
