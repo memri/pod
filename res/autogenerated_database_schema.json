@@ -1294,7 +1294,7 @@
           "indexed": false
         },
         {
-          "name": "sha256",
+          "name": "blake2b",
           "dbtype": "Text",
           "indexed": false
         },
