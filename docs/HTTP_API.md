@@ -268,14 +268,15 @@ Run an indexer on an item with the given uid.
 # File API
 
 
-### POST /v2/$owner_key/put_file/$database_key/$uid
+### POST /v2/$owner_key/upload_file/$database_key/$sha256hashOfTheFile
 ```
 RAW-FILE-BINARY
 ```
-Put a file with a specific `uid` in Pod.
-An item with this `uid` should already exist in the database.
+Upload a file into Pod assuming the metadata of a file is already uploaded in the database.
+`owner_key`, database key and sha256 are all hex-encoded.
 
-⚠️ UNSTABLE: The Content-Type of the request should or should not match the content type of the item.
+A `sha256` hash of the contents will be calculated.
+Pod will fail the request if the calculated hash doesn't match the hash from the request URL.
 
 
 ### POST /v2/$owner_key/get_file
@@ -283,11 +284,9 @@ An item with this `uid` should already exist in the database.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid
+    "sha256": $sha256
   }
 }
 ```
-Get the file of the specific `uid`. If item with such `uid` does not exist,
-or if the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.
-
-⚠️ UNSTABLE: The Content-Type of the response will or will not be taken from the item-s ContentType.
+Get a file by its sha256 hash.
+If the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.

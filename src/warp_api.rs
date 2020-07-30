@@ -8,6 +8,7 @@ use crate::api_model::UpdateItem;
 use crate::configuration;
 use crate::internal_api;
 use crate::warp_endpoints;
+use bytes::Bytes;
 use log::error;
 use log::info;
 use log::warn;
@@ -38,8 +39,14 @@ pub async fn run_server() {
     headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     let headers = warp::reply::with::headers(headers);
 
-    let api_defaults = warp::path("v2")
+    let items_api = warp::path("v2")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
+        .and(warp::post());
+    let services_api = warp::path("v2")
+        .and(warp::body::content_length_limit(32 * 1024))
+        .and(warp::post());
+    let file_api = warp::path("v2")
+        .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
@@ -50,7 +57,7 @@ pub async fn run_server() {
         .map(internal_api::get_project_version);
 
     let init_db = initialized_databases_arc.clone();
-    let get_item = api_defaults
+    let get_item = items_api
         .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -61,7 +68,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let get_all_items = api_defaults
+    let get_all_items = items_api
         .and(warp::path!(String / "get_all_items"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -72,7 +79,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let create_item = api_defaults
+    let create_item = items_api
         .and(warp::path!(String / "create_item"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -83,7 +90,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let update_item = api_defaults
+    let update_item = items_api
         .and(warp::path!(String / "update_item"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -94,7 +101,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let bulk_action = api_defaults
+    let bulk_action = items_api
         .and(warp::path!(String / "bulk_action"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -105,7 +112,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let delete_item = api_defaults
+    let delete_item = items_api
         .and(warp::path!(String / "delete_item"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -116,7 +123,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let search = api_defaults
+    let search = items_api
         .and(warp::path!(String / "search_by_fields"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -127,7 +134,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let get_items_with_edges = api_defaults
+    let get_items_with_edges = items_api
         .and(warp::path!(String / "get_items_with_edges"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -138,7 +145,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_downloaders = api_defaults
+    let run_downloaders = services_api
         // //! In fact, any type that implements `FromStr` can be used, in any order:
         // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
         .and(warp::path!(String / "run_downloader"))
@@ -151,7 +158,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_importers = api_defaults
+    let run_importers = services_api
         .and(warp::path!(String / "run_importer"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -161,13 +168,41 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_indexers = api_defaults
+    let run_indexers = services_api
         .and(warp::path!(String / "run_indexer"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunIndexer>| {
             let result = warp_endpoints::run_indexer(owner, init_db.deref(), body);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let upload_file = file_api
+        .and(warp::path!(String / "upload_file" / String / String))
+        .and(warp::path::end())
+        .and(warp::body::bytes())
+        .map(
+            move |owner: String, database_key: String, expected_sha256: String, body: Bytes| {
+                let result = warp_endpoints::upload_file(
+                    owner,
+                    init_db.deref(),
+                    database_key,
+                    expected_sha256,
+                    body,
+                );
+                respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+            },
+        );
+
+    let init_db = initialized_databases_arc.clone();
+    let get_file = file_api
+        .and(warp::path!(String / "get_file"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<String>| {
+            let result = warp_endpoints::get_file(owner, init_db.deref(), body);
+            respond_with_result(result.map(|result| result))
         });
 
     let origin_request =
@@ -203,6 +238,8 @@ pub async fn run_server() {
         .or(run_downloaders.with(&headers))
         .or(run_importers.with(&headers))
         .or(run_indexers.with(&headers))
+        .or(upload_file.with(&headers))
+        .or(get_file.with(&headers))
         .or(origin_request);
 
     if let Some(cert) = configuration::https_certificate_file() {

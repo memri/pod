@@ -5,6 +5,7 @@ pub mod configuration;
 pub mod database_migrate_refinery;
 pub mod database_migrate_schema;
 pub mod error;
+pub mod file_api;
 pub mod internal_api;
 mod services_api;
 mod sql_converters;
