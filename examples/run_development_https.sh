@@ -7,7 +7,9 @@ if !test -e Cargo.toml; then
   exit 1
 fi
 
+examples/generate_self-signed_certificate.sh
+
 POD_OWNER_HASHES=ANY \
-  POD_USE_INSECURE_NON_TLS=1 \
+  POD_HTTPS_CERTIFICATE=./data/certs/pod \
   INSECURE_HTTP_HEADERS=1 \
   RUST_LOG=pod=debug,info exec cargo run
