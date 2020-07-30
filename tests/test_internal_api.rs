@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use pod::database_migrate_refinery;
 use pod::database_migrate_schema;
 use pod::error::Error;
-use pod::internal_api::*;
+use pod::internal_api;
 use r2d2::ManageConnection;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -53,20 +53,20 @@ fn test_bulk_action() {
 
     let bulk = {
         let tx = conn.transaction().unwrap();
-        let result = bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
+        let result = internal_api::bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
         tx.commit().unwrap();
         result
     };
 
     let with_edges = {
         let tx = conn.transaction().unwrap();
-        get_item_with_edges_tx(&tx, 1)
+        internal_api::get_item_with_edges_tx(&tx, 1)
     };
 
     let json = json!({"_type": "Person"});
     let search = {
         let tx = conn.transaction().unwrap();
-        search_by_fields(&tx, json)
+        internal_api::search_by_fields(&tx, json)
     };
 
     assert_eq!(bulk, Ok(()));

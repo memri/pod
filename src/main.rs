@@ -7,6 +7,7 @@ mod configuration;
 mod database_migrate_refinery;
 pub mod database_migrate_schema;
 mod error;
+pub mod file_api;
 pub mod internal_api;
 pub mod services_api;
 mod sql_converters;
@@ -45,16 +46,18 @@ async fn main() {
         std::process::exit(0)
     };
 
-    if let Ok(db_dir) = PathBuf::from_str(configuration::DATABASE_DIR) {
-        create_dir_all(db_dir).expect("Failed to create database directory");
-    } else {
-        error!(
-            "Failed to parse database directory {:?}",
-            configuration::DATABASE_DIR
-        );
-        std::process::exit(1)
-    };
+    create_config_directory(configuration::DATABASE_DIR);
+    create_config_directory(configuration::MEDIA_DIR);
 
     // Start web framework
     warp_api::run_server().await;
+}
+
+fn create_config_directory(path: &str) {
+    if let Ok(path) = PathBuf::from_str(path) {
+        create_dir_all(path).expect("Failed to create database directory");
+    } else {
+        error!("Failed to parse database directory {:?}", path);
+        std::process::exit(1)
+    };
 }

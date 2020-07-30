@@ -10,11 +10,13 @@ use crate::database_migrate_refinery;
 use crate::database_migrate_schema;
 use crate::error::Error;
 use crate::error::Result;
+use crate::file_api;
 use crate::internal_api;
 use crate::services_api;
 use blake2::digest::Update;
 use blake2::digest::VariableOutput;
 use blake2::VarBlake2b;
+use bytes::Bytes;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -143,6 +145,28 @@ pub fn run_indexer(
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     services_api::run_indexers(&conn, body.payload.uid)
+}
+
+pub fn upload_file(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    database_key: String,
+    expected_sha256: String,
+    body: Bytes,
+) -> Result<()> {
+    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
+    file_api::upload_file(owner, expected_sha256, body)
+}
+
+pub fn get_file(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<String>,
+) -> Result<Vec<u8>> {
+    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
+    file_api::get_file(&owner, &body.payload)
 }
 
 //
