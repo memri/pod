@@ -21,7 +21,10 @@ pub fn run_downloader(payload: RunDownloader) -> Result<()> {
                 Command::new("docker")
                     .arg("run")
                     .args(&docker_arguments())
-                    .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
+                    .arg(&format!(
+                        "--env=POD_SERVICE_PAYLOAD={}",
+                        payload.service_payload
+                    ))
                     .args(&["--rm", "--name=memri-indexers_1", "-it"])
                     .args(&["memri-downloaders:latest"])
                     .spawn()
@@ -52,7 +55,10 @@ pub fn run_importer(payload: RunImporter) -> Result<()> {
             Command::new("docker")
                 .arg("run")
                 .args(&docker_arguments())
-                .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
+                .arg(&format!(
+                    "--env=POD_SERVICE_PAYLOAD={}",
+                    payload.service_payload
+                ))
                 .args(&[
                     "--rm",
                     "--volume=download-volume:/usr/src/importers/data",
@@ -81,7 +87,10 @@ pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
             Command::new("docker")
                 .arg("run")
                 .args(&docker_arguments())
-                .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
+                .arg(&format!(
+                    "--env=POD_SERVICE_PAYLOAD={}",
+                    payload.service_payload
+                ))
                 .args(&[
                     "--rm",
                     "--name=memri-indexers_1",
