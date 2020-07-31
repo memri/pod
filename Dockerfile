@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y libsqlcipher-dev && rm -rf /var/lib/apt
 RUN set -x && \
   mkdir -p src && \
   echo "fn main() {println!(\"broken\")}" > src/main.rs && \
+  mkdir -p benches && \
+  echo "" > benches/rusqlite_reconnection.rs && \
   cargo build --release && \
   rm src/main.rs && \
   find target/release/ -type f -executable -maxdepth 1 -delete
@@ -26,6 +28,7 @@ RUN set -x && \
 COPY res res
 COPY build.rs build.rs
 COPY src src
+COPY benches benches
 COPY .git .git
 RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 
