@@ -5,6 +5,7 @@ use bytes::Bytes;
 use log::warn;
 use sha2::Digest;
 use sha2::Sha256;
+use std::fs::create_dir_all;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
@@ -19,7 +20,10 @@ pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Resul
     if real_sha256.as_slice() != expected_sha256_vec.as_slice() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: "Calculated file sha256 hash differs from expected".to_string(),
+            msg: format!(
+                "Expected file sha256 hash differs from calculated {}",
+                hex::encode(real_sha256)
+            ),
         });
     };
     let file = file_path(&owner, &expected_sha256)?;
@@ -55,7 +59,12 @@ pub fn get_file(owner: &str, sha256: &str) -> Result<Vec<u8>> {
 
 fn file_path(owner: &str, sha256: &str) -> Result<PathBuf> {
     let result = media_dir()?;
-    Ok(result.join(owner).join(sha256))
+    let owner_dir = result.join(owner);
+    create_dir_all(&owner_dir).map_err(|err| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Failed to create media owner directory, {}", err),
+    })?;
+    Ok(owner_dir.join(sha256))
 }
 
 fn media_dir() -> Result<PathBuf> {
