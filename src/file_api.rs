@@ -13,6 +13,17 @@ use std::str::FromStr;
 use warp::http::status::StatusCode;
 
 pub fn upload_file(owner: String, expected_sha256: String, body: Bytes) -> Result<()> {
+    if file_exists_on_disk(&owner, &expected_sha256)? {
+        // Note that checking once for file existence here is not enough.
+        // To prevent TOCTOU attack, we also need to check file existence below.
+        // We could avoid doing a check here at all, but we do it to avoid spending CPU power
+        // on hash calculation for conflicting files,
+        // which are detected by a relatively cheap test.
+        return Err(Error {
+            code: StatusCode::CONFLICT,
+            msg: "File already exists".to_string(),
+        });
+    }
     let expected_sha256_vec = hex::decode(&expected_sha256)?;
     let mut real_sha256 = Sha256::new();
     real_sha256.update(&body);
@@ -55,6 +66,11 @@ pub fn get_file(owner: &str, sha256: &str) -> Result<Vec<u8>> {
         msg: format!("Failed to read data from target file, {}", err),
     })?;
     Ok(file)
+}
+
+fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
+    let file = file_path(owner, sha256)?;
+    Ok(file.exists())
 }
 
 fn file_path(owner: &str, sha256: &str) -> Result<PathBuf> {
