@@ -231,7 +231,11 @@ If at least one input `uid` doesn't exist, return 404 NOT_FOUND for the whole re
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
     "service": ...,
-    "dataType": ...
+    "dataType": ...,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
@@ -245,7 +249,11 @@ Unsupported service or data type will yield 400 BAD_REQUEST error.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "dataType": ...
+    "dataType": ...,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
@@ -258,7 +266,11 @@ Unsupported data type will yield 400 BAD_REQUEST error.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid
+    "uid": $uid,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
@@ -269,7 +281,7 @@ Run an indexer on an item with the given uid.
 
 
 ### POST /v2/$owner_key/upload_file/$database_key/$sha256hashOfTheFile
-```
+```text
 RAW-FILE-BINARY
 ```
 Upload a file into Pod assuming the metadata of a file is already uploaded in the database.

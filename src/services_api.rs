@@ -1,3 +1,6 @@
+use crate::api_model::RunDownloader;
+use crate::api_model::RunImporter;
+use crate::api_model::RunIndexer;
 use crate::configuration::pod_is_in_docker;
 use crate::error::Error;
 use crate::error::Result;
@@ -8,7 +11,9 @@ use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
-pub fn run_downloader(service: String, data_type: String) -> Result<()> {
+pub fn run_downloader(payload: RunDownloader) -> Result<()> {
+    let service = &payload.service;
+    let data_type = &payload.data_type;
     info!("Trying to run downloader {} for {}", service, data_type);
     match service.as_str() {
         "evernote" => match data_type.as_str() {
@@ -16,6 +21,7 @@ pub fn run_downloader(service: String, data_type: String) -> Result<()> {
                 Command::new("docker")
                     .arg("run")
                     .args(&docker_arguments())
+                    .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
                     .args(&["--rm", "--name=memri-indexers_1", "-it"])
                     .args(&["memri-downloaders:latest"])
                     .spawn()
@@ -38,13 +44,15 @@ pub fn run_downloader(service: String, data_type: String) -> Result<()> {
     Ok(())
 }
 
-pub fn run_importer(data_type: String) -> Result<()> {
+pub fn run_importer(payload: RunImporter) -> Result<()> {
+    let data_type = &payload.data_type;
     info!("Trying to run importer for {}", data_type);
     match data_type.as_str() {
         "note" => {
             Command::new("docker")
                 .arg("run")
                 .args(&docker_arguments())
+                .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
                 .args(&[
                     "--rm",
                     "--volume=download-volume:/usr/src/importers/data",
@@ -64,7 +72,8 @@ pub fn run_importer(data_type: String) -> Result<()> {
     Ok(())
 }
 
-pub fn run_indexers(conn: &Connection, uid: i64) -> Result<()> {
+pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
+    let uid = payload.uid;
     info!("Trying to run indexer on item {}", uid);
     let result = internal_api::get_item(conn.deref(), uid)?;
     match result.first() {
@@ -72,6 +81,7 @@ pub fn run_indexers(conn: &Connection, uid: i64) -> Result<()> {
             Command::new("docker")
                 .arg("run")
                 .args(&docker_arguments())
+                .arg(&format!("--env=POD_SERVICE_PAYLOAD={}", payload.service_payload))
                 .args(&[
                     "--rm",
                     "--name=memri-indexers_1",
