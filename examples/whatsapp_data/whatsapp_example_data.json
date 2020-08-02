@@ -78,35 +78,35 @@
             "_type": "Message",
             "uid": 20000000008,
             "externalId": "93463F7980167E92C28FF0781E650E80",
-            "textContent": "{\"conversation\":\"test 123\"}\n",
+            "content": "{\"conversation\":\"test 123\"}\n",
             "type": "whatsapp"
         },
         {
             "_type": "Message",
             "uid": 20000000009,
             "externalId": "9BDD372B9D4F7486D2A0",
-            "textContent": "{\"conversation\":\"hello\"}\n",
+            "content": "{\"conversation\":\"hello\"}\n",
             "type": "whatsapp"
         },
         {
             "_type": "Message",
             "uid": 20000000010,
             "externalId": "36A3043A22AC7524060B23FB54815B39",
-            "textContent": "{\"stickerMessage\":{\"url\":\"https://mmg.whatsapp.net/d/f/Al3HEpTJz7J37BOTcIGyq-saI_dzDoqX9DM7Xdcjtqbz.enc\",\"fileSha256\":\"wFKPp8ZAcSDLaORuLWW33nC7ZywuIazegAu31cyim2g=\",\"fileEncSha256\":\"pKPi4J6vFw6qafQuKuK+ilTS52B2LLU8jIzqg+QFFig=\",\"mediaKey\":\"wZZ50hD9n8UbGPCBV7Kg74FoGV//T7gm4XJhXrTNJi4=\",\"mimetype\":\"image/webp\",\"directPath\":\"/v/t62.7118-24/18863256_177570407071070_7709928085717181665_n.enc?oh=40d6d8a5f81b24df512138c48851ad67\\u0026oe=C64EA1DB\",\"fileLength\":63064,\"mediaKeyTimestamp\":1594989169,\"isAnimated\":false}}\n",
+            "content": "{\"stickerMessage\":{\"url\":\"https://mmg.whatsapp.net/d/f/Al3HEpTJz7J37BOTcIGyq-saI_dzDoqX9DM7Xdcjtqbz.enc\",\"fileSha256\":\"wFKPp8ZAcSDLaORuLWW33nC7ZywuIazegAu31cyim2g=\",\"fileEncSha256\":\"pKPi4J6vFw6qafQuKuK+ilTS52B2LLU8jIzqg+QFFig=\",\"mediaKey\":\"wZZ50hD9n8UbGPCBV7Kg74FoGV//T7gm4XJhXrTNJi4=\",\"mimetype\":\"image/webp\",\"directPath\":\"/v/t62.7118-24/18863256_177570407071070_7709928085717181665_n.enc?oh=40d6d8a5f81b24df512138c48851ad67\\u0026oe=C64EA1DB\",\"fileLength\":63064,\"mediaKeyTimestamp\":1594989169,\"isAnimated\":false}}\n",
             "type": "whatsapp"
         },
         {
             "_type": "Message",
             "uid": 20000000011,
             "externalId": "7A1FCF21F8E4216509EF8300D7C5CC57",
-            "textContent": "{\"conversation\":\"where r u?\"}\n",
+            "content": "{\"conversation\":\"where r u?\"}\n",
             "type": "whatsapp"
         },
         {
             "_type": "Message",
             "uid": 20000000012,
             "externalId": "EE9E22BD54F93EC48CF9",
-            "textContent": "{\"conversation\":\"at home\"}\n",
+            "content": "{\"conversation\":\"at home\"}\n",
             "type": "whatsapp"
         }
         ],
