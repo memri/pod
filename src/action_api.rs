@@ -1,6 +1,9 @@
-use crate::configuration::MATRIX_BASE;
 use crate::error::Result;
+use log::info;
 use serde_json::Value;
+use std::process::Command;
+
+pub const MATRIX_BASE: &str = "http://localhost:8008/_matrix/client/r0";
 
 fn get_room_id(json: &Value) -> String {
     json.get("roomId")
@@ -103,12 +106,8 @@ pub fn send_messages(json: Value) -> Result<Value> {
 
 pub fn sync_events(json: Value) -> Result<Value> {
     let client = reqwest::blocking::Client::new();
-    let next_batch = get_next_batch(&json);
     let access_token = get_access_token(&json);
-    let url = format!(
-        "{}/sync?since={}&access_token={}",
-        MATRIX_BASE, next_batch, access_token
-    );
+    let url = format!("{}/sync?access_token={}", MATRIX_BASE, access_token);
     let res = client.get(&url).send()?;
     Ok(serde_json::from_str(res.text()?.as_str())?)
 }
@@ -124,4 +123,24 @@ pub fn get_messages(json: Value) -> Result<Value> {
     );
     let res = client.get(&url).send()?;
     Ok(serde_json::from_str(res.text()?.as_str())?)
+}
+
+pub fn get_qrcode(json: Value) -> Result<Value> {
+    let room_id = get_room_id(&json);
+    let access_token = get_access_token(&json);
+    run_auth_web(access_token, room_id);
+    let url = "http://localhost:5000";
+    Ok(Value::from(format!(
+        "Please access {} website for authentication.",
+        url
+    )))
+}
+
+fn run_auth_web(access_token: String, room_id: String) {
+    info!("Trying to run web for whatsapp authentication");
+    Command::new("python3")
+        .args(&["./res/whatsapp_auth.py"])
+        .args(&[access_token, room_id])
+        .spawn()
+        .expect("Failed to run importer");
 }

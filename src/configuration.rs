@@ -30,5 +30,3 @@ pub fn use_insecure_non_tls() -> bool {
 pub fn pod_owners() -> Option<String> {
     env::var("POD_OWNER_HASHES").ok()
 }
-
-pub const MATRIX_BASE: &str = "http://localhost:8008/_matrix/client/r0";

@@ -158,6 +158,7 @@ pub fn do_action(owner: String, body: Action) -> Result<Value> {
         "send_messages" => action_api::send_messages(body.content),
         "sync_events" => action_api::sync_events(body.content),
         "get_messages" => action_api::get_messages(body.content),
+        "get_qrcode" => action_api::get_qrcode(body.content),
         _ => Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: "Unexpected action".to_string(),
