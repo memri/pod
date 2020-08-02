@@ -10,11 +10,11 @@ This document explains the data types that Pod can store,
 and current API that lets you store or retrieve the data.
 
 
-## Items
+# Items
 Items are the main thing that is stored in Pod.
-You could see it as the main holder for Pod-s data.
+You could see it as the main holder for Pod's data.
 
-### item's mandatory properties
+### Item's mandatory properties
 
 * `_type`, case-sensitive item's type. Can never be changed once created.
 * `uid`, the unique identifier of the item, signed 64-bit integer.
@@ -29,31 +29,29 @@ Permanent delete will be supported in the future, based in deletion date.
 This field is fully controlled by the Pod, all input on it will be ignored and it will always
 store the real number of updates that happened to an item.
 
-### item's additional properties
+### Item's additional properties
 Additional properties can be set dynamically via the [Schema](../README.md#schema).
 
 
-## Edges
+# Edges
 Edges connect items together to form a
 [directed graph](https://en.wikipedia.org/wiki/Directed_graph).
 Pending on design decisions we're going to make, edges might also possibly
 support properties in the future (don't rely on it yet).
 
-### edge's mandatory properties
+### Edge's mandatory properties
 
 * `_source`, the `uid` of the item it points *from*
 * `_target`, the `uid` of the item it points *to*
 * `_type`, the type of the edge. Cannot be modified once created.
 
-### edge's additional properties (currently hardcoded)
+### Edge's additional properties (currently hardcoded)
 * `edgeLabel`, an optional string
 * `sequence`, an optional integer meaning the client-side ordering of items
 (e.g. items reachable from a "root" item using edges of a particular _type)
 
 
-# API
-
-### Authentication & Credentials
+# API Authentication & Credentials
 Some endpoints require additional authentication / credentials.
 
 In text below, `databaseKey` means a 64-character hex string to be used with sqlcipher.
@@ -85,6 +83,8 @@ requests from any owner -- so called multi-tenancy.
 ⚠️ UNSTABLE: The use of this key for authentication will be changed in the nearest future.
 Note that incorrect database key (below) will also fail any request.
 
+
+# Items API
 
 ### GET /version
 Get version of the Pod: the git commit and cargo version that it was built from.
@@ -223,13 +223,19 @@ Given an input array of `uid`-s, for each `uid`:
 If at least one input `uid` doesn't exist, return 404 NOT_FOUND for the whole request.
 
 
+# Services API
+
 ### POST /v2/$owner_key/run_downloader
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
     "service": ...,
-    "dataType": ...
+    "dataType": ...,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
@@ -243,7 +249,11 @@ Unsupported service or data type will yield 400 BAD_REQUEST error.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "dataType": ...
+    "dataType": ...,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
@@ -256,11 +266,45 @@ Unsupported data type will yield 400 BAD_REQUEST error.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid
+    "uid": $uid,
+    "servicePayload": {
+      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+      "ownerKey": $owner_key
+    }
   }
 }
 ```
 Run an indexer on an item with the given uid.
+
+
+# File API
+
+
+### POST /v2/$owner_key/upload_file/$database_key/$sha256hashOfTheFile
+```text
+RAW-FILE-BINARY
+```
+Upload a file into Pod assuming the metadata of a file is already uploaded in the database.
+`owner_key`, database key and sha256 are all hex-encoded.
+
+A `sha256` hash of the contents will be calculated.
+Pod will fail the request if the calculated hash doesn't match the hash from the request URL.
+
+
+### POST /v2/$owner_key/get_file
+```json
+{
+  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "payload": {
+    "sha256": $sha256
+  }
+}
+```
+Get a file by its sha256 hash.
+If the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.
+
+# Action API
+
 
 ### POST /v2/$owner_key/do_action
 ```json
