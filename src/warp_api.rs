@@ -49,6 +49,9 @@ pub async fn run_server() {
     let file_api = warp::path("v2")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
+    let action_api = warp::path("v2")
+        .and(warp::body::content_length_limit(1024 * 1024))
+        .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
 
@@ -206,7 +209,7 @@ pub async fn run_server() {
             respond_with_result(result.map(|result| result))
         });
 
-    let do_action = api_defaults
+    let do_action = action_api
         .and(warp::path!(String / "do_action"))
         .and(warp::path::end())
         .and(warp::body::json())
