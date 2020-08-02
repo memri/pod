@@ -1,11 +1,10 @@
-use crate::action_api;
+use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
-use crate::api_model::{Action, BulkAction};
 use crate::configuration;
 use crate::database_migrate_refinery;
 use crate::database_migrate_schema;
@@ -13,6 +12,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
 use crate::services_api;
+use action_api::api_mode::Action;
 use blake2::digest::Update;
 use blake2::digest::VariableOutput;
 use blake2::VarBlake2b;
@@ -148,20 +148,12 @@ pub fn run_indexer(
 
 pub fn do_action(owner: String, body: Action) -> Result<Value> {
     check_owner(&owner)?;
-    match body.action_type.as_str() {
-        "matrix_register" => action_api::matrix_register(body.content),
-        "matrix_login" => action_api::matrix_login(body.content),
-        "create_room" => action_api::create_room(body.content),
-        "get_joined_rooms" => action_api::get_joined_rooms(body.content),
-        "invite_user_to_join" => action_api::invite_user_to_join(body.content),
-        "get_joined_members" => action_api::get_joined_members(body.content),
-        "send_messages" => action_api::send_messages(body.content),
-        "sync_events" => action_api::sync_events(body.content),
-        "get_messages" => action_api::get_messages(body.content),
-        "get_qrcode" => action_api::get_qrcode(body.content),
-        _ => Err(Error {
+    let res = action_api::api_function(body);
+    match res {
+        Ok(var) => Ok(var),
+        Err(e) => Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: "Unexpected action".to_string(),
+            msg: e.msg,
         }),
     }
 }

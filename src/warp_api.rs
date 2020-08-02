@@ -1,4 +1,3 @@
-use crate::api_model::Action;
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::PayloadWrapper;
@@ -9,6 +8,7 @@ use crate::api_model::UpdateItem;
 use crate::configuration;
 use crate::internal_api;
 use crate::warp_endpoints;
+use action_api::api_mode::Action;
 use log::error;
 use log::info;
 use log::warn;

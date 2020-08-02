@@ -261,3 +261,15 @@ Unsupported data type will yield 400 BAD_REQUEST error.
 }
 ```
 Run an indexer on an item with the given uid.
+
+### POST /v2/$owner_key/do_action
+```json
+{
+  "actionType": "send_messages",
+  "content": {
+    "accessToken": ...
+  }
+}
+```
+Invoke a function for a certain action, e.g. "send_messages" to WhatsApp chats.
+The required action is specified by `actionType`, unsupported actions will yield  400 BAD_REQUEST error.
