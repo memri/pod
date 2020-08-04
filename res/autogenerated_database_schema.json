@@ -2199,6 +2199,11 @@
           "indexed": false
         },
         {
+          "name": "progress",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
