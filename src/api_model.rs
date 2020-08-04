@@ -81,3 +81,13 @@ pub struct RunIndexer {
     pub uid: i64,
     pub service_payload: Value,
 }
+
+//
+// Files:
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetFile {
+    pub sha256: String,
+}

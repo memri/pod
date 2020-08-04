@@ -1,5 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
+use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
@@ -16,7 +17,6 @@ use crate::services_api;
 use blake2::digest::Update;
 use blake2::digest::VariableOutput;
 use blake2::VarBlake2b;
-use bytes::Bytes;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -152,21 +152,25 @@ pub fn upload_file(
     init_db: &RwLock<HashSet<String>>,
     database_key: String,
     expected_sha256: String,
-    body: Bytes,
+    body: &[u8],
 ) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    file_api::upload_file(owner, expected_sha256, body)
+    in_transaction(&mut conn, |tx| {
+        file_api::upload_file(tx, owner, expected_sha256, body)
+    })
 }
 
 pub fn get_file(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<String>,
+    body: PayloadWrapper<GetFile>,
 ) -> Result<Vec<u8>> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    file_api::get_file(&owner, &body.payload)
+    in_transaction(&mut conn, |tx| {
+        file_api::get_file(tx, &owner, &body.payload.sha256)
+    })
 }
 
 //

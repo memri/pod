@@ -1,5 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
+use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
@@ -189,7 +190,7 @@ pub async fn run_server() {
                     init_db.deref(),
                     database_key,
                     expected_sha256,
-                    body,
+                    &body,
                 );
                 respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
             },
@@ -200,7 +201,7 @@ pub async fn run_server() {
         .and(warp::path!(String / "get_file"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<String>| {
+        .map(move |owner: String, body: PayloadWrapper<GetFile>| {
             let result = warp_endpoints::get_file(owner, init_db.deref(), body);
             respond_with_result(result.map(|result| result))
         });
