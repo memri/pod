@@ -1,3 +1,4 @@
+use crate::api_model::Action;
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::PayloadWrapper;
@@ -13,7 +14,6 @@ use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
 use crate::services_api;
-use action_api::api_mode::Action;
 use blake2::digest::Update;
 use blake2::digest::VariableOutput;
 use blake2::VarBlake2b;
@@ -29,6 +29,7 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::RwLock;
 use warp::http::status::StatusCode;
+use whatsapp;
 
 pub fn get_item(
     owner: String,
@@ -172,7 +173,22 @@ pub fn get_file(
 
 pub fn do_action(owner: String, body: Action) -> Result<Value> {
     check_owner(&owner)?;
-    let res = action_api::api_function(body);
+    let res = match body.action_type.as_str() {
+        "mx_matrix_register" => whatsapp::matrix_register(body.content),
+        "mx_matrix_login" => whatsapp::matrix_login(body.content),
+        "mx_create_room" => whatsapp::create_room(body.content),
+        "mx_get_joined_rooms" => whatsapp::get_joined_rooms(body.content),
+        "mx_invite_user_to_join" => whatsapp::invite_user_to_join(body.content),
+        "mx_get_joined_members" => whatsapp::get_joined_members(body.content),
+        "mx_send_messages" => whatsapp::send_messages(body.content),
+        "mx_sync_events" => whatsapp::sync_events(body.content),
+        "mx_get_messages" => whatsapp::get_messages(body.content),
+        "mx_get_qrcode" => whatsapp::get_qrcode(body.content),
+        e => Err(whatsapp::error::Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Unsupported function: {}", e),
+        }),
+    };
     match res {
         Ok(var) => Ok(var),
         Err(e) => Err(Error {

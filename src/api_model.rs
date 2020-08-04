@@ -81,3 +81,10 @@ pub struct RunIndexer {
     pub uid: i64,
     pub service_payload: Value,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Action {
+    pub action_type: String,
+    pub content: Value,
+}

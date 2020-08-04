@@ -309,11 +309,11 @@ If the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.
 ### POST /v2/$owner_key/do_action
 ```json
 {
-  "actionType": "send_messages",
+  "actionType": "mx_send_messages",
   "content": {
     "accessToken": ...
   }
 }
 ```
-Invoke a function for a certain action, e.g. "send_messages" to WhatsApp chats.
-The required action is specified by `actionType`, unsupported actions will yield  400 BAD_REQUEST error.
+Invoke a function for a certain action, e.g. "mx_send_messages" for sending messages to WhatsApp chats.
+The required action is specified by `actionType`, unsupported actions will yield 400 BAD_REQUEST error.
