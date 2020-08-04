@@ -3621,6 +3621,111 @@
       ]
     },
     {
+      "name": "NoteList",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "importJson",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "title",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "abstract",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "datePublished",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "keyword",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "content",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "textContent",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "transcript",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "type",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "category",
+          "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
       "name": "Offer",
       "properties": [
         {
@@ -5156,6 +5261,76 @@
         {
           "name": "json",
           "dbtype": "Text",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Span",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "importJson",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "startIdx",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "endIdx",
+          "dbtype": "Integer",
           "indexed": false
         }
       ]
