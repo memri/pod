@@ -1634,11 +1634,6 @@
       "name": "File",
       "properties": [
         {
-          "name": "blake2b",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
           "name": "dateAccessed",
           "dbtype": "DateTime",
           "indexed": false
@@ -1680,6 +1675,16 @@
         },
         {
           "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "key",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "nonce",
           "dbtype": "Text",
           "indexed": false
         },

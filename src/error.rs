@@ -15,6 +15,16 @@ impl core::fmt::Display for Error {
     }
 }
 
+impl From<chacha20poly1305::aead::Error> for Error {
+    fn from(err: chacha20poly1305::aead::Error) -> Error {
+        let msg = format!("Error in symmetric encryption cypher, {}", err);
+        Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg,
+        }
+    }
+}
+
 impl From<hex::FromHexError> for Error {
     fn from(err: hex::FromHexError) -> Error {
         let msg = format!("Error converting from hex, {}", err);
