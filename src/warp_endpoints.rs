@@ -124,7 +124,7 @@ pub fn run_downloader(
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_downloader(body.payload)
+    services_api::run_downloader(&conn, body.payload)
 }
 
 pub fn run_importer(
@@ -134,7 +134,7 @@ pub fn run_importer(
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_importer(body.payload)
+    services_api::run_importer(&conn, body.payload)
 }
 
 pub fn run_indexer(
