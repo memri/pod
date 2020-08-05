@@ -14,15 +14,15 @@ use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
 use crate::services_api;
-use blake2::digest::Update;
-use blake2::digest::VariableOutput;
-use blake2::VarBlake2b;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
 use rusqlite::Connection;
 use rusqlite::Transaction;
 use serde_json::Value;
+use sha2::digest::generic_array::typenum::U32;
+use sha2::digest::generic_array::GenericArray;
+use sha2::Digest;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::path::PathBuf;
@@ -244,18 +244,18 @@ lazy_static! {
     static ref ALLOWED_OWNER_HASHES: HashSet<Vec<u8>> = allowed_owner_hashes_fn();
 }
 
-fn hash_hex(hex_string: &str) -> Result<Box<[u8]>> {
-    let mut possible_hash: VarBlake2b = VarBlake2b::new(32).expect("Invalid output size");
-    let hex_string = hex::decode(hex_string)?;
-    possible_hash.update(hex_string);
-    Ok(possible_hash.finalize_boxed())
+fn hash_of_hex(hex_string: &str) -> Result<GenericArray<u8, U32>> {
+    let hex_string: Vec<u8> = hex::decode(hex_string)?;
+    let mut hash = sha2::Sha256::new();
+    hash.update(&hex_string);
+    Ok(hash.finalize())
 }
 
 fn check_owner(possible_owner: &str) -> Result<()> {
     if configuration::pod_owners().iter().any(|e| e == "ANY") {
         return Ok(());
     };
-    let possible_hash = hash_hex(possible_owner)?;
+    let possible_hash = hash_of_hex(possible_owner)?;
     if ALLOWED_OWNER_HASHES.contains(possible_hash.deref()) {
         Ok(())
     } else {
