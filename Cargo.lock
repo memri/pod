@@ -1102,7 +1102,6 @@ dependencies = [
  "sha2",
  "tokio",
  "warp",
- "whatsapp",
 ]
 
 [[package]]
@@ -2045,18 +2044,6 @@ checksum = "ab146130f5f790d45f82aeeb09e55a256573373ec64409fc19a6fb82fb1032ae"
 dependencies = [
  "ring",
  "untrusted",
-]
-
-[[package]]
-name = "whatsapp"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "log",
- "reqwest",
- "serde",
- "serde_json",
- "warp",
 ]
 
 [[package]]
