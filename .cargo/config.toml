@@ -1,0 +1,5 @@
+[build]
+rustflags = [
+  "-Ctarget-feature=+avx2", # recommended by crate chacha20poly1305
+  "-Ctarget-cpu=haswell", # recommended by crate chacha20poly1305
+]

@@ -82,6 +82,20 @@ pub struct RunIndexer {
     pub service_payload: Value,
 }
 
+//
+// Files:
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetFile {
+    pub sha256: String,
+}
+
+//
+// Actions:
+//
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Action {
