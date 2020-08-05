@@ -224,8 +224,8 @@ If at least one input `uid` doesn't exist, return 404 NOT_FOUND for the whole re
 
 
 # Services API
-Services can add or modify data on your Pod.
-They can only be ever run / authorized to run by the user.
+Services help getting data into your Pod and enriching it.
+Services can only be ever run / authorized to run by the user.
 Typical examples of services are services that import emails/messages into Pod.
 
 ### POST /v2/$owner_key/run_downloader
