@@ -7,6 +7,7 @@ use crate::error::Result;
 use crate::internal_api;
 use log::info;
 use rusqlite::Connection;
+use std::env;
 use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
@@ -64,6 +65,25 @@ pub fn run_importer(payload: RunImporter) -> Result<()> {
                     "--volume=download-volume:/usr/src/importers/data",
                     "--name=memri-importers_1",
                 ])
+                .args(&["memri-importers:latest"])
+                .spawn()
+                .expect("Failed to run importer");
+        }
+        "whatsapp" => {
+            let path = env::current_dir()?;
+            let parent = path.parent().expect("Failed to get parent directory");
+            let wa_volume = format!(
+                "--volume={}/data-mautrix:/usr/src/importers/data-mautrix/data-mautrix",
+                parent.display().to_string()
+            );
+            Command::new("docker")
+                .arg("run")
+                .args(&docker_arguments())
+                .arg(&format!(
+                    "--env=POD_SERVICE_PAYLOAD={}",
+                    payload.service_payload
+                ))
+                .args(&["--rm", &wa_volume, "--name=memri-importers_1"])
                 .args(&["memri-importers:latest"])
                 .spawn()
                 .expect("Failed to run importer");
