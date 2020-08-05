@@ -12,132 +12,110 @@ use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
-pub fn run_downloader(payload: RunDownloader) -> Result<()> {
-    let service = &payload.service;
-    let data_type = &payload.data_type;
-    info!("Trying to run downloader {} for {}", service, data_type);
-    match service.as_str() {
-        "evernote" => match data_type.as_str() {
-            "note" => {
-                Command::new("docker")
-                    .arg("run")
-                    .args(&docker_arguments())
-                    .arg(&format!(
-                        "--env=POD_SERVICE_PAYLOAD={}",
-                        payload.service_payload
-                    ))
-                    .args(&["--rm", "--name=memri-indexers_1", "-it"])
-                    .args(&["memri-downloaders:latest"])
-                    .spawn()
-                    .expect("Failed to run downloader");
-            }
-            _ => {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Data type {} not supported", data_type),
-                })
-            }
-        },
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Service {} not supported", service),
-            })
+pub fn run_downloader(conn: &Connection, payload: RunDownloader) -> Result<()> {
+    info!("Trying to run downloader on item {}", payload.uid);
+    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    if result.first().is_some() {
+        let command = Command::new("docker")
+            .arg("run")
+            .args(&docker_arguments())
+            .arg(&format!(
+                "--env=POD_SERVICE_PAYLOAD={}",
+                payload.service_payload
+            ))
+            .args(&[
+                "--rm",
+                "--name=memri-downloaders_1",
+                &format!("--env=RUN_UID={}", payload.uid),
+                "--volume=download-volume:/usr/src/importers/data",
+            ])
+            .args(&["memri-downloaders:latest"])
+            .spawn();
+        match command {
+            Ok(_child) => Ok(()),
+            Err(err) => Err(Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR,
+                msg: format!("Failed to run importer with uid {}, {}", payload.uid, err),
+            }),
         }
+    } else {
+        Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to get item with uid={}", payload.uid),
+        })
     }
-    Ok(())
 }
 
-pub fn run_importer(payload: RunImporter) -> Result<()> {
-    let data_type = &payload.data_type;
-    info!("Trying to run importer for {}", data_type);
-    match data_type.as_str() {
-        "note" => {
-            Command::new("docker")
-                .arg("run")
-                .args(&docker_arguments())
-                .arg(&format!(
-                    "--env=POD_SERVICE_PAYLOAD={}",
-                    payload.service_payload
-                ))
-                .args(&[
-                    "--rm",
-                    "--volume=download-volume:/usr/src/importers/data",
-                    "--name=memri-importers_1",
-                ])
-                .args(&["memri-importers:latest"])
-                .spawn()
-                .expect("Failed to run importer");
+pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
+    info!("Trying to run importer on item {}", payload.uid);
+    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    if result.first().is_some() {
+        let command = Command::new("docker")
+            .arg("run")
+            .args(&docker_arguments())
+            .arg(&format!(
+                "--env=POD_SERVICE_PAYLOAD={}",
+                payload.service_payload
+            ))
+            .args(&[
+                "--rm",
+                "--name=memri-importers_1",
+                &format!("--env=RUN_UID={}", payload.uid),
+                "--volume=download-volume:/usr/src/importers/data",
+            ])
+            .args(&["memri-importers:latest"])
+            .spawn();
+        match command {
+            Ok(_child) => Ok(()),
+            Err(err) => Err(Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR,
+                msg: format!("Failed to run importer with uid {}, {}", payload.uid, err),
+            }),
         }
-        "whatsapp" => {
-            let path = env::current_dir()?;
-            let parent = path.parent().expect("Failed to get parent directory");
-            let wa_volume = format!(
-                "--volume={}/importers/data-mautrix:/usr/src/importers/data-mautrix",
-                parent.display().to_string()
-            );
-            Command::new("docker")
-                .arg("run")
-                .args(&docker_arguments())
-                .arg(&format!(
-                    "--env=POD_SERVICE_PAYLOAD={}",
-                    payload.service_payload
-                ))
-                .args(&[
-                    "--rm",
-                    &wa_volume,
-                    "--name=memri-importers_1",
-                    "--env=IMPORTER_TYPE=whatsapp",
-                ])
-                .args(&["memri-importers:latest"])
-                .spawn()
-                .expect("Failed to run importer");
-        }
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Data type {} not supported", data_type),
-            })
-        }
+    } else {
+        Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to get item {}", payload.uid),
+        })
     }
-    Ok(())
 }
 
 pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
-    let uid = payload.uid;
-    info!("Trying to run indexer on item {}", uid);
-    let result = internal_api::get_item(conn.deref(), uid)?;
-    match result.first() {
-        Some(_item) => {
-            Command::new("docker")
-                .arg("run")
-                .args(&docker_arguments())
-                .arg(&format!(
-                    "--env=POD_SERVICE_PAYLOAD={}",
-                    payload.service_payload
-                ))
-                .args(&[
-                    "--rm",
-                    "--name=memri-indexers_1",
-                    &format!("--env=RUN_UID={}", uid),
-                ])
-                .args(&["memri-indexers:latest"])
-                .spawn()
-                .expect("Failed to run indexer");
-            Ok(())
-        }
-        None => Err(Error {
+    info!("Trying to run indexer on item {}", payload.uid);
+    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    if result.first().is_some() {
+        Command::new("docker")
+            .arg("run")
+            .args(&docker_arguments())
+            .arg(&format!(
+                "--env=POD_SERVICE_PAYLOAD={}",
+                payload.service_payload
+            ))
+            .args(&[
+                "--rm",
+                "--name=memri-indexers_1",
+                &format!("--env=RUN_UID={}", payload.uid),
+            ])
+            .args(&["memri-indexers:latest"])
+            .spawn()
+            .expect("Failed to run indexer");
+        Ok(())
+    } else {
+        Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: format!("Failed to get item {}", uid),
-        }),
+            msg: format!("Failed to get item {}", payload.uid),
+        })
     }
 }
 
 fn docker_arguments() -> Vec<String> {
+    let is_https = crate::configuration::https_certificate_file().is_some();
+    let schema = if is_https { "https" } else { "http" };
     if pod_is_in_docker() {
         vec![
             "--network=pod_memri-net".to_string(),
             "--env=POD_ADDRESS=pod_pod_1".to_string(),
+            format!("--env=POD_FULL_ADDRESS={}://pod_pod_1", schema),
         ]
     } else {
         // The indexers/importers/downloaders need to have access to the host
@@ -150,6 +128,7 @@ fn docker_arguments() -> Vec<String> {
         };
         vec![
             format!("--env=POD_ADDRESS={}", pod_address),
+            format!("--env=POD_FULL_ADDRESS={}://{}", schema, pod_address),
             "--network=host".to_string(),
         ]
     }
