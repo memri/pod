@@ -50,6 +50,12 @@ pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
     info!("Trying to run importer on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_some() {
+        let path = env::current_dir()?;
+        let parent = path.parent().expect("Failed to get parent directory");
+        let wa_volume = format!(
+            "--volume={}/importers/data-mautrix:/usr/src/importers/data-mautrix",
+            parent.display().to_string()
+        );
         let command = Command::new("docker")
             .arg("run")
             .args(&docker_arguments())
@@ -62,6 +68,7 @@ pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
                 "--name=memri-importers_1",
                 &format!("--env=RUN_UID={}", payload.uid),
                 "--volume=download-volume:/usr/src/importers/data",
+                &wa_volume,
             ])
             .args(&["memri-importers:latest"])
             .spawn();
