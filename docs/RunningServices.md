@@ -15,7 +15,7 @@ Upon receiving a services request, Pod will extract the `uid` from the request a
 
 ### How services started
 Services are started via **docker**.
-Pod will make sure to set the following environment variables for services running in docker:
+Pod will make sure the following environment variables are set for services running in docker:
 
 * `POD_FULL_ADDRESS`, the address of Pod to call back, including "http"/"https".
   E.g. you can call `$POD_ADDRESS/v2/version`
