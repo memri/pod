@@ -73,7 +73,7 @@ pub fn run_importer(payload: RunImporter) -> Result<()> {
             let path = env::current_dir()?;
             let parent = path.parent().expect("Failed to get parent directory");
             let wa_volume = format!(
-                "--volume={}/data-mautrix:/usr/src/importers/data-mautrix/data-mautrix",
+                "--volume={}/importers/data-mautrix:/usr/src/importers/data-mautrix",
                 parent.display().to_string()
             );
             Command::new("docker")
@@ -83,7 +83,12 @@ pub fn run_importer(payload: RunImporter) -> Result<()> {
                     "--env=POD_SERVICE_PAYLOAD={}",
                     payload.service_payload
                 ))
-                .args(&["--rm", &wa_volume, "--name=memri-importers_1"])
+                .args(&[
+                    "--rm",
+                    &wa_volume,
+                    "--name=memri-importers_1",
+                    "--env=IMPORTER_TYPE=whatsapp",
+                ])
                 .args(&["memri-importers:latest"])
                 .spawn()
                 .expect("Failed to run importer");
