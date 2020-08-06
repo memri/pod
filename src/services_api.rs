@@ -67,7 +67,7 @@ pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
                 "--rm",
                 "--name=memri-importers_1",
                 &format!("--env=RUN_UID={}", payload.uid),
-                "--volume=download-volume:/usr/src/importers/data",
+                // "--volume=download-volume:/usr/src/importers/data",
                 &wa_volume,
             ])
             .args(&["memri-importers:latest"])
