@@ -242,6 +242,7 @@ Typical examples of services are services that import emails/messages into Pod.
 }
 ```
 Run a downloader on an item with the given uid.
+See [RunningServices](./RunningServices.md).
 
 ⚠️ UNSTABLE: Downloaders might be merged with importers soon.
 
@@ -260,6 +261,7 @@ Run a downloader on an item with the given uid.
 }
 ```
 Run an importer on an item with the given uid.
+See [RunningServices](./RunningServices.md).
 
 
 ### POST /v2/$owner_key/run_indexer
@@ -276,6 +278,7 @@ Run an importer on an item with the given uid.
 }
 ```
 Run an indexer on an item with the given uid.
+See [RunningServices](./RunningServices.md).
 
 
 # File API
