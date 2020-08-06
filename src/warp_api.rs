@@ -244,7 +244,8 @@ pub async fn run_server() {
         .or(origin_request);
 
     if let Some(cert) = configuration::https_certificate_file() {
-        let addr = configuration::pod_address().unwrap_or_else(|| "0.0.0.0:3030".to_string());
+        let addr = configuration::pod_listen_address()
+            .unwrap_or_else(|| format!("0.0.0.0:{}", configuration::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1)
@@ -272,7 +273,8 @@ pub async fn run_server() {
             .run(addr)
             .await;
     } else {
-        let addr = configuration::pod_address().unwrap_or_else(|| "127.0.0.1:3030".to_string());
+        let addr = configuration::pod_listen_address()
+            .unwrap_or_else(|| format!("127.0.0.1:{}", configuration::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1);
