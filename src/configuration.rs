@@ -12,11 +12,15 @@ pub fn pod_is_in_docker() -> bool {
     env::var_os("POD_IS_IN_DOCKER").is_some()
 }
 
-pub fn pod_address() -> Option<String> {
-    std::env::var("POD_ADDRESS").ok()
+// http settings:
+
+/// Address that Pod will start to listen when started
+pub fn pod_listen_address() -> Option<String> {
+    std::env::var("POD_LISTEN_ADDRESS").ok()
 }
 
-// http settings:
+/// If Pod listen address is not set above, this port will be listened to.
+pub const DEFAULT_PORT: u32 = 3030;
 
 pub const HTTPS_CERTIFICATE_ENV_NAME: &str = "POD_HTTPS_CERTIFICATE";
 pub fn https_certificate_file() -> Option<String> {
