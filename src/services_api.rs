@@ -108,10 +108,14 @@ pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
 }
 
 fn docker_arguments() -> Vec<String> {
+    let is_https = crate::configuration::https_certificate_file().is_some();
+    let schema = if is_https { "https" } else { "http" };
+    let port = crate::configuration::DEFAULT_PORT;
     if pod_is_in_docker() {
         vec![
             "--network=pod_memri-net".to_string(),
             "--env=POD_ADDRESS=pod_pod_1".to_string(),
+            format!("--env=POD_FULL_ADDRESS={}://pod_pod_1:{}", schema, port),
         ]
     } else {
         // The indexers/importers/downloaders need to have access to the host
@@ -124,6 +128,10 @@ fn docker_arguments() -> Vec<String> {
         };
         vec![
             format!("--env=POD_ADDRESS={}", pod_address),
+            format!(
+                "--env=POD_FULL_ADDRESS={}://{}:{}",
+                schema, pod_address, port
+            ),
             "--network=host".to_string(),
         ]
     }
