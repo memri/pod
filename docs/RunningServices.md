@@ -23,7 +23,7 @@ Pod will set the following environment variables for services running in docker:
 
 * `POD_FULL_ADDRESS`, the address of Pod to call back,
   e.g. `https://x.x.x.x:80` or `http://localhost:3030`.
-  You can call the endpoints via a URL like `$POD_ADDRESS/v2/version`.
+  You can call the endpoints via a URL like `$POD_FULL_ADDRESS/v2/version`.
 * `POD_ADDRESS`, same of the above, but without the scheme and port.
 * `RUN_UID`, the item `uid` that the service needs to run against.
   This item is commonly the first thing that the service requests from the Pod in order
