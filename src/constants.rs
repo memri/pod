@@ -1,4 +1,4 @@
-// Not a real configuration, but one place that lists all environment variable with their usages.
+// Constants used in the project. These are "convention over configuration" for now.
 
 use std::env;
 

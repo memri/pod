@@ -6,7 +6,7 @@ use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
-use crate::configuration;
+use crate::constants;
 use crate::internal_api;
 use crate::warp_endpoints;
 use bytes::Bytes;
@@ -243,9 +243,9 @@ pub async fn run_server() {
         .or(get_file.with(&headers))
         .or(origin_request);
 
-    if let Some(cert) = configuration::https_certificate_file() {
-        let addr = configuration::pod_listen_address()
-            .unwrap_or_else(|| format!("0.0.0.0:{}", configuration::DEFAULT_PORT));
+    if let Some(cert) = constants::https_certificate_file() {
+        let addr = constants::pod_listen_address()
+            .unwrap_or_else(|| format!("0.0.0.0:{}", constants::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1)
@@ -273,8 +273,8 @@ pub async fn run_server() {
             .run(addr)
             .await;
     } else {
-        let addr = configuration::pod_listen_address()
-            .unwrap_or_else(|| format!("127.0.0.1:{}", configuration::DEFAULT_PORT));
+        let addr = constants::pod_listen_address()
+            .unwrap_or_else(|| format!("127.0.0.1:{}", constants::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1);
@@ -286,7 +286,7 @@ pub async fn run_server() {
                 run Pod with encryption. To set up certificates once you obtained them, \
                 set {} environment variable to the path \
                 of the certificates (without .crt and .key suffixes)",
-                configuration::HTTPS_CERTIFICATE_ENV_NAME
+                constants::HTTPS_CERTIFICATE_ENV_NAME
             );
         }
         if !is_loopback && check_public_ip(addr.ip()) {
@@ -299,11 +299,11 @@ pub async fn run_server() {
                 addr
             );
         };
-        if !is_loopback && !configuration::use_insecure_non_tls() {
+        if !is_loopback && !constants::use_insecure_non_tls() {
             error!(
                 "Refusing to run pod without TLS (https). If you want to override this, \
                 start pod with environment variable {} set to any value.",
-                configuration::USE_INSECURE_NON_TLS_ENV_NAME
+                constants::USE_INSECURE_NON_TLS_ENV_NAME
             );
             std::process::exit(1)
         }

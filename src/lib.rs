@@ -1,7 +1,8 @@
 // Fake simple library interface to allow integration tests to work
 
 mod api_model;
-pub mod configuration;
+mod command_line_interface;
+pub mod constants;
 pub mod database_migrate_refinery;
 pub mod database_migrate_schema;
 pub mod error;

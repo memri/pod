@@ -3,7 +3,8 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 
 mod api_model;
-mod configuration;
+mod command_line_interface;
+mod constants;
 mod database_migrate_refinery;
 pub mod database_migrate_schema;
 mod error;
@@ -22,6 +23,7 @@ use std::fs::create_dir_all;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
+use structopt::StructOpt;
 
 #[tokio::main]
 async fn main() {
@@ -41,13 +43,16 @@ async fn main() {
         std::env!("GIT_DESCRIBE"),
         std::env!("CARGO_PKG_VERSION")
     );
+    let opt = command_line_interface::CLIOptions::from_args();
+    println!("{:#?}", opt);
+
     if std::env::args().any(|a| a == "--version" || a == "--help") {
         eprintln!("Done");
         std::process::exit(0)
     };
 
-    create_config_directory(configuration::DATABASE_DIR);
-    create_config_directory(configuration::MEDIA_DIR);
+    create_config_directory(constants::DATABASE_DIR);
+    create_config_directory(constants::MEDIA_DIR);
 
     // Start web framework
     warp_api::run_server().await;

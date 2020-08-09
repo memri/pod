@@ -1,7 +1,7 @@
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
-use crate::configuration::pod_is_in_docker;
+use crate::constants::pod_is_in_docker;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
@@ -125,9 +125,9 @@ pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
 }
 
 fn docker_arguments() -> Vec<String> {
-    let is_https = crate::configuration::https_certificate_file().is_some();
+    let is_https = crate::constants::https_certificate_file().is_some();
     let schema = if is_https { "https" } else { "http" };
-    let port = crate::configuration::DEFAULT_PORT;
+    let port = crate::constants::DEFAULT_PORT;
     if pod_is_in_docker() {
         vec![
             "--network=pod_memri-net".to_string(),

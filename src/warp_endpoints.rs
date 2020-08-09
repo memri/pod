@@ -6,7 +6,7 @@ use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
-use crate::configuration;
+use crate::constants;
 use crate::database_migrate_refinery;
 use crate::database_migrate_schema;
 use crate::error::Error;
@@ -204,7 +204,7 @@ fn initialize_db(
     database_key: &str,
 ) -> Result<Connection> {
     let database_path = format!("{}.db", &owner);
-    let database_path = PathBuf::from(configuration::DATABASE_DIR).join(database_path);
+    let database_path = PathBuf::from(constants::DATABASE_DIR).join(database_path);
     let mut conn = Connection::open(database_path).unwrap();
     let pragma_sql = format!("PRAGMA key = \"x'{}'\";", database_key);
     conn.execute_batch(&pragma_sql)?;
@@ -221,7 +221,7 @@ fn initialize_db(
 }
 
 fn allowed_owner_hashes_fn() -> HashSet<Vec<u8>> {
-    if let Some(owners) = configuration::pod_owners() {
+    if let Some(owners) = constants::pod_owners() {
         let mut result = HashSet::new();
         for owner in owners.split(',') {
             let hexed = hex::decode(owner).unwrap_or_else(|err| {
@@ -252,7 +252,7 @@ fn hash_of_hex(hex_string: &str) -> Result<GenericArray<u8, U32>> {
 }
 
 fn check_owner(possible_owner: &str) -> Result<()> {
-    if configuration::pod_owners().iter().any(|e| e == "ANY") {
+    if constants::pod_owners().iter().any(|e| e == "ANY") {
         return Ok(());
     };
     let possible_hash = hash_of_hex(possible_owner)?;
