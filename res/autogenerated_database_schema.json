@@ -64,6 +64,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "nameQuality",
           "dbtype": "Integer",
           "indexed": false
@@ -76,11 +81,6 @@
         {
           "name": "starred",
           "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "type",
-          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -144,6 +144,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "latitude",
           "dbtype": "Real",
           "indexed": false
@@ -175,11 +180,6 @@
         },
         {
           "name": "street",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -254,6 +254,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -275,11 +280,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -579,6 +579,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "name",
           "dbtype": "Text",
           "indexed": false
@@ -596,11 +601,6 @@
         {
           "name": "starred",
           "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "type",
-          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -674,6 +674,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -695,11 +700,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -849,6 +849,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -870,11 +875,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -939,6 +939,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "key",
           "dbtype": "Text",
           "indexed": false
@@ -956,11 +961,6 @@
         {
           "name": "starred",
           "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "type",
-          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -1219,6 +1219,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1240,11 +1245,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1389,6 +1389,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1415,11 +1420,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1584,6 +1584,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1610,11 +1615,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -1834,6 +1834,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -1855,11 +1860,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2024,6 +2024,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -2045,11 +2050,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -2199,6 +2199,11 @@
           "indexed": false
         },
         {
+          "name": "password",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "progress",
           "dbtype": "Integer",
           "indexed": false
@@ -2211,6 +2216,11 @@
         {
           "name": "uid",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "username",
+          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -2434,13 +2444,13 @@
           "indexed": false
         },
         {
-          "name": "starred",
-          "dbtype": "Bool",
+          "name": "itemType",
+          "dbtype": "Text",
           "indexed": false
         },
         {
-          "name": "type",
-          "dbtype": "Text",
+          "name": "starred",
+          "dbtype": "Bool",
           "indexed": false
         },
         {
@@ -3009,6 +3019,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "name",
           "dbtype": "Text",
           "indexed": false
@@ -3016,11 +3031,6 @@
         {
           "name": "starred",
           "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "type",
-          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -3104,6 +3114,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -3130,11 +3145,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3344,6 +3354,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -3365,11 +3380,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3429,6 +3439,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "sequence",
           "dbtype": "Integer",
           "indexed": false
@@ -3445,11 +3460,6 @@
         },
         {
           "name": "title",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3589,6 +3599,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -3610,11 +3625,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3694,6 +3704,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -3715,11 +3730,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -4054,6 +4064,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -4075,11 +4090,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -4259,6 +4269,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "phoneNumber",
           "dbtype": "Text",
           "indexed": false
@@ -4266,11 +4281,6 @@
         {
           "name": "starred",
           "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "type",
-          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -4759,6 +4769,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -4780,11 +4795,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -4859,6 +4869,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -4880,11 +4895,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -5094,6 +5104,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -5115,11 +5130,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -5939,6 +5949,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -5960,11 +5975,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -6024,13 +6034,13 @@
           "indexed": false
         },
         {
-          "name": "starred",
-          "dbtype": "Bool",
+          "name": "itemType",
+          "dbtype": "Text",
           "indexed": false
         },
         {
-          "name": "type",
-          "dbtype": "Text",
+          "name": "starred",
+          "dbtype": "Bool",
           "indexed": false
         },
         {
@@ -6154,13 +6164,13 @@
           "indexed": false
         },
         {
-          "name": "starred",
-          "dbtype": "Bool",
+          "name": "itemType",
+          "dbtype": "Text",
           "indexed": false
         },
         {
-          "name": "type",
-          "dbtype": "Text",
+          "name": "starred",
+          "dbtype": "Bool",
           "indexed": false
         },
         {
@@ -6239,6 +6249,11 @@
           "indexed": false
         },
         {
+          "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "keyword",
           "dbtype": "Text",
           "indexed": false
@@ -6260,11 +6275,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
