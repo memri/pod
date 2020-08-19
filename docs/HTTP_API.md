@@ -224,14 +224,16 @@ If at least one input `uid` doesn't exist, return 404 NOT_FOUND for the whole re
 
 
 # Services API
+Services help getting data into your Pod and enriching it.
+Services can only be ever run / authorized to run by the user.
+Typical examples of services are services that import emails/messages into Pod.
 
 ### POST /v2/$owner_key/run_downloader
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "service": ...,
-    "dataType": ...,
+    "uid": $uid,
     "servicePayload": {
       "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
       "ownerKey": $owner_key
@@ -239,9 +241,10 @@ If at least one input `uid` doesn't exist, return 404 NOT_FOUND for the whole re
   }
 }
 ```
-Run a downloader for different services with different data types,
-e.g. "service=evernote" with "dataType=note".
-Unsupported service or data type will yield 400 BAD_REQUEST error.
+Run a downloader on an item with the given uid.
+See [RunningServices](./RunningServices.md).
+
+⚠️ UNSTABLE: Downloaders might be merged with importers soon.
 
 
 ### POST /v2/$owner_key/run_importer
@@ -249,7 +252,7 @@ Unsupported service or data type will yield 400 BAD_REQUEST error.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "dataType": ...,
+    "uid": $uid,
     "servicePayload": {
       "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
       "ownerKey": $owner_key
@@ -257,8 +260,8 @@ Unsupported service or data type will yield 400 BAD_REQUEST error.
   }
 }
 ```
-Run an importer for a given data type, e.g. "note".
-Unsupported data type will yield 400 BAD_REQUEST error.
+Run an importer on an item with the given uid.
+See [RunningServices](./RunningServices.md).
 
 
 ### POST /v2/$owner_key/run_indexer
@@ -275,6 +278,7 @@ Unsupported data type will yield 400 BAD_REQUEST error.
 }
 ```
 Run an indexer on an item with the given uid.
+See [RunningServices](./RunningServices.md).
 
 
 # File API

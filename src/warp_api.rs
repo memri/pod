@@ -150,7 +150,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_downloaders = services_api
+    let run_downloader = services_api
         // //! In fact, any type that implements `FromStr` can be used, in any order:
         // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
         .and(warp::path!(String / "run_downloader"))
@@ -163,7 +163,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_importers = services_api
+    let run_importer = services_api
         .and(warp::path!(String / "run_importer"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -173,7 +173,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let run_indexers = services_api
+    let run_indexer = services_api
         .and(warp::path!(String / "run_indexer"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -250,16 +250,17 @@ pub async fn run_server() {
         .or(delete_item.with(&headers))
         .or(search.with(&headers))
         .or(get_items_with_edges.with(&headers))
-        .or(run_downloaders.with(&headers))
-        .or(run_importers.with(&headers))
-        .or(run_indexers.with(&headers))
+        .or(run_downloader.with(&headers))
+        .or(run_importer.with(&headers))
+        .or(run_indexer.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(do_action.with(&headers))
         .or(origin_request);
 
     if let Some(cert) = configuration::https_certificate_file() {
-        let addr = configuration::pod_address().unwrap_or_else(|| "0.0.0.0:3030".to_string());
+        let addr = configuration::pod_listen_address()
+            .unwrap_or_else(|| format!("0.0.0.0:{}", configuration::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1)
@@ -287,7 +288,8 @@ pub async fn run_server() {
             .run(addr)
             .await;
     } else {
-        let addr = configuration::pod_address().unwrap_or_else(|| "127.0.0.1:3030".to_string());
+        let addr = configuration::pod_listen_address()
+            .unwrap_or_else(|| format!("127.0.0.1:{}", configuration::DEFAULT_PORT));
         let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
             error!("Failed to parse desired hosting address {}, {}", addr, err);
             std::process::exit(1);

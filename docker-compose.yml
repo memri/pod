@@ -17,7 +17,7 @@ services:
     environment:
       - POD_IS_IN_DOCKER=true
       - POD_OWNER_HASHES=ANY
-      #- POD_ADDRESS=
+      #- POD_LISTEN_ADDRESS=
       #- POD_HTTPS_CERTIFICATE=
       #- POD_USE_INSECURE_NON_TLS=
 
