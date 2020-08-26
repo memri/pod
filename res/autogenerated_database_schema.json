@@ -4,6 +4,11 @@
       "name": "Account",
       "properties": [
         {
+          "name": "avatarUrl",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "dateAccessed",
           "dbtype": "DateTime",
           "indexed": false
@@ -26,16 +31,6 @@
         {
           "name": "displayName",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "enablePresence",
-          "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "enableReceipts",
-          "dbtype": "Bool",
           "indexed": false
         },
         {
@@ -66,11 +61,6 @@
         {
           "name": "itemType",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "nameQuality",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -3145,6 +3135,11 @@
         },
         {
           "name": "transcript",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
