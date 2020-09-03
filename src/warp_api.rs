@@ -6,7 +6,7 @@ use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
-use crate::configuration;
+use crate::command_line_interface::CLIOptions;
 use crate::internal_api;
 use crate::warp_endpoints;
 use bytes::Bytes;
@@ -31,13 +31,15 @@ use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server() {
+pub async fn run_server(cli_options: &CLIOptions) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
     let mut headers = HeaderMap::new();
-    warn!("Always adding the insecure Access-Control-Allow-Origin header for development purposes");
-    headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+    if cli_options.insecure_http_headers {
+        info!("Adding insecure http headers Access-Control-Allow-Origin header as per CLI option");
+        headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+    }
     let headers = warp::reply::with::headers(headers);
 
     let items_api = warp::path("v2")
@@ -146,6 +148,7 @@ pub async fn run_server() {
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc = Arc::new(cli_options.clone());
     let run_downloader = services_api
         // //! In fact, any type that implements `FromStr` can be used, in any order:
         // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
@@ -153,28 +156,33 @@ pub async fn run_server() {
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunDownloader>| {
-            let result = warp_endpoints::run_downloader(owner, init_db.deref(), body);
+            let cli: &CLIOptions = &cli_options_arc.deref();
+            let result = warp_endpoints::run_downloader(owner, init_db.deref(), body, cli);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc = Arc::new(cli_options.clone());
     let run_importer = services_api
         .and(warp::path!(String / "run_importer"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
-            let result = warp_endpoints::run_importer(owner, init_db.deref(), body);
+            let cli: &CLIOptions = &cli_options_arc.deref();
+            let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc = Arc::new(cli_options.clone());
     let run_indexer = services_api
         .and(warp::path!(String / "run_indexer"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunIndexer>| {
-            let result = warp_endpoints::run_indexer(owner, init_db.deref(), body);
+            let cli: &CLIOptions = &cli_options_arc.deref();
+            let result = warp_endpoints::run_indexer(owner, init_db.deref(), body, cli);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 
@@ -206,24 +214,32 @@ pub async fn run_server() {
             respond_with_result(result.map(|result| result))
         });
 
+    let insecure_http_headers = Arc::new(cli_options.insecure_http_headers);
     let origin_request =
         warp::options()
             .and(warp::header::<String>("origin"))
             .map(move |_origin| {
-                let builder = http::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                    .header(
-                        "access-control-allow-headers",
-                        "Origin, X-Requested-With, Content-Type, Accept",
-                    )
-                    .header("access-control-allow-credentials", "true")
-                    .header("access-control-max-age", "300")
-                    .header("access-control-allow-origin", "*");
-                builder
-                    .header("vary", "origin")
-                    .body("".to_string())
-                    .unwrap()
+                if *insecure_http_headers {
+                    let builder = http::response::Response::builder()
+                        .status(StatusCode::OK)
+                        .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                        .header(
+                            "access-control-allow-headers",
+                            "Origin, X-Requested-With, Content-Type, Accept",
+                        )
+                        .header("access-control-allow-credentials", "true")
+                        .header("access-control-max-age", "300")
+                        .header("access-control-allow-origin", "*");
+                    builder
+                        .header("vary", "origin")
+                        .body("".to_string())
+                        .unwrap()
+                } else {
+                    http::Response::builder()
+                        .status(StatusCode::METHOD_NOT_ALLOWED)
+                        .body(String::new())
+                        .expect("Failed to return an empty body")
+                }
             });
 
     let main_filter = version
@@ -243,71 +259,54 @@ pub async fn run_server() {
         .or(get_file.with(&headers))
         .or(origin_request);
 
-    if let Some(cert) = configuration::https_certificate_file() {
-        let addr = configuration::pod_listen_address()
-            .unwrap_or_else(|| format!("0.0.0.0:{}", configuration::DEFAULT_PORT));
-        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
-            error!("Failed to parse desired hosting address {}, {}", addr, err);
-            std::process::exit(1)
-        });
-        let cert_path = format!("{}.crt", cert);
-        let key_path = format!("{}.key", cert);
-        if !PathBuf::from_str(&cert_path)
-            .map(|p| p.exists())
-            .unwrap_or(false)
+    if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {
+        let ip = if let Some(ip) = cli_options.insecure_non_tls {
+            if ip.is_loopback() {
+                log::info!(
+                    "You seem to use --insecure-non-tls option with a loopback address. \
+                    It is recommended to instead use --non-tls CLI option \
+                    for clarity and simplicity."
+                );
+            } else if check_public_ip(&ip) {
+                warn!(
+                    "The server is asked to run on a public IP {} without https encryption. \
+                    This is discouraged as an intermediary (even your router on a local network) \
+                    could spoof the traffic sent to the server and do a MiTM attack.\
+                    Please consider using Pod with https encryption, \
+                    or run it on a non-public network.",
+                    ip
+                );
+            };
+            ip
+        } else {
+            IpAddr::from([127, 0, 0, 1])
+        };
+        let socket = SocketAddr::new(ip, cli_options.port);
+        warp::serve(main_filter).run(socket).await
+    } else {
+        let cert_path = &cli_options.tls_pub_crt;
+        let key_path = &cli_options.tls_priv_key;
+        if PathBuf::from_str(&cert_path)
+            .map(|p| !p.exists())
+            .unwrap_or(true)
         {
             error!("Certificate public key {} not found", cert_path);
             std::process::exit(1)
-        }
-        if !PathBuf::from_str(&key_path)
-            .map(|p| p.exists())
-            .unwrap_or(false)
+        };
+        if PathBuf::from_str(&key_path)
+            .map(|p| !p.exists())
+            .unwrap_or(true)
         {
             error!("Certificate private key {} not found", cert_path);
             std::process::exit(1)
-        }
+        };
+        let socket = SocketAddr::new(IpAddr::from([0, 0, 0, 0]), cli_options.port);
         warp::serve(main_filter)
             .tls()
             .cert_path(cert_path)
             .key_path(key_path)
-            .run(addr)
+            .run(socket)
             .await;
-    } else {
-        let addr = configuration::pod_listen_address()
-            .unwrap_or_else(|| format!("127.0.0.1:{}", configuration::DEFAULT_PORT));
-        let addr = SocketAddr::from_str(&addr).unwrap_or_else(|err| {
-            error!("Failed to parse desired hosting address {}, {}", addr, err);
-            std::process::exit(1);
-        });
-        let is_loopback = addr.ip().is_loopback();
-        if !is_loopback {
-            warn!(
-                "Https certificate files not configured. It is best recommended to only \
-                run Pod with encryption. To set up certificates once you obtained them, \
-                set {} environment variable to the path \
-                of the certificates (without .crt and .key suffixes)",
-                configuration::HTTPS_CERTIFICATE_ENV_NAME
-            );
-        }
-        if !is_loopback && check_public_ip(addr.ip()) {
-            warn!(
-                "The server is asked to run on a public IP {} without https encryption. \
-                This is discouraged as an intermediary (even your router on a local network) \
-                could spoof the traffic sent to the server and do a MiTM attack.\
-                Please consider using Pod with https encryption, \
-                or run it on a non-public network.",
-                addr
-            );
-        };
-        if !is_loopback && !configuration::use_insecure_non_tls() {
-            error!(
-                "Refusing to run pod without TLS (https). If you want to override this, \
-                start pod with environment variable {} set to any value.",
-                configuration::USE_INSECURE_NON_TLS_ENV_NAME
-            );
-            std::process::exit(1)
-        }
-        warp::serve(main_filter).run(addr).await
     }
 }
 
@@ -324,7 +323,7 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
     }
 }
 
-fn check_public_ip(addr: IpAddr) -> bool {
+fn check_public_ip(addr: &IpAddr) -> bool {
     match addr {
         IpAddr::V4(v4) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
         IpAddr::V6(v6) if v6.is_loopback() => true,

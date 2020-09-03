@@ -22,9 +22,7 @@ use std::str;
 use warp::http::status::StatusCode;
 
 pub fn get_project_version() -> String {
-    let git = env!("GIT_DESCRIBE");
-    let cargo = env!("CARGO_PKG_VERSION");
-    format!("{}-cargo{})", git, cargo)
+    crate::command_line_interface::VERSION.to_string()
 }
 
 pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {

@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
 struct DatabaseSchema {
@@ -115,6 +116,14 @@ pub fn migrate(conn: &Connection) -> Result<(), String> {
         .map_err(|err| format!("Failed to execute SQL:\n{}\n{}", sql, err))
 }
 
+pub fn validate_schema_file(file: &Path) -> Result<(), String> {
+    let file = std::fs::read(file)
+        .map_err(|err| format!("Failed to read data from target file, {}", err))?;
+    let schema: DatabaseSchema = serde_json::from_slice(&file)
+        .map_err(|err| format!("Failed to parse schema file, {}", err))?;
+    validate_schema(&schema)
+}
+
 fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
     for typ in &schema.types {
         validate_property_name(&typ.name)
@@ -154,8 +163,13 @@ fn get_column_info(
     let mut column_indexes = HashMap::new();
     let mut declared_columns = HashMap::new();
 
-    let all_items_columns: HashSet<String> = get_all_columns_pragma("items", conn)
-        .expect("Failed to get items column information using PRAGMA");
+    let all_items_columns: HashSet<String> =
+        get_all_columns_pragma("items", conn).map_err(|err| {
+            format!(
+                "Failed to get items column information using PRAGMA, {}",
+                err
+            )
+        })?;
     let all_items_columns: HashSet<_> =
         all_items_columns.iter().map(|c| c.to_lowercase()).collect();
 

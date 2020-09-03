@@ -9,7 +9,8 @@ fi
 
 examples/generate_self-signed_certificate.sh
 
-POD_OWNER_HASHES=ANY \
-  POD_HTTPS_CERTIFICATE=./data/certs/pod \
-  INSECURE_HTTP_HEADERS=1 \
-  RUST_LOG=pod=debug,info exec cargo run
+RUST_LOG=pod=debug,info \
+  exec cargo run -- \
+  --owners=ANY
+  --insecure-http-headers \
+  "$@"

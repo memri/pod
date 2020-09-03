@@ -7,7 +7,9 @@ if ! test -e Cargo.toml; then
   exit 1
 fi
 
-POD_OWNER_HASHES=ANY \
-  POD_USE_INSECURE_NON_TLS=1 \
-  INSECURE_HTTP_HEADERS=1 \
-  RUST_LOG=pod=debug,info exec cargo run
+RUST_LOG=pod=debug,info \
+  exec cargo run -- \
+  --owners=ANY \
+  --insecure-non-tls=0.0.0.0 \
+  --insecure-http-headers \
+  "$@"
