@@ -15,11 +15,10 @@ services:
       - ./data/certs:/data/certs
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - POD_IS_IN_DOCKER=true
       - POD_OWNER_HASHES=ANY
-      #- POD_LISTEN_ADDRESS=
-      #- POD_HTTPS_CERTIFICATE=
-      #- POD_USE_INSECURE_NON_TLS=
+      - INSECURE_NON_TLS=0.0.0.0
+      - SERVICES_CALLBACK_ADDRESS=pod_pod_1:3030
+      - SERVICES_DOCKER_NETWORK=pod_memri-net
 
 volumes:
   db:
