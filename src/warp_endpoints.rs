@@ -215,12 +215,12 @@ fn initialize_db(
     conn.execute_batch(&pragma_sql)?;
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {
-        init_db.insert(owner.to_string());
         database_migrate_refinery::migrate(&mut conn)?;
         database_migrate_schema::migrate(&conn).map_err(|err| Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!("Failed to migrate database according to schema, {}", err),
         })?;
+        init_db.insert(owner.to_string());
     }
     Ok(conn)
 }
