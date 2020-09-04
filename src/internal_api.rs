@@ -18,6 +18,7 @@ use rusqlite::NO_PARAMS;
 use serde_json::value::Value::Object;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::str;
 use warp::http::status::StatusCode;
 
@@ -110,6 +111,7 @@ pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Resul
     if !fields.contains_key("dateModified") {
         fields.insert("dateModified".to_string(), time_now.into());
     }
+    fields.insert("_dateServerModified".to_string(), time_now.into());
     fields.insert("version".to_string(), Value::from(1));
 
     let mut sql = "INSERT INTO items (".to_string();
@@ -131,10 +133,11 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
     fields.remove("_type");
     fields.remove("dateCreated");
 
+    let time_now = Utc::now().timestamp_millis();
     if !fields.contains_key("dateModified") {
-        let time_now = Utc::now().timestamp_millis();
         fields.insert("dateModified".to_string(), time_now.into());
     }
+    fields.insert("_dateServerModified".to_string(), time_now.into());
 
     fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
@@ -155,13 +158,12 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
 
 fn create_edge(
     tx: &Transaction,
-    _type: String,
+    _type: &str,
     source: i64,
     target: i64,
     mut fields: HashMap<String, Value>,
 ) -> Result<()> {
-    update_item_tx(tx, source, HashMap::new())?;
-    fields.insert("_type".to_string(), _type.as_str().into());
+    fields.insert("_type".to_string(), _type.into());
     fields.insert("_source".to_string(), source.into());
     fields.insert("_target".to_string(), target.into());
     let fields: HashMap<String, Value> = fields
@@ -214,6 +216,7 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
     fields.insert("dateModified".to_string(), time_now.into());
+    fields.insert("_dateServerModified".to_string(), time_now.into());
     update_item_tx(tx, uid, fields)
 }
 
@@ -232,8 +235,12 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
     }
+    let sources_set: HashSet<_> = bulk_action.create_edges.iter().map(|e| e._source).collect();
     for edge in bulk_action.create_edges {
-        create_edge(tx, edge._type, edge._source, edge._target, edge.fields)?;
+        create_edge(tx, &edge._type, edge._source, edge._target, edge.fields)?;
+    }
+    for edge_source in sources_set {
+        update_item_tx(tx, edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
         delete_item_tx(tx, edge_uid)?;
