@@ -91,6 +91,7 @@ lazy_static! {
         let mut result = get_columns_of_type(SchemaPropertyType::DateTime);
         result.insert("dateCreated".to_string());
         result.insert("dateModified".to_string());
+        result.insert("_dateServerModified".to_string());
         result
     };
 }

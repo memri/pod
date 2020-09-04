@@ -216,6 +216,7 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
     fields.insert("dateModified".to_string(), time_now.into());
+    fields.insert("_dateServerModified".to_string(), time_now.into());
     update_item_tx(tx, uid, fields)
 }
 
