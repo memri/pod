@@ -128,7 +128,7 @@ fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
     for typ in &schema.types {
         validate_property_name(&typ.name)
             .map_err(|err| format!("Schema type {} is invalid, {}", typ.name, err))?;
-        if typ.name.starts_with("_") {
+        if typ.name.starts_with('_') {
             return Err(format!("Schema type {} starts with underscore", typ.name));
         }
     }
@@ -141,7 +141,7 @@ fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
                     prop.name, typ.name, err
                 )
             })?;
-            if prop.name.starts_with("_") {
+            if prop.name.starts_with('_') {
                 return Err(format!(
                     "Schema property {} of type {} starts with underscore",
                     prop.name, typ.name
