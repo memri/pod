@@ -27,7 +27,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 After this, you can run Pod with:
 ```sh
-cargo run --release
+cargo run -- --help
+cargo run -- --owners=ANY
 ```
 
 Or the easy-to-use development version:
@@ -42,11 +43,6 @@ If you develop Pod, you might want to have faster build turn-around.
 Use this to incrementally compile the project (after installing [cargo-watch](https://github.com/passcod/cargo-watch)):
 ```sh
 cargo watch --ignore docs -s 'cargo check'
-```
-
-Run:
-```sh
-RUST_LOG=pod=debug,info cargo run
 ```
 
 You can read about various components of the server:
