@@ -288,11 +288,17 @@ See [RunningServices](./RunningServices.md).
 ```text
 RAW-FILE-BINARY
 ```
-Upload a file into Pod assuming the metadata of a file is already uploaded in the database.
+Upload a file into Pod and verify it's `sha256`.
 `owner_key`, database key and sha256 are all hex-encoded.
 
-A `sha256` hash of the contents will be calculated.
-Pod will fail the request if the calculated hash doesn't match the hash from the request URL.
+If a file with a given `sha256` has already being uploaded, the request will fail.
+If the provided `sha256` doesn't match the hash of the contents, the request will fail.
+If no item with this `sha256` exists in the database, Pod wouldn't be able to store
+cryptographic information about the file, and the request will also fail.
+
+If `sha256` matches, the file has not yet been uploaded to Pod and if an item
+with such `sha256` already exists in DB, Pod will accept the file and store it.
+The fields `nonce` and `key` will be updated for this item.
 
 
 ### POST /v2/$owner_key/get_file

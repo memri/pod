@@ -7,7 +7,9 @@ use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::UpdateItem;
-use crate::configuration;
+use crate::command_line_interface;
+use crate::command_line_interface::CLIOptions;
+use crate::constants;
 use crate::database_migrate_refinery;
 use crate::database_migrate_schema;
 use crate::error::Error;
@@ -122,30 +124,33 @@ pub fn run_downloader(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<RunDownloader>,
+    cli_options: &CLIOptions,
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_downloader(&conn, body.payload)
+    services_api::run_downloader(&conn, body.payload, cli_options)
 }
 
 pub fn run_importer(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<RunImporter>,
+    cli_options: &CLIOptions,
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_importer(&conn, body.payload)
+    services_api::run_importer(&conn, body.payload, cli_options)
 }
 
 pub fn run_indexer(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<RunIndexer>,
+    cli_options: &CLIOptions,
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_indexers(&conn, body.payload)
+    services_api::run_indexers(&conn, body.payload, cli_options)
 }
 
 pub fn upload_file(
@@ -233,44 +238,41 @@ fn initialize_db(
     database_key: &str,
 ) -> Result<Connection> {
     let database_path = format!("{}.db", &owner);
-    let database_path = PathBuf::from(configuration::DATABASE_DIR).join(database_path);
+    let database_path = PathBuf::from(constants::DATABASE_DIR).join(database_path);
     let mut conn = Connection::open(database_path).unwrap();
     let pragma_sql = format!("PRAGMA key = \"x'{}'\";", database_key);
     conn.execute_batch(&pragma_sql)?;
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {
-        init_db.insert(owner.to_string());
         database_migrate_refinery::migrate(&mut conn)?;
         database_migrate_schema::migrate(&conn).map_err(|err| Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!("Failed to migrate database according to schema, {}", err),
         })?;
+        init_db.insert(owner.to_string());
     }
     Ok(conn)
 }
 
-fn allowed_owner_hashes_fn() -> HashSet<Vec<u8>> {
-    if let Some(owners) = configuration::pod_owners() {
-        let mut result = HashSet::new();
-        for owner in owners.split(',') {
-            let hexed = hex::decode(owner).unwrap_or_else(|err| {
-                error!(
-                    "POD_OWNER_HASHES is invalid, failed to decode {} from hex, {}",
-                    owner, err
-                );
-                std::process::exit(1);
-            });
-            result.insert(hexed);
-        }
-        result
-    } else {
-        error!("No POD_OWNER_HASHES configured for Pod. Without owners to trust, Pod will not be able to answer any HTTP requests.");
-        HashSet::new()
+fn allowed_owner_hashes_fn(cli_options: &CLIOptions) -> HashSet<Vec<u8>> {
+    let owners: &str = &cli_options.owners;
+    let mut result = HashSet::new();
+    for owner in owners.split(',') {
+        let hexed = hex::decode(owner).unwrap_or_else(|err| {
+            error!(
+                "Pod owners are invalid, failed to decode hex {}, {}",
+                owner, err
+            );
+            std::process::exit(1);
+        });
+        result.insert(hexed);
     }
+    result
 }
 
 lazy_static! {
-    static ref ALLOWED_OWNER_HASHES: HashSet<Vec<u8>> = allowed_owner_hashes_fn();
+    static ref ALLOWED_OWNER_HASHES: HashSet<Vec<u8>> =
+        allowed_owner_hashes_fn(&command_line_interface::PARSED);
 }
 
 fn hash_of_hex(hex_string: &str) -> Result<GenericArray<u8, U32>> {
@@ -281,7 +283,7 @@ fn hash_of_hex(hex_string: &str) -> Result<GenericArray<u8, U32>> {
 }
 
 fn check_owner(possible_owner: &str) -> Result<()> {
-    if configuration::pod_owners().iter().any(|e| e == "ANY") {
+    if command_line_interface::PARSED.owners == "ANY" {
         return Ok(());
     };
     let possible_hash = hash_of_hex(possible_owner)?;

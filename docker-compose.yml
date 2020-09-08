@@ -14,12 +14,12 @@ services:
       - ./data/db:/data/db
       - ./data/certs:/data/certs
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - POD_IS_IN_DOCKER=true
-      - POD_OWNER_HASHES=ANY
-      #- POD_LISTEN_ADDRESS=
-      #- POD_HTTPS_CERTIFICATE=
-      #- POD_USE_INSECURE_NON_TLS=
+    entrypoint:
+      - "/pod"
+      - "--owners=ANY"
+      - "--insecure-non-tls=0.0.0.0"
+      - "--services-callback-address=pod_pod_1:3030"
+      - "--services-docker-network=pod_memri-net"
 
 volumes:
   db:
