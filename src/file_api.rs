@@ -1,4 +1,4 @@
-use crate::configuration;
+use crate::constants;
 use crate::error::Error;
 use crate::error::Result;
 use chacha20poly1305::aead::Aead;
@@ -159,11 +159,8 @@ fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u
 }
 
 fn media_dir() -> Result<PathBuf> {
-    PathBuf::from_str(configuration::MEDIA_DIR).map_err(|err| {
-        warn!(
-            "Failed to create file upload path {}",
-            configuration::MEDIA_DIR
-        );
+    PathBuf::from_str(constants::MEDIA_DIR).map_err(|err| {
+        warn!("Failed to create file upload path {}", constants::MEDIA_DIR);
         Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!("Failed to create file upload path, {}", err),

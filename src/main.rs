@@ -3,7 +3,8 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 
 mod api_model;
-mod configuration;
+mod command_line_interface;
+mod constants;
 mod database_migrate_refinery;
 pub mod database_migrate_schema;
 mod error;
@@ -15,6 +16,7 @@ mod warp_api;
 mod warp_endpoints;
 
 use chrono::Utc;
+use command_line_interface::CLIOptions;
 use env_logger::Env;
 use log::error;
 use log::info;
@@ -36,21 +38,28 @@ async fn main() {
             )
         })
         .init();
+    let cli_options: &CLIOptions = &*command_line_interface::PARSED;
+    if let Some(file) = &cli_options.validate_schema {
+        if let Err(err) = database_migrate_schema::validate_schema_file(&file) {
+            log::error!("Schema validation failed: {}", err);
+            std::process::exit(1)
+        } else {
+            log::info!("Schema is valid!");
+            std::process::exit(0)
+        }
+    };
     info!(
         "Starting Pod version {} (Cargo version {})",
         std::env!("GIT_DESCRIBE"),
         std::env!("CARGO_PKG_VERSION")
     );
-    if std::env::args().any(|a| a == "--version" || a == "--help") {
-        eprintln!("Done");
-        std::process::exit(0)
-    };
+    info!("Running Pod with configuration {:#?}", cli_options);
 
-    create_config_directory(configuration::DATABASE_DIR);
-    create_config_directory(configuration::MEDIA_DIR);
+    create_config_directory(constants::DATABASE_DIR);
+    create_config_directory(constants::MEDIA_DIR);
 
     // Start web framework
-    warp_api::run_server().await;
+    warp_api::run_server(cli_options).await;
 }
 
 fn create_config_directory(path: &str) {

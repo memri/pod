@@ -1,7 +1,7 @@
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
-use crate::configuration::pod_is_in_docker;
+use crate::command_line_interface::CLIOptions;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
@@ -12,7 +12,11 @@ use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
-pub fn run_downloader(conn: &Connection, payload: RunDownloader) -> Result<()> {
+pub fn run_downloader(
+    conn: &Connection,
+    payload: RunDownloader,
+    cli_options: &CLIOptions,
+) -> Result<()> {
     info!("Trying to run downloader on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_none() {
@@ -23,7 +27,7 @@ pub fn run_downloader(conn: &Connection, payload: RunDownloader) -> Result<()> {
     };
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
-    for arg in docker_arguments() {
+    for arg in docker_arguments(cli_options) {
         args.push(arg);
     }
     args.push(format!(
@@ -52,7 +56,11 @@ pub fn run_downloader(conn: &Connection, payload: RunDownloader) -> Result<()> {
     }
 }
 
-pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
+pub fn run_importer(
+    conn: &Connection,
+    payload: RunImporter,
+    cli_options: &CLIOptions,
+) -> Result<()> {
     info!("Trying to run importer on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_none() {
@@ -70,7 +78,7 @@ pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
     );
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
-    for arg in docker_arguments() {
+    for arg in docker_arguments(cli_options) {
         args.push(arg);
     }
     args.push(format!(
@@ -97,7 +105,11 @@ pub fn run_importer(conn: &Connection, payload: RunImporter) -> Result<()> {
     }
 }
 
-pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
+pub fn run_indexers(
+    conn: &Connection,
+    payload: RunIndexer,
+    cli_options: &CLIOptions,
+) -> Result<()> {
     info!("Trying to run indexer on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_none() {
@@ -108,7 +120,7 @@ pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
     };
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
-    for arg in docker_arguments() {
+    for arg in docker_arguments(cli_options) {
         args.push(arg);
     }
     args.push(format!(
@@ -133,32 +145,30 @@ pub fn run_indexers(conn: &Connection, payload: RunIndexer) -> Result<()> {
     }
 }
 
-fn docker_arguments() -> Vec<String> {
-    let is_https = crate::configuration::https_certificate_file().is_some();
+fn docker_arguments(cli_options: &CLIOptions) -> Vec<String> {
+    let is_https = cli_options.non_tls || cli_options.insecure_non_tls.is_some();
     let schema = if is_https { "https" } else { "http" };
-    let port = crate::configuration::DEFAULT_PORT;
-    if pod_is_in_docker() {
-        vec![
-            "--network=pod_memri-net".to_string(),
-            "--env=POD_ADDRESS=pod_pod_1".to_string(),
-            format!("--env=POD_FULL_ADDRESS={}://pod_pod_1:{}", schema, port),
-        ]
-    } else {
-        // The indexers/importers/downloaders need to have access to the host
-        // This is currently done differently on MacOS and Linux
-        // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-        let pod_address = if cfg!(target_os = "linux") {
-            "localhost"
-        } else {
-            "host.docker.internal"
-        };
-        vec![
-            format!("--env=POD_ADDRESS={}", pod_address),
-            format!(
-                "--env=POD_FULL_ADDRESS={}://{}:{}",
-                schema, pod_address, port
-            ),
-            "--network=host".to_string(),
-        ]
-    }
+    let port: u16 = cli_options.port;
+    let network: &str = match &cli_options.services_docker_network {
+        Some(net) => net,
+        None => "host",
+    };
+    let callback = match &cli_options.services_callback_address {
+        Some(addr) => addr.to_string(),
+        None => {
+            // The indexers/importers/downloaders need to have access to the host
+            // This is currently done differently on MacOS and Linux
+            // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
+            let pod_domain = if cfg!(target_os = "linux") {
+                "localhost"
+            } else {
+                "host.docker.internal"
+            };
+            format!("{}:{}", pod_domain, port)
+        }
+    };
+    vec![
+        format!("--network={}", network),
+        format!("--env=POD_FULL_ADDRESS={}://{}", schema, callback),
+    ]
 }

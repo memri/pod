@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
 struct DatabaseSchema {
@@ -90,6 +91,7 @@ lazy_static! {
         let mut result = get_columns_of_type(SchemaPropertyType::DateTime);
         result.insert("dateCreated".to_string());
         result.insert("dateModified".to_string());
+        result.insert("_dateServerModified".to_string());
         result
     };
 }
@@ -115,10 +117,21 @@ pub fn migrate(conn: &Connection) -> Result<(), String> {
         .map_err(|err| format!("Failed to execute SQL:\n{}\n{}", sql, err))
 }
 
+pub fn validate_schema_file(file: &Path) -> Result<(), String> {
+    let file = std::fs::read(file)
+        .map_err(|err| format!("Failed to read data from target file, {}", err))?;
+    let schema: DatabaseSchema = serde_json::from_slice(&file)
+        .map_err(|err| format!("Failed to parse schema file, {}", err))?;
+    validate_schema(&schema)
+}
+
 fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
     for typ in &schema.types {
         validate_property_name(&typ.name)
             .map_err(|err| format!("Schema type {} is invalid, {}", typ.name, err))?;
+        if typ.name.starts_with('_') {
+            return Err(format!("Schema type {} starts with underscore", typ.name));
+        }
     }
     let mut properties: HashMap<String, SchemaPropertyType> = HashMap::new();
     for typ in &schema.types {
@@ -129,6 +142,12 @@ fn validate_schema(schema: &DatabaseSchema) -> Result<(), String> {
                     prop.name, typ.name, err
                 )
             })?;
+            if prop.name.starts_with('_') {
+                return Err(format!(
+                    "Schema property {} of type {} starts with underscore",
+                    prop.name, typ.name
+                ));
+            }
             let prop_name = prop.name.to_lowercase();
             match properties.get(&prop_name) {
                 None => {
@@ -154,8 +173,13 @@ fn get_column_info(
     let mut column_indexes = HashMap::new();
     let mut declared_columns = HashMap::new();
 
-    let all_items_columns: HashSet<String> = get_all_columns_pragma("items", conn)
-        .expect("Failed to get items column information using PRAGMA");
+    let all_items_columns: HashSet<String> =
+        get_all_columns_pragma("items", conn).map_err(|err| {
+            format!(
+                "Failed to get items column information using PRAGMA, {}",
+                err
+            )
+        })?;
     let all_items_columns: HashSet<_> =
         all_items_columns.iter().map(|c| c.to_lowercase()).collect();
 

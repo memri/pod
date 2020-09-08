@@ -144,8 +144,8 @@ pub fn json_value_to_sqlite<'a>(
                 Err(Error {
                     code: StatusCode::BAD_REQUEST,
                     msg: format!(
-                        "Failed to insert json value {} to property {}, reason: not defined in schema",
-                        json, column
+                        "Property {} not defined in schema (attempted to use it for json value {})",
+                        column, json,
                     ),
                 })
             }
