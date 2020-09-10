@@ -1,10 +1,10 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
+use crate::api_model::SearchByFields;
 use crate::error::Error;
 use crate::error::Result;
 use crate::sql_converters::borrow_sql_params;
-use crate::sql_converters::fields_mapping_to_owned_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
@@ -15,7 +15,6 @@ use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
-use serde_json::value::Value::Object;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -259,20 +258,11 @@ pub fn create_item(conn: &mut Connection, create_action: CreateItem) -> Result<i
     Ok(result)
 }
 
-pub fn search_by_fields(tx: &Transaction, query: Value) -> Result<Vec<Value>> {
+pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {
     debug!("Searching by fields {:?}", query);
-    let fields_map = match query {
-        Object(map) => map,
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: "Expected JSON object".to_string(),
-            })
-        }
-    };
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
-    for (field, value) in &fields_map {
+    for (field, value) in &query.fields {
         validate_property_name(field)?;
         match value {
             Value::Array(_) => continue,
@@ -287,10 +277,20 @@ pub fn search_by_fields(tx: &Transaction, query: Value) -> Result<Vec<Value>> {
         sql_body.push_str(" = :");
         sql_body.push_str(field);
     }
+    if query._date_server_modified_after.is_some() {
+        sql_body.push_str(" AND _dateServerModified > :_dateServerModified");
+    };
     sql_body.push_str(";");
 
-    let sql_params = fields_mapping_to_owned_sql_params(&fields_map)?;
-    let sql_params = borrow_sql_params(&sql_params);
+    let mut sql_params = Vec::new();
+    for (key, value) in &query.fields {
+        sql_params.push((format!(":{}", key), json_value_to_sqlite(&value, &key)?));
+    }
+    if let Some(date) = query._date_server_modified_after {
+        let key = ":_dateServerModified".to_string();
+        sql_params.push((key, date.into()));
+    };
+    let sql_params = borrow_sql_params(sql_params.as_slice());
     let mut stmt = tx.prepare_cached(&sql_body)?;
     let rows = stmt.query_named(sql_params.as_slice())?;
     let json = sqlite_rows_to_json(rows, true)?;

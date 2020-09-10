@@ -51,6 +51,15 @@ pub struct BulkAction {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct SearchByFields {
+    #[serde(rename = "_dateServerModifiedAfter")]
+    pub _date_server_modified_after: Option<i64>,
+    #[serde(flatten)]
+    pub fields: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PayloadWrapper<T> {
     pub database_key: String,
     pub payload: T,
