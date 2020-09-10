@@ -200,10 +200,13 @@ Mark an item as deleted:
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-  "payload": { "_type": "Label", "color": "#CCFF00", ... }
+  "payload": { "_type": "Label", "color": "#CCFF00", "_dateServerModifiedAfter": 123456789, ... }
 }
 ```
 Search items by their fields.
+Field `_dateServerModifiedAfter` is not treated in the standard way, and instead, it filters
+items by their `_dateServerModified` field using the `>` operator.
+
 The endpoint will return an array of all items with exactly the same properties.
 
 

@@ -3,7 +3,6 @@ extern crate pod;
 use lazy_static::lazy_static;
 use pod::database_migrate_refinery;
 use pod::database_migrate_schema;
-use pod::error::Error;
 use pod::internal_api;
 use r2d2::ManageConnection;
 use r2d2::Pool;
@@ -42,42 +41,51 @@ lazy_static! {
 #[test]
 fn test_bulk_action() {
     let sqlite: &Pool<SqliteConnectionManager> = &SQLITE;
-
-    let json = json!({
-        "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
-        "updateItems": [{"uid": 1, "_type": "Person1"}],
-        "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
-    });
-
     let mut conn = sqlite.get().unwrap();
 
-    let bulk = {
+    {
         let tx = conn.transaction().unwrap();
-        let result = internal_api::bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
+        let json = json!({
+            "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
+            "updateItems": [{"uid": 1, "_type": "Person1"}],
+            "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
+        });
+        let bulk = internal_api::bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
         tx.commit().unwrap();
-        result
-    };
+        assert_eq!(bulk, Ok(()));
+    }
 
-    let with_edges = {
+    {
         let tx = conn.transaction().unwrap();
-        internal_api::get_item_with_edges_tx(&tx, 1)
-    };
+        let with_edges = internal_api::get_item_with_edges_tx(&tx, 1);
+        assert!(
+            with_edges.is_ok(),
+            "get items with edges failed with: {:?}",
+            with_edges
+        );
+    }
 
-    let json = json!({"_type": "Person"});
-    let search = {
+    {
         let tx = conn.transaction().unwrap();
-        internal_api::search_by_fields(&tx, json)
-    };
+        let json = json!({"_type": "Person"});
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert!(!search.is_empty());
+    }
 
-    assert_eq!(bulk, Ok(()));
-    assert!(
-        with_edges.is_ok(),
-        "get items with edges failed with: {:?}",
-        with_edges
-    );
-    assert!(check_has_item(search));
-}
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({"_type": "Person", "_dateServerModifiedAfter": 1_000_000_000_000_i64 });
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert!(!search.is_empty());
+    }
 
-fn check_has_item(result: Result<Vec<Value>, Error>) -> bool {
-    result.iter().flatten().next().is_some()
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({"_type": "Person", "_dateServerModifiedAfter": 999_000_000_000_000_i64 });
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert_eq!(search, Vec::<Value>::new());
+    }
 }
