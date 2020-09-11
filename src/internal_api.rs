@@ -1,6 +1,6 @@
 use crate::api_model::BulkAction;
-use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
+use crate::api_model::InsertTreeItem;
 use crate::api_model::SearchByFields;
 use crate::error::Error;
 use crate::error::Result;
@@ -250,12 +250,25 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     Ok(())
 }
 
-pub fn create_item(conn: &mut Connection, create_action: CreateItem) -> Result<i64> {
-    debug!("Creating item {:?}", create_action);
-    let tx = conn.transaction()?;
-    let result = create_item_tx(&tx, create_action.fields)?;
-    tx.commit()?;
-    Ok(result)
+pub fn insert_tree(tx: &Transaction, item: InsertTreeItem) -> Result<i64> {
+    let source_uid: i64 = if item.fields.len() > 1 {
+        create_item_tx(tx, item.fields)?
+    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
+        if !item._edges.is_empty() {
+            update_item_tx(tx, uid, HashMap::new())?;
+        }
+        uid
+    } else {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Cannot create item: {:?}", item),
+        });
+    };
+    for edge in item._edges {
+        let target_item = insert_tree(tx, edge._target)?;
+        create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
+    }
+    Ok(source_uid)
 }
 
 pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {

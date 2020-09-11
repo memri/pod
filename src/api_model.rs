@@ -50,6 +50,22 @@ pub struct BulkAction {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct InsertTreeItem {
+    #[serde(default)]
+    pub _edges: Vec<InsertTreeEdge>,
+    #[serde(flatten)]
+    pub fields: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InsertTreeEdge {
+    pub _type: String,
+    pub _target: InsertTreeItem,
+    #[serde(flatten)]
+    pub fields: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchByFields {
     #[serde(rename = "_dateServerModifiedAfter")]
