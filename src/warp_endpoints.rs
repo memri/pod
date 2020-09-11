@@ -1,6 +1,7 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
+use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
@@ -92,6 +93,15 @@ pub fn delete_item(
     in_transaction(&mut conn, |tx| {
         internal_api::delete_item_tx(&tx, body.payload)
     })
+}
+
+pub fn insert_tree(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<InsertTreeItem>,
+) -> Result<i64> {
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    in_transaction(&mut conn, |tx| internal_api::insert_tree(&tx, body.payload))
 }
 
 pub fn search_by_fields(

@@ -196,6 +196,47 @@ Mark an item as deleted:
 * Update `dateModified` (server's time is taken)
 
 
+### POST /v2/$owner_key/insert_tree
+```json5
+{
+  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "payload": { /* item definition (see below) */ }
+}
+```
+Insert a tree with edges (of arbitrary depth) in one batch.
+
+Each item should either be an object with only `uid` and `_edges` fields:
+```json5
+{
+  "uid": 123456789 /* uid of the item to create edge with */,
+  "_edges": [ /* see below edges definition*/ ]
+}
+```
+Or the full item to be created, in which case `uid` is optional,
+but all standard mandatory item fields need to be present:
+```json5
+{
+  "_type": "SomeItemType",
+  "_edges": [ /* see below edges definition*/ ],
+  /* other item properties here */
+}
+```
+
+Each edge in the array above is required to have the following form:
+```json5
+{
+  "_type": "SomeEdgeType",
+  "_target": { /* item of identical structure to the above */ }
+  /* optional edge properties here */
+}
+```
+
+As always, inserting edges will result in updating timestamps for `_source` items
+(even if they are referenced by `uid` only).
+
+The method will return the `uid` of the created root item, e.g. `123456789`.
+
+
 ### POST /v2/$owner_key/search_by_fields/
 ```json
 {
@@ -204,8 +245,10 @@ Mark an item as deleted:
 }
 ```
 Search items by their fields.
-Field `_dateServerModifiedAfter` is not treated in the standard way, and instead, it filters
-items by their `_dateServerModified` field using the `>` operator.
+
+Ephemeral underscore field `_dateServerModifiedAfter`, if specified,
+is treated specially. It will filter out those items that have
+`_dateServerModified` higher (`>`) than the specified value.
 
 The endpoint will return an array of all items with exactly the same properties.
 
