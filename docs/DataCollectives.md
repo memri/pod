@@ -34,7 +34,7 @@ All information stored by a Data Collective is stored in a single database,
 and in order to write to a Data Collective, you need to know its `database_key`.
 Reading data from a Data Collective via API is always impossible.
 
-Data Collective maintainer must access the database from the filesystem,
-presuming they also have the `database_key` of course.
+Data Collective maintainer must access the database from the filesystem.
+(To do so, they also need to have the `database_key` of course.)
 
 Run Pod with `--help` to see CLI help on setting up a Data Collective.
