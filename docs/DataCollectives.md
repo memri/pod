@@ -1,7 +1,7 @@
 # About
 This documentation is part of [Pod](../README.md).
 
-Data Collectives are a storage for data shared across different people. For example:
+Data Collective is a storage for data shared across different people. For example:
 
 * communities, e.g. people interested in plants, food, etc
 * family
