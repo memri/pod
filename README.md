@@ -8,7 +8,7 @@ See documentation on:
 
 * Pod-s [HTTP API](./docs/HTTP_API.md)
 * Running [Integrators](./docs/Integrators.md)
-* What are [Data Collectives](./docs/DataCollectives.md)
+* What is a [Shared Pod](./docs/SharedPod.md)
 * How are data types defined in [Schema](./docs/Schema.md)
 * How to run Pod (this document)
 
