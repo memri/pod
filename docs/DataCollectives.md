@@ -21,6 +21,9 @@ The information required is:
 * `database_key`, which must be filled in by the user as it is a shared secret for all Data Collective participants
 * URL of the Data Collective (similar to the one of Pod itself)
 
+It is the front-end-s decision on which data to send to a particular Data Collective.
+It always needs to be done with user confirmation.
+
 
 # Implementation
 
