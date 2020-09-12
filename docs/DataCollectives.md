@@ -8,6 +8,18 @@ Data Collectives are a storage for data shared across different people. For exam
 * data that you can contribute to help building community Machine Learning tools ("datasets")
 * teams in companies
 * wikipedia-like articles
+* etc
+
+
+# Front-ends
+
+In order for front-ends to send information to Data Collectives,
+they need to support configuration of the data collectives.
+
+The information required is:
+
+* `database_key`, which must be filled in by the user as it is a shared secret for all Data Collective participants
+* URL of the Data Collective (similar to the one of Pod itself)
 
 
 # Implementation
@@ -23,14 +35,3 @@ Data Collective maintainer must access the database from the filesystem,
 presuming they also have the `database_key` of course.
 
 Run Pod with `--help` to see CLI help on setting up a Data Collective.
-
-
-# Front-ends
-
-In order for front-ends to send information to Data Collectives,
-they need to support configuration of the data collectives.
-
-The information required is:
-
-* `database_key`, which must be filled in by the user as it is a shared secret for all Data Collective participants
-* URL of the Data Collective (similar to the one of Pod itself)
