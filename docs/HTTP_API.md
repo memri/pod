@@ -1,13 +1,9 @@
 # About
-There are various components that communicate with the Pod:
+This documentation is part of [Pod](../README.md).
 
-* Clients like iOS app, web app;
-* Indexers that enrich data/photos/other content;
-* Importers/Downloaders that import data from other systems, e.g. from evernote.
-
-All of that data goes through Pod HTTP API.
+HTTP API is the interface that Pod provides to store and access user data.
 This document explains the data types that Pod can store,
-and current API that lets you store or retrieve the data.
+and current API provided for that.
 
 
 # Items
@@ -288,7 +284,7 @@ Typical examples of services are services that import emails/messages into Pod.
 }
 ```
 Run a downloader on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 ⚠️ UNSTABLE: Downloaders might be merged with importers soon.
 
@@ -307,7 +303,7 @@ See [RunningServices](./RunningServices.md).
 }
 ```
 Run an importer on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 
 ### POST /v2/$owner_key/run_indexer
@@ -324,7 +320,7 @@ See [RunningServices](./RunningServices.md).
 }
 ```
 Run an indexer on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 
 # File API
