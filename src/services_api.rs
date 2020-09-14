@@ -137,7 +137,7 @@ pub fn run_indexers(
 }
 
 fn docker_arguments(cli_options: &CLIOptions) -> Vec<String> {
-    let is_https = cli_options.non_tls || cli_options.insecure_non_tls.is_some();
+    let is_https = cli_options.insecure_non_tls.is_none() && !cli_options.non_tls;
     let schema = if is_https { "https" } else { "http" };
     let port: u16 = cli_options.port;
     let network: &str = match &cli_options.services_docker_network {
