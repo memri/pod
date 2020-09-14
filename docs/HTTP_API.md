@@ -201,15 +201,19 @@ Mark an item as deleted:
 ```
 Insert a tree with edges (of arbitrary depth) in one batch.
 
-Each item should either be an object with only `uid` and `_edges` fields:
+Each item should either be "a reference", e.g. an object with only `uid` and `_edges` fields,
+or a full item which would then be created.
+
+"Reference" type of items look like that
+(the `uid` property mandatory, no other properties are present):
 ```json5
 {
   "uid": 123456789 /* uid of the item to create edge with */,
   "_edges": [ /* see below edges definition*/ ]
 }
 ```
-Or the full item to be created, in which case `uid` is optional,
-but all standard mandatory item fields need to be present:
+
+And in order to insert an item, specify all its properties (`uid` is optional in this case):
 ```json5
 {
   "_type": "SomeItemType",
