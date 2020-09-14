@@ -1,10 +1,12 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
+use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface::CLIOptions;
 use crate::internal_api;
@@ -13,7 +15,6 @@ use bytes::Bytes;
 use log::error;
 use log::info;
 use log::warn;
-use serde_json::Value;
 use std::collections::HashSet;
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -126,11 +127,22 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let search = items_api
+    let insert_tree = items_api
+        .and(warp::path!(String / "insert_tree"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<InsertTreeItem>| {
+            let result = warp_endpoints::insert_tree(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let search_by_fields = items_api
         .and(warp::path!(String / "search_by_fields"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<Value>| {
+        .map(move |owner: String, body: PayloadWrapper<SearchByFields>| {
             let result = warp_endpoints::search_by_fields(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -250,7 +262,8 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
-        .or(search.with(&headers))
+        .or(insert_tree.with(&headers))
+        .or(search_by_fields.with(&headers))
         .or(get_items_with_edges.with(&headers))
         .or(run_downloader.with(&headers))
         .or(run_importer.with(&headers))

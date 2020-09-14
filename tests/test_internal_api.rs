@@ -1,83 +1,122 @@
 extern crate pod;
 
-use lazy_static::lazy_static;
 use pod::database_migrate_refinery;
 use pod::database_migrate_schema;
-use pod::error::Error;
 use pod::internal_api;
-use r2d2::ManageConnection;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::OpenFlags;
+use rusqlite::Connection;
 use serde_json::json;
 use serde_json::Value;
-use std::path::PathBuf;
 
-lazy_static! {
-    static ref SQLITE: Pool<SqliteConnectionManager> = {
-        let sqlite =
-            SqliteConnectionManager::file(PathBuf::from("file:memdb?mode=memory&cache=shared"))
-                .with_flags(OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_READ_WRITE)
-                .with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
-
-        // Cannot re-use `migrate` function from `database_migrate_refinery`.
-        // Probably due to some weird lifetime problem, didn't properly investigate yet
-        let mut refinery_connection = sqlite
-            .connect()
-            .expect("Failed to open a connection for refinery database migrations");
-        // Run "refinery" migrations to bring the core structure of items/edges up-to-date
-        database_migrate_refinery::embedded::migrations::runner()
-            .run(&mut refinery_connection)
-            .expect("Failed to run refinery migrations");
-        // database_migrate_refinery::migrate(&sqlite);
-
-        let sqlite: Pool<SqliteConnectionManager> =
-            r2d2::Pool::new(sqlite).expect("Failed to create r2d2 SQLite connection pool");
-        database_migrate_schema::migrate(&refinery_connection)
-            .unwrap_or_else(|err| panic!("Failed to migrate schema, {}", err));
-        sqlite
-    };
+fn new_conn() -> Connection {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    database_migrate_refinery::embedded::migrations::runner()
+        .run(&mut conn)
+        .expect("Failed to run refinery migrations");
+    database_migrate_schema::migrate(&conn)
+        .unwrap_or_else(|err| panic!("Failed to migrate schema, {}", err));
+    conn
 }
 
 #[test]
 fn test_bulk_action() {
-    let sqlite: &Pool<SqliteConnectionManager> = &SQLITE;
+    let mut conn = new_conn();
 
-    let json = json!({
-        "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
-        "updateItems": [{"uid": 1, "_type": "Person1"}],
-        "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
-    });
-
-    let mut conn = sqlite.get().unwrap();
-
-    let bulk = {
+    {
         let tx = conn.transaction().unwrap();
+        let json = json!({
+            "createItems": [{"uid": 1, "_type": "Person"}, {"uid": 2, "_type": "Person"}],
+            "updateItems": [{"uid": 1, "_type": "Person1"}],
+            "createEdges": [{"_type": "friend", "_source": 1, "_target": 2, "edgeLabel": "test", "sequence": 1}]
+        });
         let result = internal_api::bulk_action_tx(&tx, serde_json::from_value(json).unwrap());
         tx.commit().unwrap();
-        result
-    };
+        assert_eq!(result, Ok(()));
+    }
 
-    let with_edges = {
+    {
         let tx = conn.transaction().unwrap();
-        internal_api::get_item_with_edges_tx(&tx, 1)
-    };
+        let get_result = internal_api::get_item_with_edges_tx(&tx, 1);
+        assert!(
+            get_result.is_ok(),
+            "get items with edges failed with: {:?}",
+            get_result
+        );
+    }
 
-    let json = json!({"_type": "Person"});
-    let search = {
+    {
         let tx = conn.transaction().unwrap();
-        internal_api::search_by_fields(&tx, json)
-    };
+        let json = json!({"_type": "Person"});
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert!(!search.is_empty());
+    }
 
-    assert_eq!(bulk, Ok(()));
-    assert!(
-        with_edges.is_ok(),
-        "get items with edges failed with: {:?}",
-        with_edges
-    );
-    assert!(check_has_item(search));
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({"_type": "Person", "_dateServerModifiedAfter": 1_000_000_000_000_i64 });
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert!(!search.is_empty());
+    }
+
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({"_type": "Person", "_dateServerModifiedAfter": 999_000_000_000_000_i64 });
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.expect("Search request failed");
+        assert_eq!(search, Vec::<Value>::new());
+    }
 }
 
-fn check_has_item(result: Result<Vec<Value>, Error>) -> bool {
-    result.iter().flatten().next().is_some()
+#[test]
+fn test_insert_item() {
+    let mut conn = new_conn();
+    let child1_uid = 3;
+    let child2_uid = 4;
+
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({
+            "_type": "InsertItemSource",
+            "dateCreated": 0,
+            "_edges": [
+                {
+                    "_type": "InsertItemEdge",
+                    "_target": { "uid": child1_uid, "_type": "InsertItemTarget" }
+                },
+                {
+                    "_type": "InsertItemEdge",
+                    "_target": { "uid": child2_uid, "_type": "InsertItemTarget" }
+                },
+            ]
+        });
+        let result = internal_api::insert_tree(&tx, serde_json::from_value(json).unwrap());
+        result.expect("request failed");
+        tx.commit().unwrap();
+    }
+
+    {
+        let tx = conn.transaction().unwrap();
+        let edges = internal_api::get_item_with_edges_tx(&tx, child1_uid).unwrap();
+        let edges = edges.get("allEdges").unwrap().as_array().unwrap();
+        assert!(edges.is_empty(), "child item has outgoing edges");
+    }
+
+    {
+        let tx = conn.transaction().unwrap();
+        let json = json!({ "_type": "InsertItemSource", "dateCreated": 0 });
+        let search = internal_api::search_by_fields(&tx, serde_json::from_value(json).unwrap());
+        let search = search.unwrap();
+        assert_eq!(search.len(), 1);
+        let search = search.first().unwrap();
+        let uid = search.get("uid").unwrap().as_i64().unwrap();
+
+        let edges = internal_api::get_item_with_edges_tx(&tx, uid).unwrap();
+        let edges = edges.get("allEdges").unwrap().as_array().unwrap();
+        assert_eq!(
+            edges.len(),
+            2,
+            "root item does not have exactly 2 outgoing edges"
+        );
+    }
 }

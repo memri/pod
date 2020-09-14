@@ -1,10 +1,12 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
+use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
@@ -93,10 +95,19 @@ pub fn delete_item(
     })
 }
 
+pub fn insert_tree(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<InsertTreeItem>,
+) -> Result<i64> {
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    in_transaction(&mut conn, |tx| internal_api::insert_tree(&tx, body.payload))
+}
+
 pub fn search_by_fields(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<Value>,
+    body: PayloadWrapper<SearchByFields>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {

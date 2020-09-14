@@ -64,21 +64,6 @@ fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
     }
 }
 
-pub fn fields_mapping_to_owned_sql_params(
-    fields_map: &Map<String, serde_json::Value>,
-) -> crate::error::Result<Vec<(String, ToSqlOutput)>> {
-    let mut sql_params = Vec::new();
-    for (key, value) in fields_map {
-        if value.is_array() || value.is_object() {
-            continue;
-        };
-        let value = json_value_to_sqlite(value, key)?;
-        let key = format!(":{}", key);
-        sql_params.push((key, value));
-    }
-    Ok(sql_params)
-}
-
 pub fn borrow_sql_params<'a>(
     sql_params: &'a [(String, ToSqlOutput)],
 ) -> Vec<(&'a str, &'a dyn ToSql)> {

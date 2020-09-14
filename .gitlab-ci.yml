@@ -14,6 +14,7 @@ test:
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
+    - if grep --recursive '::{' src/; then false; fi
     - cargo audit
     - cargo test
 
