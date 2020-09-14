@@ -75,7 +75,7 @@ pub struct CLIOptions {
     #[structopt(short = "t", long)]
     pub non_tls: bool,
 
-    /// Unsafe version of --non-tls that runs on a public network, e.g. "0.0.0.0".
+    /// Unsafe version of --non-tls that runs on a public network, e.g. "http://0.0.0.0".
     /// This option will force Pod to not use https when starting the server,
     /// instead run on http on the provided network interface.
     /// WARNING: This is heavily discouraged as an intermediary
