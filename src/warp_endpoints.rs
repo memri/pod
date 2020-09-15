@@ -99,9 +99,12 @@ pub fn insert_tree(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<InsertTreeItem>,
+    shared_server: bool,
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    in_transaction(&mut conn, |tx| internal_api::insert_tree(&tx, body.payload))
+    in_transaction(&mut conn, |tx| {
+        internal_api::insert_tree(&tx, body.payload, shared_server)
+    })
 }
 
 pub fn search_by_fields(
