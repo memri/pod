@@ -127,12 +127,14 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc = Arc::new(cli_options.clone());
     let insert_tree = items_api
         .and(warp::path!(String / "insert_tree"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<InsertTreeItem>| {
-            let result = warp_endpoints::insert_tree(owner, init_db.deref(), body);
+            let shared_server = cli_options_arc.shared_server;
+            let result = warp_endpoints::insert_tree(owner, init_db.deref(), body, shared_server);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
@@ -254,15 +256,17 @@ pub async fn run_server(cli_options: &CLIOptions) {
                 }
             });
 
-    let main_filter = version
+    let shared_pod_filters = version
         .with(&headers)
-        .or(get_item.with(&headers))
-        .or(get_all_items.with(&headers))
         .or(create_item.with(&headers))
+        .or(insert_tree.with(&headers));
+
+    let owned_pod_filters = get_item
+        .with(&headers)
+        .or(get_all_items.with(&headers))
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
-        .or(insert_tree.with(&headers))
         .or(search_by_fields.with(&headers))
         .or(get_items_with_edges.with(&headers))
         .or(run_downloader.with(&headers))
@@ -295,7 +299,13 @@ pub async fn run_server(cli_options: &CLIOptions) {
             IpAddr::from([127, 0, 0, 1])
         };
         let socket = SocketAddr::new(ip, cli_options.port);
-        warp::serve(main_filter).run(socket).await
+        if cli_options.shared_server {
+            warp::serve(shared_pod_filters).run(socket).await
+        } else {
+            warp::serve(shared_pod_filters.or(owned_pod_filters))
+                .run(socket)
+                .await
+        }
     } else {
         let cert_path = &cli_options.tls_pub_crt;
         let key_path = &cli_options.tls_priv_key;
@@ -314,12 +324,21 @@ pub async fn run_server(cli_options: &CLIOptions) {
             std::process::exit(1)
         };
         let socket = SocketAddr::new(IpAddr::from([0, 0, 0, 0]), cli_options.port);
-        warp::serve(main_filter)
-            .tls()
-            .cert_path(cert_path)
-            .key_path(key_path)
-            .run(socket)
-            .await;
+        if cli_options.shared_server {
+            warp::serve(shared_pod_filters)
+                .tls()
+                .cert_path(cert_path)
+                .key_path(key_path)
+                .run(socket)
+                .await;
+        } else {
+            warp::serve(shared_pod_filters.or(owned_pod_filters))
+                .tls()
+                .cert_path(cert_path)
+                .key_path(key_path)
+                .run(socket)
+                .await;
+        }
     }
 }
 

@@ -90,7 +90,7 @@ fn test_insert_item() {
                 },
             ]
         });
-        let result = internal_api::insert_tree(&tx, serde_json::from_value(json).unwrap());
+        let result = internal_api::insert_tree(&tx, serde_json::from_value(json).unwrap(), true);
         result.expect("request failed");
         tx.commit().unwrap();
     }

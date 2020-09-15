@@ -91,6 +91,11 @@ pub struct CLIOptions {
     #[structopt(long)]
     pub insecure_http_headers: bool,
 
+    /// Run server as a "SharedServer". See `/docs/SharedServer.md` documentation
+    /// for details on what it is, and how it works.
+    #[structopt(long)]
+    pub shared_server: bool,
+
     /// Validate a schema file, and exit.
     /// This allows testing whether a given schema is suitable for use in Pod.
     /// See README.md#schema on the general definition of a valid schema.
