@@ -250,9 +250,17 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     Ok(())
 }
 
-pub fn insert_tree(tx: &Transaction, item: InsertTreeItem) -> Result<i64> {
+pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
     let source_uid: i64 = if item.fields.len() > 1 {
         create_item_tx(tx, item.fields)?
+    } else if shared_server {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Cannot create edges to already existing items in a shared server {:?}",
+                item
+            ),
+        });
     } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
         if !item._edges.is_empty() {
             update_item_tx(tx, uid, HashMap::new())?;
@@ -265,7 +273,7 @@ pub fn insert_tree(tx: &Transaction, item: InsertTreeItem) -> Result<i64> {
         });
     };
     for edge in item._edges {
-        let target_item = insert_tree(tx, edge._target)?;
+        let target_item = insert_tree(tx, edge._target, shared_server)?;
         create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
     }
     Ok(source_uid)
