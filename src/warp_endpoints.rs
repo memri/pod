@@ -1,4 +1,3 @@
-use crate::api_model::Action;
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
@@ -7,6 +6,7 @@ use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::RunService;
 use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
@@ -167,6 +167,17 @@ pub fn run_indexer(
     services_api::run_indexers(&conn, body.payload, cli_options)
 }
 
+pub fn run_service(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<RunService>,
+    cli_options: &CLIOptions,
+) -> Result<()> {
+    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    conn.execute_batch("SELECT 1 FROM items;")?;
+    services_api::run_services(&conn, body.payload, cli_options)
+}
+
 pub fn upload_file(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
@@ -191,34 +202,6 @@ pub fn get_file(
     in_transaction(&mut conn, |tx| {
         file_api::get_file(tx, &owner, &body.payload.sha256)
     })
-}
-
-pub fn do_action(owner: String, body: Action) -> Result<Value> {
-    Ok(Value::Null)
-    //     check_owner(&owner)?;
-    //     let res = match body.action_type.as_str() {
-    //         "mx_matrix_register" => whatsapp::matrix_register(body.content),
-    //         "mx_matrix_login" => whatsapp::matrix_login(body.content),
-    //         "mx_create_room" => whatsapp::create_room(body.content),
-    //         "mx_get_joined_rooms" => whatsapp::get_joined_rooms(body.content),
-    //         "mx_invite_user_to_join" => whatsapp::invite_user_to_join(body.content),
-    //         "mx_get_joined_members" => whatsapp::get_joined_members(body.content),
-    //         "mx_send_messages" => whatsapp::send_messages(body.content),
-    //         "mx_sync_events" => whatsapp::sync_events(body.content),
-    //         "mx_get_messages" => whatsapp::get_messages(body.content),
-    //         "mx_get_qrcode" => whatsapp::get_qrcode(body.content),
-    //         e => Err(whatsapp::error::Error {
-    //             code: StatusCode::BAD_REQUEST,
-    //             msg: format!("Unsupported function: {}", e),
-    //         }),
-    //     };
-    //     match res {
-    //         Ok(var) => Ok(var),
-    //         Err(e) => Err(Error {
-    //             code: StatusCode::BAD_REQUEST,
-    //             msg: e.msg,
-    //         }),
-    //     }
 }
 
 //

@@ -1,4 +1,3 @@
-use crate::api_model::Action;
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
@@ -7,6 +6,7 @@ use crate::api_model::PayloadWrapper;
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::RunService;
 use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface::CLIOptions;
@@ -52,9 +52,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::post());
     let file_api = warp::path("v2")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
-        .and(warp::post());
-    let action_api = warp::path("v2")
-        .and(warp::body::content_length_limit(1024 * 1024))
         .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
@@ -205,6 +202,18 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc = Arc::new(cli_options.clone());
+    let run_service = services_api
+        .and(warp::path!(String / "run_service"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<RunService>| {
+            let cli: &CLIOptions = &cli_options_arc.deref();
+            let result = warp_endpoints::run_service(owner, init_db.deref(), body, cli);
+            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+        });
+
+    let init_db = initialized_databases_arc.clone();
     let upload_file = file_api
         .and(warp::path!(String / "upload_file" / String / String))
         .and(warp::path::end())
@@ -230,16 +239,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .map(move |owner: String, body: PayloadWrapper<GetFile>| {
             let result = warp_endpoints::get_file(owner, init_db.deref(), body);
             respond_with_result(result.map(|result| result))
-        });
-
-    let do_action = action_api
-        .and(warp::path!(String / "do_action"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: Action| {
-            let result = warp_endpoints::do_action(owner, body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
         });
 
     let insecure_http_headers = Arc::new(cli_options.insecure_http_headers);
@@ -286,9 +285,9 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(run_downloader.with(&headers))
         .or(run_importer.with(&headers))
         .or(run_indexer.with(&headers))
+        .or(run_service.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
-        .or(do_action.with(&headers))
         .or(origin_request);
 
     if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {

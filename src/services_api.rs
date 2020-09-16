@@ -1,6 +1,6 @@
-use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::{RunDownloader, RunService};
 use crate::command_line_interface::CLIOptions;
 use crate::error::Error;
 use crate::error::Result;
@@ -140,6 +140,49 @@ pub fn run_indexers(
         Err(err) => Err(Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!("Failed to run indexer with uid {}, {}", payload.uid, err),
+        }),
+    }
+}
+
+pub fn run_services(
+    conn: &Connection,
+    payload: RunService,
+    cli_options: &CLIOptions,
+) -> Result<()> {
+    info!("Trying to run service on item {}", payload.uid);
+    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    if result.first().is_none() {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to get item {}", payload.uid),
+        });
+    };
+    let mut args: Vec<String> = Vec::new();
+    args.push("run".to_string());
+    for arg in docker_arguments(cli_options) {
+        args.push(arg);
+    }
+    args.push(format!(
+        "--env=POD_SERVICE_PAYLOAD={}",
+        payload.service_payload
+    ));
+    args.push("--rm".to_string());
+    args.push("--name=memri-services_1".to_string());
+    args.push(format!("--env=RUN_UID={}", payload.uid));
+    args.push(format!(
+        "{}:latest",
+        result.get(3).expect("Failed to get dataType").to_string()
+    ));
+    log::debug!("Starting service docker command {:?}", args);
+    let command = Command::new("docker").args(&args).spawn();
+    match command {
+        Ok(_child) => {
+            log::debug!("Successfully started service for {}", payload.uid);
+            Ok(())
+        }
+        Err(err) => Err(Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!("Failed to run service with uid {}, {}", payload.uid, err),
         }),
     }
 }
