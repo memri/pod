@@ -1,13 +1,9 @@
 # About
-There are various components that communicate with the Pod:
+This documentation is part of [Pod](../README.md).
 
-* Clients like iOS app, web app;
-* Indexers that enrich data/photos/other content;
-* Importers/Downloaders that import data from other systems, e.g. from evernote.
-
-All of that data goes through Pod HTTP API.
+HTTP API is the interface that Pod provides to store and access user data.
 This document explains the data types that Pod can store,
-and current API that lets you store or retrieve the data.
+and current API provided for that.
 
 
 # Items
@@ -196,14 +192,64 @@ Mark an item as deleted:
 * Update `dateModified` (server's time is taken)
 
 
+### POST /v2/$owner_key/insert_tree
+```json5
+{
+  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "payload": { /* item definition (see below) */ }
+}
+```
+Insert a tree with edges (of arbitrary depth) in one batch.
+
+Each item should either be "a reference", e.g. an object with only `uid` and `_edges` fields,
+or a full item which would then be created.
+
+"Reference" type of items look like that
+(the `uid` property mandatory, no other properties are present):
+```json5
+{
+  "uid": 123456789 /* uid of the item to create edge with */,
+  "_edges": [ /* see below edges definition*/ ]
+}
+```
+
+And in order to insert an item, specify all its properties (`uid` is optional in this case):
+```json5
+{
+  "_type": "SomeItemType",
+  "_edges": [ /* see below edges definition*/ ],
+  /* other item properties here */
+}
+```
+
+Each edge in the array above is required to have the following form:
+```json5
+{
+  "_type": "SomeEdgeType",
+  "_target": { /* item of identical structure to the above */ }
+  /* optional edge properties here */
+}
+```
+
+As always, inserting edges will result in updating timestamps for `_source` items
+(even if they are referenced by `uid` only).
+
+The method will return the `uid` of the created root item, e.g. `123456789`.
+
+
 ### POST /v2/$owner_key/search_by_fields/
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-  "payload": { "_type": "Label", "color": "#CCFF00", ... }
+  "payload": { "_type": "Label", "color": "#CCFF00", "_dateServerModifiedAfter": 123456789, ... }
 }
 ```
 Search items by their fields.
+
+Ephemeral underscore field `_dateServerModifiedAfter`, if specified,
+is treated specially. It will filter out those items that have
+`_dateServerModified` higher (`>`) than the specified value.
+
 The endpoint will return an array of all items with exactly the same properties.
 
 
@@ -242,7 +288,7 @@ Typical examples of services are services that import emails/messages into Pod.
 }
 ```
 Run a downloader on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 ⚠️ UNSTABLE: Downloaders might be merged with importers soon.
 
@@ -261,7 +307,7 @@ See [RunningServices](./RunningServices.md).
 }
 ```
 Run an importer on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 
 ### POST /v2/$owner_key/run_indexer
@@ -278,7 +324,7 @@ See [RunningServices](./RunningServices.md).
 }
 ```
 Run an indexer on an item with the given uid.
-See [RunningServices](./RunningServices.md).
+See [Integrators](./Integrators.md).
 
 
 # File API

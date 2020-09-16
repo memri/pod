@@ -1,6 +1,6 @@
 // Fake simple library interface to allow integration tests to work
 
-mod api_model;
+pub mod api_model;
 mod command_line_interface;
 pub mod constants;
 pub mod database_migrate_refinery;

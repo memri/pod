@@ -75,7 +75,7 @@ pub struct CLIOptions {
     #[structopt(short = "t", long)]
     pub non_tls: bool,
 
-    /// Unsafe version of --non-tls that runs on a public network, e.g. "0.0.0.0".
+    /// Unsafe version of --non-tls that runs on a public network, e.g. "http://0.0.0.0".
     /// This option will force Pod to not use https when starting the server,
     /// instead run on http on the provided network interface.
     /// WARNING: This is heavily discouraged as an intermediary
@@ -90,6 +90,11 @@ pub struct CLIOptions {
     /// and make the server answer to ORIGIN requests.
     #[structopt(long)]
     pub insecure_http_headers: bool,
+
+    /// Run server as a "SharedServer". See `/docs/SharedServer.md` documentation
+    /// for details on what it is, and how it works.
+    #[structopt(long)]
+    pub shared_server: bool,
 
     /// Validate a schema file, and exit.
     /// This allows testing whether a given schema is suitable for use in Pod.
