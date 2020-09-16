@@ -1,6 +1,7 @@
+use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
-use crate::api_model::{RunDownloader, RunService};
+use crate::api_model::RunService;
 use crate::command_line_interface::CLIOptions;
 use crate::error::Error;
 use crate::error::Result;
@@ -144,11 +145,7 @@ pub fn run_indexers(
     }
 }
 
-pub fn run_services(
-    conn: &Connection,
-    payload: RunService,
-    cli_options: &CLIOptions,
-) -> Result<()> {
+pub fn run_services(conn: &Connection, payload: RunService) -> Result<()> {
     info!("Trying to run service on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_none() {
@@ -159,9 +156,6 @@ pub fn run_services(
     };
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
-    for arg in docker_arguments(cli_options) {
-        args.push(arg);
-    }
     args.push(format!(
         "--env=POD_SERVICE_PAYLOAD={}",
         payload.service_payload

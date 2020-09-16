@@ -202,14 +202,12 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
     let run_service = services_api
         .and(warp::path!(String / "run_service"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunService>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_service(owner, init_db.deref(), body, cli);
+            let result = warp_endpoints::run_service(owner, init_db.deref(), body);
             respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
         });
 

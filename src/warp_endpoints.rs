@@ -171,11 +171,10 @@ pub fn run_service(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<RunService>,
-    cli_options: &CLIOptions,
 ) -> Result<()> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?;
-    services_api::run_services(&conn, body.payload, cli_options)
+    services_api::run_services(&conn, body.payload)
 }
 
 pub fn upload_file(
