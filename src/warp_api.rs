@@ -208,7 +208,8 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<RunService>| {
             let result = warp_endpoints::run_service(owner, init_db.deref(), body);
-            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
         });
 
     let init_db = initialized_databases_arc.clone();

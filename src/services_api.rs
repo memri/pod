@@ -8,6 +8,7 @@ use crate::error::Result;
 use crate::internal_api;
 use log::info;
 use rusqlite::Connection;
+use serde_json::Value;
 use std::env;
 use std::ops::Deref;
 use std::process::Command;
@@ -145,7 +146,7 @@ pub fn run_indexers(
     }
 }
 
-pub fn run_services(conn: &Connection, payload: RunService) -> Result<()> {
+pub fn run_services(conn: &Connection, payload: RunService) -> Result<Value> {
     info!("Trying to run service on item {}", payload.uid);
     let result = internal_api::get_item(conn.deref(), payload.uid)?;
     if result.first().is_none() {
@@ -156,28 +157,35 @@ pub fn run_services(conn: &Connection, payload: RunService) -> Result<()> {
     };
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
+    args.push("--rm".to_string());
+    let service = result
+        .first()
+        .expect("Failed to get value")
+        .as_object()
+        .expect("Failed to get map")
+        .get("dataType")
+        .expect("Failed to get service");
+    args.push(service.to_string());
     args.push(format!(
         "--env=POD_SERVICE_PAYLOAD={}",
         payload.service_payload
     ));
-    args.push("--rm".to_string());
-    args.push("--name=memri-services_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push(format!(
-        "{}:latest",
-        result.get(3).expect("Failed to get dataType").to_string()
-    ));
     log::debug!("Starting service docker command {:?}", args);
-    let command = Command::new("docker").args(&args).spawn();
-    match command {
-        Ok(_child) => {
-            log::debug!("Successfully started service for {}", payload.uid);
-            Ok(())
-        }
-        Err(err) => Err(Error {
+    let output = Command::new("docker").args(&args).output()?;
+    if output.status.success() {
+        log::debug!("Successfully started service for {}", payload.uid);
+        let output = Value::from(String::from_utf8(output.stdout)?);
+        Ok(output)
+    } else {
+        Err(Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Failed to run service with uid {}, {}", payload.uid, err),
-        }),
+            msg: format!(
+                "Failed to run service with uid {}, {}",
+                payload.uid,
+                String::from_utf8(output.stderr)?
+            ),
+        })
     }
 }
 

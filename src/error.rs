@@ -107,3 +107,13 @@ impl From<std::io::Error> for Error {
         }
     }
 }
+
+impl From<std::string::FromUtf8Error> for Error {
+    fn from(err: std::string::FromUtf8Error) -> Error {
+        let msg = format!("From Utf8 error {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
