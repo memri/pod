@@ -1389,6 +1389,11 @@
           "indexed": false
         },
         {
+          "name": "service",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -3114,6 +3119,11 @@
           "indexed": false
         },
         {
+          "name": "service",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -3135,11 +3145,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -4144,16 +4149,6 @@
           "indexed": false
         },
         {
-          "name": "enablePresence",
-          "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "enableReceipts",
-          "dbtype": "Bool",
-          "indexed": false
-        },
-        {
           "name": "externalId",
           "dbtype": "Text",
           "indexed": false
@@ -4186,11 +4181,6 @@
         {
           "name": "lastName",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "nameQuality",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
