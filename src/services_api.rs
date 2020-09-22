@@ -7,6 +7,7 @@ use crate::error::Result;
 use crate::internal_api;
 use log::info;
 use rusqlite::Connection;
+use std::env;
 use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
@@ -68,6 +69,13 @@ pub fn run_importer(
             msg: format!("Failed to get item {}", payload.uid),
         });
     };
+
+    let path = env::current_dir()?;
+    let parent = path.parent().expect("Failed to get parent directory");
+    let wa_volume = format!(
+        "--volume={}/importers/data-synapse:/usr/src/importers/data-synapse",
+        parent.display().to_string()
+    );
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
@@ -80,7 +88,7 @@ pub fn run_importer(
     args.push("--rm".to_string());
     args.push("--name=memri-importers_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push("--volume=download-volume:/usr/src/importers/data".to_string());
+    args.push(wa_volume);
     args.push("memri-importers:latest".to_string());
     log::debug!("Starting importer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
