@@ -72,10 +72,17 @@ pub fn run_importer(
 
     let path = env::current_dir()?;
     let parent = path.parent().expect("Failed to get parent directory");
-    let wa_volume = format!(
+    let whatsapp_volume = format!(
         "--volume={}/importers/data-synapse:/usr/src/importers/data-synapse",
         parent.display().to_string()
     );
+    let docker_image = result
+        .first()
+        .expect("Failed to get ImporterRun item")
+        .as_object()
+        .expect("Failed to get value")
+        .get("repository")
+        .expect("Failed to get repository for docker image");
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
@@ -88,8 +95,8 @@ pub fn run_importer(
     args.push("--rm".to_string());
     args.push("--name=memri-importers_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push(wa_volume);
-    args.push("memri-importers:latest".to_string());
+    args.push(whatsapp_volume);
+    args.push(format!("{}:latest", docker_image));
     log::debug!("Starting importer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
