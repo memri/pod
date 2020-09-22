@@ -82,7 +82,9 @@ pub fn run_importer(
         .as_object()
         .expect("Failed to get value")
         .get("repository")
-        .expect("Failed to get repository for docker image");
+        .expect("Failed to get repository for docker image")
+        .as_str()
+        .expect("Failed to get string");
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
