@@ -158,19 +158,24 @@ pub fn run_services(conn: &Connection, payload: RunService) -> Result<Value> {
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     args.push("--rm".to_string());
+    let content = payload.service_payload.to_string();
+    println!("{:#?}", content.trim_matches('\\'));
+    args.push(format!(
+        "--env=POD_SERVICE_PAYLOAD='{}'",
+        content.trim_matches('\\')
+    ));
     let service = result
         .first()
         .expect("Failed to get value")
         .as_object()
         .expect("Failed to get map")
         .get("dataType")
-        .expect("Failed to get service");
-    args.push(service.to_string());
-    args.push(format!(
-        "--env=POD_SERVICE_PAYLOAD={}",
-        payload.service_payload
-    ));
+        .expect("Failed to get service")
+        .as_str()
+        .expect("Failed to get string");
+    args.push(format!("--name={}_1", service));
     args.push(format!("--env=RUN_UID={}", payload.uid));
+    args.push(format!("{}:latest", service));
     log::debug!("Starting service docker command {:?}", args);
     let output = Command::new("docker").args(&args).output()?;
     if output.status.success() {
