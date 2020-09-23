@@ -327,6 +327,22 @@ Run an indexer on an item with the given uid.
 See [Integrators](./Integrators.md).
 
 
+### POST /v2/$owner_key/run_service
+```json
+{
+  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "payload": {
+    "uid": $uid,
+    "servicePayload": {
+      ...
+    }
+  }
+}
+```
+Invoke a function for a certain action with the given uid.
+Value of `servicePayload` will be forwarded to the specified function.
+
+
 # File API
 
 
@@ -358,18 +374,3 @@ The fields `nonce` and `key` will be updated for this item.
 ```
 Get a file by its sha256 hash.
 If the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.
-
-# Action API
-
-
-### POST /v2/$owner_key/do_action
-```json
-{
-  "actionType": "mx_send_messages",
-  "content": {
-    "accessToken": ...
-  }
-}
-```
-Invoke a function for a certain action, e.g. "mx_send_messages" for sending messages to WhatsApp chats.
-The required action is specified by `actionType`, unsupported actions will yield 400 BAD_REQUEST error.
