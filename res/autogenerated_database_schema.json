@@ -1389,6 +1389,11 @@
           "indexed": false
         },
         {
+          "name": "service",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -2119,6 +2124,11 @@
           "indexed": false
         },
         {
+          "name": "repository",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -2196,6 +2206,11 @@
         {
           "name": "progress",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "repository",
+          "dbtype": "Text",
           "indexed": false
         },
         {
@@ -2289,6 +2304,11 @@
           "indexed": false
         },
         {
+          "name": "repository",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "runDestination",
           "dbtype": "Text",
           "indexed": false
@@ -2369,6 +2389,11 @@
           "indexed": false
         },
         {
+          "name": "repository",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -2435,6 +2460,76 @@
         },
         {
           "name": "itemType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "starred",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "uid",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "Integrator",
+      "properties": [
+        {
+          "name": "dateAccessed",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateCreated",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "dateModified",
+          "dbtype": "DateTime",
+          "indexed": false
+        },
+        {
+          "name": "deleted",
+          "dbtype": "Bool",
+          "indexed": false
+        },
+        {
+          "name": "externalId",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "genericType",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "importJson",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "itemDescription",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "repository",
           "dbtype": "Text",
           "indexed": false
         },
@@ -3114,6 +3209,11 @@
           "indexed": false
         },
         {
+          "name": "service",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -3135,11 +3235,6 @@
         },
         {
           "name": "transcript",
-          "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "type",
           "dbtype": "Text",
           "indexed": false
         },
@@ -4144,16 +4239,6 @@
           "indexed": false
         },
         {
-          "name": "enablePresence",
-          "dbtype": "Bool",
-          "indexed": false
-        },
-        {
-          "name": "enableReceipts",
-          "dbtype": "Bool",
-          "indexed": false
-        },
-        {
           "name": "externalId",
           "dbtype": "Text",
           "indexed": false
@@ -4186,11 +4271,6 @@
         {
           "name": "lastName",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "nameQuality",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
