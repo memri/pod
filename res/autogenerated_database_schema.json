@@ -5354,6 +5354,11 @@
           "indexed": false
         },
         {
+          "name": "repository",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "starred",
           "dbtype": "Bool",
           "indexed": false
@@ -5420,6 +5425,11 @@
         },
         {
           "name": "name",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
+          "name": "repository",
           "dbtype": "Text",
           "indexed": false
         },
