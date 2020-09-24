@@ -7,7 +7,7 @@ services:
     restart: always
     image: pod:latest
     ports:
-      - "3030:3030"
+      - "0.0.0.0:3030:3030"
     networks:
       - memri-net
     volumes:
