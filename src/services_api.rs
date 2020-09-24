@@ -1,13 +1,13 @@
 use crate::api_model::RunDownloader;
 use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
+use crate::api_model::RunIntegratorItem;
 use crate::command_line_interface::CLIOptions;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
 use log::info;
 use rusqlite::Connection;
-use std::env;
 use std::ops::Deref;
 use std::process::Command;
 use warp::http::status::StatusCode;
@@ -37,7 +37,7 @@ pub fn run_downloader(
     args.push("--rm".to_string());
     args.push("--name=memri-downloaders_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push("--volume=download-volume:/usr/src/importers/data".to_string());
+    args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
     args.push("memri-downloaders:latest".to_string());
     log::debug!("Starting downloader docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
@@ -62,29 +62,12 @@ pub fn run_importer(
     cli_options: &CLIOptions,
 ) -> Result<()> {
     info!("Trying to run importer on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
-    if result.first().is_none() {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Failed to get item {}", payload.uid),
-        });
-    };
-
-    let path = env::current_dir()?;
-    let parent = path.parent().expect("Failed to get parent directory");
-    let whatsapp_volume = format!(
-        "--volume={}/importers/data-synapse:/usr/src/importers/data-synapse",
-        parent.display().to_string()
-    );
-    let docker_image = result
-        .first()
-        .expect("Failed to get ImporterRun item")
-        .as_object()
-        .expect("Failed to get value")
-        .get("repository")
-        .expect("Failed to get repository for docker image")
-        .as_str()
-        .expect("Failed to get string");
+    let item = internal_api::get_item(conn.deref(), payload.uid)?;
+    let item = item.into_iter().next().ok_or_else(|| Error {
+        code: StatusCode::BAD_REQUEST,
+        msg: format!("Failed to get item {}", payload.uid),
+    })?;
+    let item: RunIntegratorItem = serde_json::from_value(item)?;
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
@@ -97,8 +80,8 @@ pub fn run_importer(
     args.push("--rm".to_string());
     args.push("--name=memri-importers_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push(whatsapp_volume);
-    args.push(format!("{}:latest", docker_image));
+    args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
+    args.push(item.repository);
     log::debug!("Starting importer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
