@@ -87,33 +87,3 @@ impl<T> From<std::sync::PoisonError<T>> for Error {
         }
     }
 }
-
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Error {
-        let msg = format!("HTTP reqwest error {}", err);
-        Error {
-            code: StatusCode::BAD_REQUEST,
-            msg,
-        }
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Error {
-        let msg = format!("IO error {}", err);
-        Error {
-            code: StatusCode::BAD_REQUEST,
-            msg,
-        }
-    }
-}
-
-impl From<std::string::FromUtf8Error> for Error {
-    fn from(err: std::string::FromUtf8Error) -> Error {
-        let msg = format!("From Utf8 error {}", err);
-        Error {
-            code: StatusCode::BAD_REQUEST,
-            msg,
-        }
-    }
-}

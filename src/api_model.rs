@@ -122,3 +122,13 @@ pub struct RunService {
 pub struct GetFile {
     pub sha256: String,
 }
+
+//
+// Items:
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RunIntegratorItem {
+    pub repository: String,
+}
