@@ -87,13 +87,3 @@ impl<T> From<std::sync::PoisonError<T>> for Error {
         }
     }
 }
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Error {
-        let msg = format!("IO error {}", err);
-        Error {
-            code: StatusCode::BAD_REQUEST,
-            msg,
-        }
-    }
-}
