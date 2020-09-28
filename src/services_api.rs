@@ -139,13 +139,12 @@ pub fn run_indexers(
 
 pub fn run_services(conn: &Connection, payload: RunService) -> Result<String> {
     info!("Trying to run service on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
-    if result.first().is_none() {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Failed to get item {}", payload.uid),
-        });
-    };
+    let item = internal_api::get_item(conn.deref(), payload.uid)?;
+    let item = item.into_iter().next().ok_or_else(|| Error {
+        code: StatusCode::BAD_REQUEST,
+        msg: format!("Failed to get item {}", payload.uid),
+    })?;
+    let item: RunIntegratorItem = serde_json::from_value(item)?;
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     args.push("--rm".to_string());
@@ -153,18 +152,9 @@ pub fn run_services(conn: &Connection, payload: RunService) -> Result<String> {
         "--env=POD_SERVICE_PAYLOAD={}",
         payload.service_payload.to_string()
     ));
-    let service = result
-        .first()
-        .expect("Failed to get value")
-        .as_object()
-        .expect("Failed to get map")
-        .get("repository")
-        .expect("Failed to get service")
-        .as_str()
-        .expect("Failed to get string");
-    args.push(format!("--name={}_1", service));
+    args.push("--name=memri_service_1".to_string());
     args.push("--network=host".to_string());
-    args.push(format!("{}:latest", service));
+    args.push(item.repository);
     log::debug!("Starting service docker command {:?}", args);
     let output = Command::new("docker").args(&args).output()?;
     if output.status.success() {
