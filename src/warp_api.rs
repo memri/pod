@@ -8,6 +8,7 @@ use crate::api_model::RunImporter;
 use crate::api_model::RunIndexer;
 use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
+use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
 use crate::internal_api;
 use crate::warp_endpoints;
@@ -256,13 +257,20 @@ pub async fn run_server(cli_options: &CLIOptions) {
                 }
             });
 
-    let shared_pod_filters = version
+    let always_enabled_filters = version
         .with(&headers)
         .or(create_item.with(&headers))
         .or(insert_tree.with(&headers));
 
-    let owned_pod_filters = get_item
-        .with(&headers)
+    let sensitive_filters = warp::any().and_then(|| async move {
+        if command_line_interface::PARSED.shared_server {
+            Ok(warp::reply::with_status("", StatusCode::NOT_FOUND).into_response())
+        } else {
+            Err(warp::reject::not_found()) // reject in order to pass to filters below
+        }
+    });
+    let sensitive_filters = sensitive_filters
+        .or(get_item.with(&headers))
         .or(get_all_items.with(&headers))
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
@@ -275,6 +283,8 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);
+
+    let filters = always_enabled_filters.or(sensitive_filters);
 
     if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {
         let ip = if let Some(ip) = cli_options.insecure_non_tls {
@@ -299,13 +309,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
             IpAddr::from([127, 0, 0, 1])
         };
         let socket = SocketAddr::new(ip, cli_options.port);
-        if cli_options.shared_server {
-            warp::serve(shared_pod_filters).run(socket).await
-        } else {
-            warp::serve(shared_pod_filters.or(owned_pod_filters))
-                .run(socket)
-                .await
-        }
+        warp::serve(filters).run(socket).await
     } else {
         let cert_path = &cli_options.tls_pub_crt;
         let key_path = &cli_options.tls_priv_key;
@@ -324,21 +328,12 @@ pub async fn run_server(cli_options: &CLIOptions) {
             std::process::exit(1)
         };
         let socket = SocketAddr::new(IpAddr::from([0, 0, 0, 0]), cli_options.port);
-        if cli_options.shared_server {
-            warp::serve(shared_pod_filters)
-                .tls()
-                .cert_path(cert_path)
-                .key_path(key_path)
-                .run(socket)
-                .await;
-        } else {
-            warp::serve(shared_pod_filters.or(owned_pod_filters))
-                .tls()
-                .cert_path(cert_path)
-                .key_path(key_path)
-                .run(socket)
-                .await;
-        }
+        warp::serve(filters)
+            .tls()
+            .cert_path(cert_path)
+            .key_path(key_path)
+            .run(socket)
+            .await;
     }
 }
 
