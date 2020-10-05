@@ -2214,6 +2214,11 @@
           "indexed": false
         },
         {
+          "name": "progressMessage",
+          "dbtype": "Text",
+          "indexed": false
+        },
+        {
           "name": "repository",
           "dbtype": "Text",
           "indexed": false
@@ -2396,6 +2401,11 @@
         {
           "name": "progress",
           "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "progressMessage",
+          "dbtype": "Text",
           "indexed": false
         },
         {
