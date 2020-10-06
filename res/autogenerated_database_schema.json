@@ -2210,7 +2210,7 @@
         },
         {
           "name": "progress",
-          "dbtype": "Integer",
+          "dbtype": "Real",
           "indexed": false
         },
         {
@@ -2400,7 +2400,7 @@
         },
         {
           "name": "progress",
-          "dbtype": "Integer",
+          "dbtype": "Real",
           "indexed": false
         },
         {
