@@ -35,16 +35,6 @@ impl From<hex::FromHexError> for Error {
     }
 }
 
-impl From<r2d2::Error> for Error {
-    fn from(err: r2d2::Error) -> Error {
-        let msg = format!("Database r2d2 error {}", err);
-        Error {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg,
-        }
-    }
-}
-
 impl From<refinery::Error> for Error {
     fn from(err: refinery::Error) -> Error {
         let msg = format!("Database 'refinery' migration error, {}", err);
