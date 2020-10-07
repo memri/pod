@@ -193,7 +193,7 @@ Mark an item as deleted:
 
 
 ### POST /v2/$owner_key/insert_tree
-```json5
+```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": { /* item definition (see below) */ }
@@ -201,33 +201,34 @@ Mark an item as deleted:
 ```
 Insert a tree with edges (of arbitrary depth) in one batch.
 
-Each item should either be "a reference", e.g. an object with only `uid` and `_edges` fields,
-or a full item which would then be created.
+Each item should either be "a reference" (an object with only `uid` and `_edges` fields),
+or a full item which will then be created.
 
-"Reference" type of items look like that
+"Reference" objects should look like that
 (the `uid` property mandatory, no other properties are present):
-```json5
+```json
 {
   "uid": 123456789 /* uid of the item to create edge with */,
   "_edges": [ /* see below edges definition*/ ]
 }
 ```
 
-And in order to insert an item, specify all its properties (`uid` is optional in this case):
-```json5
+Items which have other properties besides `uid` and `_edges` will be
+considered new and will be created. For example:
+```json
 {
   "_type": "SomeItemType",
-  "_edges": [ /* see below edges definition*/ ],
   /* other item properties here */
+  "_edges": [ /* see below edges definition*/ ],
 }
 ```
 
-Each edge in the array above is required to have the following form:
-```json5
+Each edge in the array above should have the following form:
+```json
 {
   "_type": "SomeEdgeType",
-  "_target": { /* item of identical structure to the above */ }
   /* optional edge properties here */
+  "_target": { /* item of identical structure to the above */ }
 }
 ```
 
