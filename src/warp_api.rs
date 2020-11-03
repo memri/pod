@@ -12,7 +12,7 @@ use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
 use crate::internal_api;
 use crate::warp_endpoints;
-use bytes::Bytes;
+use warp::hyper::body::Bytes;
 use log::error;
 use log::info;
 use log::warn;
