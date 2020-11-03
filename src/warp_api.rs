@@ -226,7 +226,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<GetFile>| {
             let result = warp_endpoints::get_file(owner, init_db.deref(), body);
-            respond_with_result(result.map(|result| result))
+            respond_with_result(result)
         });
 
     let insecure_http_headers = Arc::new(cli_options.insecure_http_headers);
