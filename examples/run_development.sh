@@ -7,8 +7,10 @@ if ! test -e Cargo.toml; then
   exit 1
 fi
 
+cargo build
+
 RUST_LOG=pod=debug,info \
-  exec cargo run -- \
+  exec target/debug/pod \
   --owners=ANY \
   --insecure-non-tls=0.0.0.0 \
   --insecure-http-headers \
