@@ -17,6 +17,7 @@ test:
     - if grep --recursive '::{' src/; then false; fi
     - cargo audit
     - cargo test
+    - ./tests/test_curl.sh
 
 pages:
   stage: docs
