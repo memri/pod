@@ -19,7 +19,8 @@ they need to support their configuration.
 Each Shared Pod has:
 
 * `database_key`, which must be filled in by the user as it is a shared secret for all Shared Pod participants
-* URL of the Shared Pod (similar to the one of Pod itself)
+* The `owner` key of the Shared Pod.
+* URL of the Shared Pod (similar to the one of Pod itself).
 
 It is the front-end-s decision on which data to send to a particular Shared Pod.
 It always needs to be done with user confirmation.
@@ -27,17 +28,26 @@ It always needs to be done with user confirmation.
 
 # Implementation
 
-Shared Pods are implemented as a variation of Pod. Currently,
-it is limited to `insert_tree` and `version`, which are basically write-only endpoints.
-This makes sure that you can submit even your sensitive data if you trust the Shared Pod maintainer.
+Shared Pods are currently implemented as a run mode of the Pod server.
+The owner of the shared Pod hosts a public instance and gives
+the `owner` key and the `database_key` to anyone they want.
+Any person having this `owner` and `database_key` will then be able to
+connect to the shared pod and write data to it.
+
+This run mode is activated with the `--shared-server` CLI parameter, and it means that the
+server will only have `insert_tree` and `version` (write-only) endpoints working.
+Because it is write-only, other users won't be able to read your data,
+and you can submit even your sensitive data if you trust the Shared Pod maintainer.
 
 In the future we expect users to be able to share data with more fine-grained permissions,
 e.g. by allowing reads but not edits, etc.
 
-All information stored by a Shared Pod is stored in a single database,
-and in order to write to a Shared Pod, you need to know its `database_key`.
-
 Shared Pod maintainer must access the database from the filesystem.
 (To do so, they also need to have the `database_key` of course.)
 
-Run Pod with `--help` to see CLI help on setting up a Shared Pod.
+
+# Debugging
+
+If you want to experiment with how a shared Pod works,
+run your Pod with the `--shared-server` CLI parameter.
+For example, `./examples/run_development.sh --shared-server`.
