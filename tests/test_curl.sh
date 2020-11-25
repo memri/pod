@@ -6,12 +6,12 @@ set -euETo pipefail
 #### Start Pod
 ./examples/run_development.sh --port=4956 &
 pid=$!
+trap 'kill $pid' EXIT
 
 for attempt in {1..30}; do
   #### Try to get a successful response to /version
-  if curl localhost:4956/version 1>/dev/null 2>&1; then
+  if timeout 1s curl localhost:4956/version 1>/dev/null 2>&1; then
     echo "Got a successful response, exiting"
-    kill $pid
     exit 0
   else
     sleep 1s
