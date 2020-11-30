@@ -173,7 +173,9 @@ Returns an empty object if the operation is successful.
   }
 }
 ```
-Perform a bulk of operations atomically.
+Perform a bulk of operations in one request.
+The endpoint is "atomic", meaning that either all of the operations succeed,
+or the database won't be changed at all.
 
 If `createEdges` array is not empty, all items in `createItems` MUST have `uid` set.
 
