@@ -121,7 +121,7 @@ pub fn run_indexers(
     args.push("--rm".to_string());
     args.push("--name=memri-indexers_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
-    args.push("memri-indexers:latest".to_string());
+    args.push("memri-pyintegrators".to_string());
     log::debug!("Starting indexer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
