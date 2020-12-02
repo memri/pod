@@ -1,6 +1,6 @@
 #!/bin/bash -euET
 # This is an example of how you might run Pod during development.
-# Do not ever attempt to ever use this script in production!
+# Do not ever attempt to use this script in production!
 
 if ! test -e Cargo.toml; then
   echo "Please run this script from Pod-s main directory."
