@@ -4414,6 +4414,11 @@
           "indexed": false
         },
         {
+          "name": "channels",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "dateAccessed",
           "dbtype": "DateTime",
           "indexed": false
@@ -4464,6 +4469,11 @@
           "indexed": false
         },
         {
+          "name": "height",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
           "name": "importJson",
           "dbtype": "Text",
           "indexed": false
@@ -4495,6 +4505,11 @@
         },
         {
           "name": "version",
+          "dbtype": "Integer",
+          "indexed": false
+        },
+        {
+          "name": "width",
           "dbtype": "Integer",
           "indexed": false
         }
