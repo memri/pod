@@ -1,6 +1,7 @@
 ## About
 
 CHANGE
+ANOTHER CHANGE
 Pod is the open-source backend for [Memri](https://memri.io/) project.
 
 It's written in Rust and provides an HTTP interface for use by the clients.
