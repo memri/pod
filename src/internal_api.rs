@@ -302,7 +302,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
     if query._date_server_modified_after.is_some() {
         sql_body.push_str(" AND _dateServerModified > :_dateServerModified");
     };
-    sql_body.push_str(";");
+    sql_body.push(';');
 
     let mut sql_params = Vec::new();
     for (key, value) in &query.fields {
