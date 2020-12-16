@@ -37,8 +37,8 @@ async fn main() {
         })
         .init();
     let cli_options: &CLIOptions = &*command_line_interface::PARSED;
-    if let Some(file) = &cli_options.validate_schema {
-        if let Err(err) = database_migrate_schema::validate_schema_file(&file) {
+    if cli_options.validate_schema {
+        if let Err(err) = database_migrate_schema::validate_schema_file(&cli_options.schema_file) {
             log::error!("Schema validation failed: {}", err);
             std::process::exit(1)
         } else {
