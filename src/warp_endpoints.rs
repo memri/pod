@@ -222,7 +222,7 @@ fn initialize_db(
     init_db: &RwLock<HashSet<String>>,
     database_key: &str,
 ) -> Result<Connection> {
-    let database_path = format!("{}.db", &owner);
+    let database_path = format!("{}{}", &owner, constants::DATABASE_SUFFIX);
     let database_path = PathBuf::from(constants::DATABASE_DIR).join(database_path);
     let mut conn = Connection::open(database_path).unwrap();
     let pragma_sql = format!("PRAGMA key = \"x'{}'\";", database_key);
