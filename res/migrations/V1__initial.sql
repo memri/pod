@@ -1,5 +1,5 @@
 CREATE TABLE items (
-    uid INTEGER NOT NULL PRIMARY KEY,
+    uid TEXT NOT NULL PRIMARY KEY,
     _type TEXT NOT NULL,
     dateCreated INTEGER /* datetime */ NOT NULL,
     dateModified INTEGER /* datetime */ NOT NULL,
@@ -9,8 +9,8 @@ CREATE TABLE items (
 );
 
 CREATE TABLE edges (
-    _source INTEGER NOT NULL,
-    _target INTEGER NOT NULL,
+    _source TEXT NOT NULL,
+    _target TEXT NOT NULL,
     _type TEXT NOT NULL,
     FOREIGN KEY (_source) REFERENCES items(uid),
     FOREIGN KEY (_target) REFERENCES items(uid)

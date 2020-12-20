@@ -13,7 +13,7 @@ pub struct CreateItem {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateItem {
-    pub uid: i64,
+    pub uid: String,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
 }
@@ -88,21 +88,21 @@ pub struct PayloadWrapper<T> {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RunDownloader {
-    pub uid: i64,
+    pub uid: String,
     pub service_payload: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RunImporter {
-    pub uid: i64,
+    pub uid: String,
     pub service_payload: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RunIndexer {
-    pub uid: i64,
+    pub uid: String,
     pub service_payload: Value,
 }
 

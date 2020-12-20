@@ -25,7 +25,7 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
+pub fn get_item(conn: &Connection, uid: String) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
 
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
@@ -35,7 +35,7 @@ pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
     Ok(json)
 }
 
-fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
+fn check_item_exists(tx: &Transaction, uid: String) -> Result<bool> {
     let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
     let mut rows = stmt.query_named(&[(":uid", &uid)])?;
     let result = match rows.next()? {
@@ -123,7 +123,7 @@ pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Resul
     Ok(tx.last_insert_rowid())
 }
 
-pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
+pub fn update_item_tx(tx: &Transaction, uid: String, fields: HashMap<String, Value>) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -210,7 +210,7 @@ fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     Ok(result)
 }
 
-pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
+pub fn delete_item_tx(tx: &Transaction, uid: String) -> Result<()> {
     let mut fields = HashMap::new();
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
@@ -251,9 +251,9 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
 }
 
 pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
-    let source_uid: i64 = if item.fields.len() > 1 {
+    let source_uid: String = if item.fields.len() > 1 {
         create_item_tx(tx, item.fields)?
-    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
+    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_String()).flatten() {
         if item._edges.is_empty() {
         } else if shared_server {
             return Err(Error {
@@ -319,7 +319,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
     Ok(json)
 }
 
-pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
+pub fn get_item_with_edges_tx(tx: &Transaction, uid: String) -> Result<Value> {
     let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
     let mut item = match item_rows.next()? {
