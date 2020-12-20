@@ -21,16 +21,16 @@ pub struct UpdateItem {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateEdge {
     pub _type: String,
-    pub _source: i64,
-    pub _target: i64,
+    pub _source: String,
+    pub _target: String,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DeleteEdge {
-    pub _source: i64,
-    pub _target: i64,
+    pub _source: String,
+    pub _target: String,
     pub _type: String,
 }
 
@@ -42,7 +42,7 @@ pub struct BulkAction {
     #[serde(default)]
     pub update_items: Vec<UpdateItem>,
     #[serde(default)]
-    pub delete_items: Vec<i64>,
+    pub delete_items: Vec<String>,
     #[serde(default)]
     pub create_edges: Vec<CreateEdge>,
     #[serde(default)]

@@ -18,7 +18,7 @@ pub fn run_downloader(
     cli_options: &CLIOptions,
 ) -> Result<()> {
     info!("Trying to run downloader on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    let result = internal_api::get_item(conn.deref(), &payload.uid)?;
     if result.first().is_none() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
@@ -62,7 +62,7 @@ pub fn run_importer(
     cli_options: &CLIOptions,
 ) -> Result<()> {
     info!("Trying to run importer on item {}", payload.uid);
-    let item = internal_api::get_item(conn.deref(), payload.uid)?;
+    let item = internal_api::get_item(conn.deref(), &payload.uid)?;
     let item = item.into_iter().next().ok_or_else(|| Error {
         code: StatusCode::BAD_REQUEST,
         msg: format!("Failed to get item {}", payload.uid),
@@ -102,7 +102,7 @@ pub fn run_indexers(
     cli_options: &CLIOptions,
 ) -> Result<()> {
     info!("Trying to run indexer on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
+    let result = internal_api::get_item(conn.deref(), &payload.uid)?;
     if result.first().is_none() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,

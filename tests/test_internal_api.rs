@@ -35,7 +35,7 @@ fn test_bulk_action() {
 
     {
         let tx = conn.transaction().unwrap();
-        let get_result = internal_api::get_item_with_edges_tx(&tx, 1);
+        let get_result = internal_api::get_item_with_edges_tx(&tx, "1");
         assert!(
             get_result.is_ok(),
             "get items with edges failed with: {:?}",
@@ -109,9 +109,9 @@ fn test_insert_item() {
         let search = search.unwrap();
         assert_eq!(search.len(), 1);
         let search = search.first().unwrap();
-        let uid = search.get("uid").unwrap().as_String().unwrap();
+        let uid = search.get("uid").unwrap().to_string();
 
-        let edges = internal_api::get_item_with_edges_tx(&tx, uid).unwrap();
+        let edges = internal_api::get_item_with_edges_tx(&tx, &uid).unwrap();
         let edges = edges.get("allEdges").unwrap().as_array().unwrap();
         assert_eq!(
             edges.len(),

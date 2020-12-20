@@ -25,7 +25,7 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-pub fn get_item(conn: &Connection, uid: String) -> Result<Vec<Value>> {
+pub fn get_item(conn: &Connection, uid: &str) -> Result<Vec<Value>> {
     debug!("Getting item {}", uid);
 
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
@@ -35,7 +35,7 @@ pub fn get_item(conn: &Connection, uid: String) -> Result<Vec<Value>> {
     Ok(json)
 }
 
-fn check_item_exists(tx: &Transaction, uid: String) -> Result<bool> {
+fn check_item_exists(tx: &Transaction, uid: &str) -> Result<bool> {
     let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
     let mut rows = stmt.query_named(&[(":uid", &uid)])?;
     let result = match rows.next()? {
@@ -98,7 +98,7 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
     Ok(())
 }
 
-pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
+pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<String> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -120,10 +120,10 @@ pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Resul
     write_sql_body(&mut sql, &keys, ", :");
     sql.push_str(");");
     execute_sql(tx, &sql, &fields)?;
-    Ok(tx.last_insert_rowid())
+    Ok(fields["uid"].to_string())
 }
 
-pub fn update_item_tx(tx: &Transaction, uid: String, fields: HashMap<String, Value>) -> Result<()> {
+pub fn update_item_tx(tx: &Transaction, uid: &str, fields: HashMap<String, Value>) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -158,8 +158,8 @@ pub fn update_item_tx(tx: &Transaction, uid: String, fields: HashMap<String, Val
 fn create_edge(
     tx: &Transaction,
     _type: &str,
-    source: i64,
-    target: i64,
+    source: &str,
+    target: &str,
     mut fields: HashMap<String, Value>,
 ) -> Result<()> {
     fields.insert("_type".to_string(), _type.into());
@@ -210,7 +210,7 @@ fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     Ok(result)
 }
 
-pub fn delete_item_tx(tx: &Transaction, uid: String) -> Result<()> {
+pub fn delete_item_tx(tx: &Transaction, uid: &str) -> Result<()> {
     let mut fields = HashMap::new();
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
@@ -232,17 +232,19 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
         create_item_tx(tx, item.fields)?;
     }
     for item in bulk_action.update_items {
-        update_item_tx(tx, item.uid, item.fields)?;
+        update_item_tx(tx, &item.uid, item.fields)?;
     }
-    let sources_set: HashSet<_> = bulk_action.create_edges.iter().map(|e| e._source).collect();
+    
+    let sources_set: HashSet<String> = bulk_action.create_edges.iter().map(|e| e._source.clone()).collect();
     for edge in bulk_action.create_edges {
-        create_edge(tx, &edge._type, edge._source, edge._target, edge.fields)?;
+        create_edge(tx, &edge._type, &edge._source, &edge._target, edge.fields)?;
     }
+    
     for edge_source in sources_set {
-        update_item_tx(tx, edge_source, HashMap::new())?;
+        update_item_tx(tx, &edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
-        delete_item_tx(tx, edge_uid)?;
+        delete_item_tx(tx, &edge_uid)?;
     }
     for del_edge in bulk_action.delete_edges {
         delete_edge_tx(tx, del_edge)?;
@@ -250,10 +252,10 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     Ok(())
 }
 
-pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
+pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<String> {
     let source_uid: String = if item.fields.len() > 1 {
         create_item_tx(tx, item.fields)?
-    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_String()).flatten() {
+    } else if let Some(uid) = item.fields.get("uid").map(|v| v.to_string()) {
         if item._edges.is_empty() {
         } else if shared_server {
             return Err(Error {
@@ -264,7 +266,7 @@ pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) 
                 ),
             });
         } else {
-            update_item_tx(tx, uid, HashMap::new())?;
+            update_item_tx(tx, &uid, HashMap::new())?;
         }
         uid
     } else {
@@ -275,7 +277,7 @@ pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) 
     };
     for edge in item._edges {
         let target_item = insert_tree(tx, edge._target, shared_server)?;
-        create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
+        create_edge(tx, &edge._type, &source_uid, &target_item, edge.fields)?;
     }
     Ok(source_uid)
 }
@@ -302,7 +304,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
     if query._date_server_modified_after.is_some() {
         sql_body.push_str(" AND _dateServerModified > :_dateServerModified");
     };
-    sql_body.push(';');
+    sql_body.push_str(";");
 
     let mut sql_params = Vec::new();
     for (key, value) in &query.fields {
@@ -319,7 +321,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
     Ok(json)
 }
 
-pub fn get_item_with_edges_tx(tx: &Transaction, uid: String) -> Result<Value> {
+pub fn get_item_with_edges_tx(tx: &Transaction, uid: &str) -> Result<Value> {
     let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
     let mut item = match item_rows.next()? {
@@ -348,10 +350,8 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: String) -> Result<Value> {
     let mut new_edges = Vec::new();
     for mut edge in edges {
         let target = edge
-            .get("_target")
-            .expect("Failed to get _target")
-            .as_i64()
-            .expect("Failed to get value as i64");
+            .get("_target").map(|v| v.to_string())
+            .expect("Failed to get _target");
         let mut stmt = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
         let mut rows = stmt.query_named(&[(":uid", &target)])?;
         edge.remove("_target");
@@ -368,10 +368,10 @@ pub fn get_item_with_edges_tx(tx: &Transaction, uid: String) -> Result<Value> {
     Ok(item.into())
 }
 
-pub fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
+pub fn get_items_with_edges_tx(tx: &Transaction, uids: &[String]) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for uid in uids {
-        result.push(get_item_with_edges_tx(tx, *uid)?);
+        result.push(get_item_with_edges_tx(tx, uid)?);
     }
     Ok(result)
 }

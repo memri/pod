@@ -75,7 +75,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -175,7 +175,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -275,7 +275,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -370,7 +370,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -445,7 +445,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -505,7 +505,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -595,7 +595,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -695,7 +695,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -770,7 +770,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -870,7 +870,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -955,7 +955,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1040,7 +1040,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1135,7 +1135,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1240,7 +1240,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1300,7 +1300,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1420,7 +1420,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1505,7 +1505,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1615,7 +1615,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1695,7 +1695,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1760,7 +1760,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1860,7 +1860,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -1950,7 +1950,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2050,7 +2050,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2135,7 +2135,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2235,7 +2235,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2335,7 +2335,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2435,7 +2435,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2500,7 +2500,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2570,7 +2570,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2630,7 +2630,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2700,7 +2700,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2760,7 +2760,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2830,7 +2830,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2900,7 +2900,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -2995,7 +2995,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3080,7 +3080,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3150,7 +3150,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3270,7 +3270,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3345,7 +3345,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3405,7 +3405,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3505,7 +3505,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3585,7 +3585,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3650,7 +3650,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3750,7 +3750,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3855,7 +3855,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3915,7 +3915,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -3975,7 +3975,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4035,7 +4035,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4115,7 +4115,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4215,7 +4215,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4320,7 +4320,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4390,7 +4390,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4411,11 +4411,6 @@
         {
           "name": "caption",
           "dbtype": "Text",
-          "indexed": false
-        },
-        {
-          "name": "channels",
-          "dbtype": "Integer",
           "indexed": false
         },
         {
@@ -4469,11 +4464,6 @@
           "indexed": false
         },
         {
-          "name": "height",
-          "dbtype": "Integer",
-          "indexed": false
-        },
-        {
           "name": "importJson",
           "dbtype": "Text",
           "indexed": false
@@ -4500,16 +4490,11 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
           "name": "version",
-          "dbtype": "Integer",
-          "indexed": false
-        },
-        {
-          "name": "width",
           "dbtype": "Integer",
           "indexed": false
         }
@@ -4565,7 +4550,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4675,7 +4660,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4745,7 +4730,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4810,7 +4795,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -4920,7 +4905,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5020,7 +5005,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5090,7 +5075,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5150,7 +5135,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5255,7 +5240,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5325,7 +5310,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5395,7 +5380,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5465,7 +5450,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5535,7 +5520,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5620,7 +5605,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5690,7 +5675,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5760,7 +5745,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5825,12 +5810,12 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5930,7 +5915,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -5995,12 +5980,12 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -6100,7 +6085,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -6165,7 +6150,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -6230,7 +6215,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -6295,7 +6280,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {
@@ -6400,7 +6385,7 @@
         },
         {
           "name": "uid",
-          "dbtype": "Integer",
+          "dbtype": "String",
           "indexed": false
         },
         {

@@ -36,10 +36,10 @@ use warp::http::status::StatusCode;
 pub fn get_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<i64>,
+    body: PayloadWrapper<String>,
 ) -> Result<Vec<Value>> {
     let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    internal_api::get_item(&conn, body.payload)
+    internal_api::get_item(&conn, &body.payload)
 }
 
 pub fn get_all_items(
@@ -55,7 +55,7 @@ pub fn create_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<CreateItem>,
-) -> Result<i64> {
+) -> Result<String> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
         internal_api::create_item_tx(&tx, body.payload.fields)
@@ -69,7 +69,7 @@ pub fn update_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)
+        internal_api::update_item_tx(&tx, &body.payload.uid, body.payload.fields)
     })
 }
 
@@ -87,11 +87,11 @@ pub fn bulk_action(
 pub fn delete_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<i64>,
+    body: PayloadWrapper<String>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::delete_item_tx(&tx, body.payload)
+        internal_api::delete_item_tx(&tx, &body.payload)
     })
 }
 
@@ -100,7 +100,7 @@ pub fn insert_tree(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<InsertTreeItem>,
     shared_server: bool,
-) -> Result<i64> {
+) -> Result<String> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
         internal_api::insert_tree(&tx, body.payload, shared_server)
@@ -121,7 +121,7 @@ pub fn search_by_fields(
 pub fn get_items_with_edges(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<Vec<i64>>,
+    body: PayloadWrapper<Vec<String>>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {

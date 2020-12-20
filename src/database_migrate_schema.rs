@@ -64,6 +64,9 @@ lazy_static! {
     pub static ref TEXT_COLUMNS: HashSet<String> = {
         let mut result = get_columns_of_type(SchemaPropertyType::Text);
         result.insert("_type".to_string());
+        result.insert("uid".to_string());
+        result.insert("_source".to_string());
+        result.insert("_target".to_string());
         result.insert("edgeLabel".to_string());
         result
     };
@@ -71,10 +74,7 @@ lazy_static! {
 lazy_static! {
     pub static ref INTEGER_COLUMNS: HashSet<String> = {
         let mut result = get_columns_of_type(SchemaPropertyType::Integer);
-        result.insert("uid".to_string());
         result.insert("version".to_string());
-        result.insert("_source".to_string());
-        result.insert("_target".to_string());
         result.insert("sequence".to_string());
         result
     };

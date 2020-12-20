@@ -158,10 +158,10 @@ Returns an empty object if the operation is successful.
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
     "createItems": [
-      { "uid": 12345, "_type": "Person", ... }, ...
+      { "uid": "12345", "_type": "Person", ... }, ...
     ],
     "updateItems": [
-      { "uid": 12345, ... }, ...
+      { "uid": "12345", ... }, ...
     ],
     "deleteItems": [ uid, uid, uid, ...],
     "createEdges": [
@@ -210,7 +210,7 @@ or a full item which will then be created.
 (the `uid` property mandatory, no other properties are present):
 ```json
 {
-  "uid": 123456789 /* uid of the item to create edge with */,
+  "uid": "123456789" /* uid of the item to create edge with */,
   "_edges": [ /* see below edges definition*/ ]
 }
 ```
