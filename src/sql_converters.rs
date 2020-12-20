@@ -103,16 +103,6 @@ pub fn json_value_to_sqlite<'a>(
             }
         }
         Value::Bool(b) if BOOL_COLUMNS.contains(column) => Ok((if *b { 1 } else { 0 }).into()),
-        Value::Number(n) if BOOL_COLUMNS.contains(column) => {
-            if let Some(int) = n.as_f64() {
-                Ok(ToSqlOutput::Borrowed(ValueRef::Real(int)))
-            } else {
-                Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to BOOL ({})", n, column),
-                })
-            }
-        }
         Value::Number(n) if DATE_TIME_COLUMNS.contains(column) => {
             if let Some(int) = n.as_i64() {
                 Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
