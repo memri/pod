@@ -9,8 +9,9 @@ fi
 
 examples/generate_self-signed_certificate.sh
 
-RUST_LOG=pod=debug,info \
-  exec cargo run -- \
+#RUST_LOG=pod=debug,info \
+
+exec cargo run -- \
   --owners=ANY
   --insecure-http-headers \
   "$@"

@@ -10,7 +10,7 @@ use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
 use crate::sql_converters::validate_property_name;
 use chrono::Utc;
-use log::debug;
+use log::info;
 use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
@@ -26,7 +26,7 @@ pub fn get_project_version() -> String {
 }
 
 pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
-    debug!("Getting item {}", uid);
+    info!("Getting item {}", uid);
 
     let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
     let rows = stmt.query_named(&[(":uid", &uid)])?;
@@ -49,7 +49,7 @@ fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
 }
 
 pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
-    debug!("Getting all items");
+    info!("Getting all items");
     let mut stmt = conn.prepare_cached("SELECT * FROM items")?;
     let rows = stmt.query(NO_PARAMS)?;
     let json = sqlite_rows_to_json(rows, true)?;
@@ -220,7 +220,14 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
 }
 
 pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
-    debug!("Performing bulk action {:#?}", bulk_action);
+    info!(
+        "Performing bulk action with {} new items, {} updated items, {} deleted items, {} created edges, {} deleted edges",
+        bulk_action.create_items.len(),
+        bulk_action.update_items.len(),
+        bulk_action.delete_items.len(),
+        bulk_action.create_edges.len(),
+        bulk_action.delete_edges.len(),
+    );
     let edges_will_be_created = !bulk_action.create_edges.is_empty();
     for item in bulk_action.create_items {
         if !item.fields.contains_key("uid") && edges_will_be_created {
@@ -251,6 +258,11 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
 }
 
 pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
+    info!(
+        "Inserting tree item with {} properties and {} edges",
+        item.fields.len(),
+        item._edges.len()
+    );
     let source_uid: i64 = if item.fields.len() > 1 {
         create_item_tx(tx, item.fields)?
     } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
@@ -281,7 +293,7 @@ pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) 
 }
 
 pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {
-    debug!("Searching by fields {:?}", query);
+    info!("Searching by fields {:?}", query);
     let mut sql_body = "SELECT * FROM items WHERE ".to_string();
     let mut first_parameter = true;
     for (field, value) in &query.fields {

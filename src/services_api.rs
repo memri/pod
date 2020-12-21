@@ -39,7 +39,7 @@ pub fn run_downloader(
     args.push(format!("--env=RUN_UID={}", payload.uid));
     args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
     args.push("memri-downloaders:latest".to_string());
-    log::debug!("Starting downloader docker command {:?}", args);
+    log::info!("Starting downloader docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {
@@ -82,7 +82,7 @@ pub fn run_importer(
     args.push(format!("--env=RUN_UID={}", payload.uid));
     args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
     args.push(item.repository);
-    log::debug!("Starting importer docker command {:?}", args);
+    log::info!("Starting importer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {
@@ -122,7 +122,7 @@ pub fn run_indexers(
     args.push("--name=memri-indexers_1".to_string());
     args.push(format!("--env=RUN_UID={}", payload.uid));
     args.push("memri-pyintegrators".to_string());
-    log::debug!("Starting indexer docker command {:?}", args);
+    log::info!("Starting indexer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {

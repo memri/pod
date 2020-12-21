@@ -9,8 +9,9 @@ fi
 
 cargo build
 
-RUST_LOG=pod=debug,info \
-  exec target/debug/pod \
+#RUST_LOG=pod=debug,info \
+
+exec target/debug/pod \
   --owners=ANY \
   --insecure-non-tls=0.0.0.0 \
   --insecure-http-headers \
