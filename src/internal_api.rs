@@ -8,9 +8,11 @@ use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
+use crate::sql_converters::sqlite_value_to_json;
 use crate::sql_converters::validate_property_name;
 use chrono::Utc;
 use log::info;
+use rusqlite::params;
 use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
@@ -25,14 +27,42 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
-    info!("Getting item {}", uid);
+fn get_item_properties(tx: &Transaction, item_id: &str) -> Result<HashMap<String, Value>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM itemproperties WHERE itemId = ?1")?;
+    let rows_iter = stmt.query_map(params![item_id], |row| {
+        let name: String = row.get(0)?;
+        let value = sqlite_value_to_json(row.get_raw(1), &name);
+        if let Some(value) = value {
+            Ok(Some((name, value)))
+        } else {
+            Ok(None)
+        }
+    })?;
+    let mut result = HashMap::new();
+    for row in rows_iter {
+        if let Some((k, v)) = row? {
+            result.insert(k, v);
+        }
+    }
+    Ok(result)
+}
 
-    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-    let rows = stmt.query_named(&[(":uid", &uid)])?;
+pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
+    info!("Getting item {}", id);
 
-    let json = sqlite_rows_to_json(rows, true)?;
-    Ok(json)
+    let mut stmt = tx.prepare_cached("SELECT * FROM items WHERE id = :id")?;
+    let mut rows = stmt.query_named(&[(":id", &id)])?;
+
+    let row = match rows.next()? {
+        Some(row) => row,
+        None => return Ok(None),
+    };
+    let mut map = get_item_properties(tx, &id.to_string())?;
+    for (k, v) in sqlite_row_to_map(row, true)? {
+        map.insert(k, v);
+    }
+    let obj: Value = serde_json::to_value(map)?;
+    Ok(Some(obj))
 }
 
 fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {

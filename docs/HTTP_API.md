@@ -90,10 +90,10 @@ Get version of the Pod: the git commit and cargo version that it was built from.
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-  "payload": $uid
+  "payload": $id
 }
 ```
-Get a single item by its `uid`.
+Get a single item by its `id`.
 
 ⚠️ UNSTABLE: currently, the endpoint returns an empty array if an item is not found,
 or an array with 1 item if item exists.
@@ -282,7 +282,7 @@ Typical examples of services are services that import emails/messages into Pod.
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid,
+    "id": $id,
     "servicePayload": {
       "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
       "ownerKey": $owner_key
@@ -290,7 +290,7 @@ Typical examples of services are services that import emails/messages into Pod.
   }
 }
 ```
-Run a downloader on an item with the given uid.
+Run a downloader on an item with the given id.
 See [Integrators](./Integrators.md).
 
 ⚠️ UNSTABLE: Downloaders might be merged with importers soon.
@@ -301,7 +301,7 @@ See [Integrators](./Integrators.md).
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid,
+    "id": $id,
     "servicePayload": {
       "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
       "ownerKey": $owner_key
@@ -309,7 +309,7 @@ See [Integrators](./Integrators.md).
   }
 }
 ```
-Run an importer on an item with the given uid.
+Run an importer on an item with the given id.
 See [Integrators](./Integrators.md).
 
 
@@ -318,7 +318,7 @@ See [Integrators](./Integrators.md).
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
-    "uid": $uid,
+    "id": $id,
     "servicePayload": {
       "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
       "ownerKey": $owner_key
@@ -326,7 +326,7 @@ See [Integrators](./Integrators.md).
   }
 }
 ```
-Run an indexer on an item with the given uid.
+Run an indexer on an item with the given id.
 See [Integrators](./Integrators.md).
 
 

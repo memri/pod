@@ -36,10 +36,12 @@ use warp::http::status::StatusCode;
 pub fn get_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<i64>,
+    body: PayloadWrapper<String>,
 ) -> Result<Vec<Value>> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    internal_api::get_item(&conn, body.payload)
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    in_transaction(&mut conn, |tx| {
+        internal_api::get_item_tx(&tx, &body.payload).map(|r| r.into_iter().collect())
+    })
 }
 
 pub fn get_all_items(
@@ -139,9 +141,11 @@ pub fn run_downloader(
     body: PayloadWrapper<RunDownloader>,
     cli_options: &CLIOptions,
 ) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_downloader(&conn, body.payload, cli_options)
+    in_transaction(&mut conn, |tx| {
+        services_api::run_downloader(&tx, body.payload, cli_options)
+    })
 }
 
 pub fn run_importer(
@@ -150,9 +154,11 @@ pub fn run_importer(
     body: PayloadWrapper<RunImporter>,
     cli_options: &CLIOptions,
 ) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_importer(&conn, body.payload, cli_options)
+    in_transaction(&mut conn, |tx| {
+        services_api::run_importer(&tx, body.payload, cli_options)
+    })
 }
 
 pub fn run_indexer(
@@ -161,9 +167,11 @@ pub fn run_indexer(
     body: PayloadWrapper<RunIndexer>,
     cli_options: &CLIOptions,
 ) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_indexers(&conn, body.payload, cli_options)
+    in_transaction(&mut conn, |tx| {
+        services_api::run_indexers(&tx, body.payload, cli_options)
+    })
 }
 
 pub fn upload_file(

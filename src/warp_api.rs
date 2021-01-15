@@ -66,7 +66,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<i64>| {
+        .map(move |owner: String, body: PayloadWrapper<String>| {
             let result = warp_endpoints::get_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -284,7 +284,11 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(get_file.with(&headers))
         .or(origin_request);
 
-    let filters = always_enabled_filters.or(sensitive_filters);
+    let not_found = warp::any().map(|| {
+        warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
+    });
+
+    let filters = always_enabled_filters.or(sensitive_filters).or(not_found);
 
     if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {
         let ip = if let Some(ip) = cli_options.insecure_non_tls {

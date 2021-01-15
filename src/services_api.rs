@@ -7,22 +7,21 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
 use log::info;
-use rusqlite::Connection;
-use std::ops::Deref;
+use rusqlite::Transaction;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
 pub fn run_downloader(
-    conn: &Connection,
+    tx: &Transaction,
     payload: RunDownloader,
     cli_options: &CLIOptions,
 ) -> Result<()> {
-    info!("Trying to run downloader on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
-    if result.first().is_none() {
+    info!("Trying to run downloader on item {}", payload.id);
+    let result = internal_api::get_item_tx(tx, &payload.id)?;
+    if result.is_none() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: format!("Failed to get item {}", payload.uid),
+            msg: format!("Failed to get item {}", payload.id),
         });
     };
     let mut args: Vec<String> = Vec::new();
@@ -36,36 +35,36 @@ pub fn run_downloader(
     ));
     args.push("--rm".to_string());
     args.push("--name=memri-downloaders_1".to_string());
-    args.push(format!("--env=RUN_UID={}", payload.uid));
+    args.push(format!("--env=RUN_UID={}", payload.id));
     args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
     args.push("memri-downloaders:latest".to_string());
     log::info!("Starting downloader docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {
-            log::debug!("Successfully started downloader for {}", payload.uid);
+            log::debug!("Successfully started downloader for {}", payload.id);
             Ok(())
         }
         Err(err) => {
-            log::warn!("Failed to run downloader {}", payload.uid);
+            log::warn!("Failed to run downloader {}", payload.id);
             Err(Error {
                 code: StatusCode::INTERNAL_SERVER_ERROR,
-                msg: format!("Failed to run downloader with uid {}, {}", payload.uid, err),
+                msg: format!("Failed to run downloader with id {}, {}", payload.id, err),
             })
         }
     }
 }
 
 pub fn run_importer(
-    conn: &Connection,
+    tx: &Transaction,
     payload: RunImporter,
     cli_options: &CLIOptions,
 ) -> Result<()> {
-    info!("Trying to run importer on item {}", payload.uid);
-    let item = internal_api::get_item(conn.deref(), payload.uid)?;
+    info!("Trying to run importer on item {}", payload.id);
+    let item = internal_api::get_item_tx(tx, &payload.id)?;
     let item = item.into_iter().next().ok_or_else(|| Error {
         code: StatusCode::BAD_REQUEST,
-        msg: format!("Failed to get item {}", payload.uid),
+        msg: format!("Failed to get item {}", payload.id),
     })?;
     let item: RunIntegratorItem = serde_json::from_value(item)?;
     let mut args: Vec<String> = Vec::new();
@@ -79,34 +78,30 @@ pub fn run_importer(
     ));
     args.push("--rm".to_string());
     args.push("--name=memri-importers_1".to_string());
-    args.push(format!("--env=RUN_UID={}", payload.uid));
+    args.push(format!("--env=RUN_UID={}", payload.id));
     args.push("--volume=memri-integrators-volume:/usr/src/importers/data".to_string());
     args.push(item.repository);
     log::info!("Starting importer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {
-            log::debug!("Successfully started importer for {}", payload.uid);
+            log::debug!("Successfully started importer for {}", payload.id);
             Ok(())
         }
         Err(err) => Err(Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Failed to run importer with uid {}, {}", payload.uid, err),
+            msg: format!("Failed to run importer with id {}, {}", payload.id, err),
         }),
     }
 }
 
-pub fn run_indexers(
-    conn: &Connection,
-    payload: RunIndexer,
-    cli_options: &CLIOptions,
-) -> Result<()> {
-    info!("Trying to run indexer on item {}", payload.uid);
-    let result = internal_api::get_item(conn.deref(), payload.uid)?;
-    if result.first().is_none() {
+pub fn run_indexers(tx: &Transaction, payload: RunIndexer, cli_options: &CLIOptions) -> Result<()> {
+    info!("Trying to run indexer on item {}", payload.id);
+    let result = internal_api::get_item_tx(tx, &payload.id)?;
+    if result.is_none() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: format!("Failed to get item {}", payload.uid),
+            msg: format!("Failed to get item {}", payload.id),
         });
     };
     let mut args: Vec<String> = Vec::new();
@@ -120,18 +115,18 @@ pub fn run_indexers(
     ));
     args.push("--rm".to_string());
     args.push("--name=memri-indexers_1".to_string());
-    args.push(format!("--env=RUN_UID={}", payload.uid));
+    args.push(format!("--env=RUN_UID={}", payload.id));
     args.push("memri-pyintegrators".to_string());
     log::info!("Starting indexer docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
     match command {
         Ok(_child) => {
-            log::debug!("Successfully started indexer for {}", payload.uid);
+            log::debug!("Successfully started indexer for {}", payload.id);
             Ok(())
         }
         Err(err) => Err(Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Failed to run indexer with uid {}, {}", payload.uid, err),
+            msg: format!("Failed to run indexer with id {}, {}", payload.id, err),
         }),
     }
 }

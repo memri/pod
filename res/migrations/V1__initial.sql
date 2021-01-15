@@ -18,10 +18,10 @@ CREATE INDEX idx_itemproperties_item on itemproperties(itemId);
 
 
 CREATE TABLE edges (
+    id INTEGER NOT NULL PRIMARY KEY,
     source INTEGER NOT NULL,
     target INTEGER NOT NULL,
     type TEXT NOT NULL,
-    id INTEGER NOT NULL PRIMARY KEY,
     FOREIGN KEY (source) REFERENCES items(uid),
     FOREIGN KEY (target) REFERENCES items(uid)
 );

@@ -5,6 +5,7 @@ mod command_line_interface;
 pub mod constants;
 pub mod database_migrate_refinery;
 pub mod database_migrate_schema;
+pub mod db_model;
 pub mod error;
 pub mod file_api;
 pub mod internal_api;
