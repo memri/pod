@@ -94,7 +94,7 @@ lazy_static! {
         let mut result = get_columns_of_type(SchemaPropertyType::DateTime);
         result.insert("dateCreated".to_string());
         result.insert("dateModified".to_string());
-        result.insert("_dateServerModified".to_string());
+        result.insert("dateServerModified".to_string());
         result
     };
 }
@@ -231,7 +231,7 @@ fn generate_sql(
         };
         let creation = format!("ALTER TABLE items ADD {} {};", column, db_type);
         result.push_str(&creation);
-        result.push_str("\n");
+        result.push('\n');
     }
 
     for (column, is_indexed) in column_indexes {
@@ -244,7 +244,7 @@ fn generate_sql(
             format!("DROP INDEX IF EXISTS idx_schema_items_{};", column)
         };
         result.push_str(&index);
-        result.push_str("\n");
+        result.push('\n');
     }
 
     result

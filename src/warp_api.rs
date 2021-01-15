@@ -1,12 +1,9 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
-use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
-use crate::api_model::RunDownloader;
-use crate::api_model::RunImporter;
-use crate::api_model::RunIndexer;
-use crate::api_model::SearchByFields;
+// use crate::api_model::RunImporter;
+use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
@@ -44,13 +41,13 @@ pub async fn run_server(cli_options: &CLIOptions) {
     }
     let headers = warp::reply::with::headers(headers);
 
-    let items_api = warp::path("v2")
+    let items_api = warp::path("v3")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
-    let services_api = warp::path("v2")
-        .and(warp::body::content_length_limit(32 * 1024))
-        .and(warp::post());
-    let file_api = warp::path("v2")
+    // let services_api = warp::path("v3")
+    //     .and(warp::body::content_length_limit(32 * 1024))
+    //     .and(warp::post());
+    let file_api = warp::path("v3")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 
@@ -62,11 +59,22 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .map(internal_api::get_project_version);
 
     let init_db = initialized_databases_arc.clone();
+    let create_item = items_api
+        .and(warp::path!(String / "create_item"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
+            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
     let get_item = items_api
         .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<i64>| {
+        .map(move |owner: String, body: PayloadWrapper<String>| {
             let result = warp_endpoints::get_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -79,17 +87,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<()>| {
             let result = warp_endpoints::get_all_items(owner, init_db.deref(), body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let create_item = items_api
-        .and(warp::path!(String / "create_item"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
-            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
@@ -128,25 +125,12 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let insert_tree = items_api
-        .and(warp::path!(String / "insert_tree"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<InsertTreeItem>| {
-            let shared_server = cli_options_arc.shared_server;
-            let result = warp_endpoints::insert_tree(owner, init_db.deref(), body, shared_server);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
     let search_by_fields = items_api
-        .and(warp::path!(String / "search_by_fields"))
+        .and(warp::path!(String / "search"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<SearchByFields>| {
-            let result = warp_endpoints::search_by_fields(owner, init_db.deref(), body);
+        .map(move |owner: String, body: PayloadWrapper<Search>| {
+            let result = warp_endpoints::search(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
@@ -162,44 +146,17 @@ pub async fn run_server(cli_options: &CLIOptions) {
             respond_with_result(result)
         });
 
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_downloader = services_api
-        // //! In fact, any type that implements `FromStr` can be used, in any order:
-        // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
-        .and(warp::path!(String / "run_downloader"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunDownloader>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_downloader(owner, init_db.deref(), body, cli);
-            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_importer = services_api
-        .and(warp::path!(String / "run_importer"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
-            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_indexer = services_api
-        .and(warp::path!(String / "run_indexer"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunIndexer>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_indexer(owner, init_db.deref(), body, cli);
-            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
-        });
+    // let init_db = initialized_databases_arc.clone();
+    // let cli_options_arc = Arc::new(cli_options.clone());
+    // let run_importer = services_api
+    //     .and(warp::path!(String / "run_importer"))
+    //     .and(warp::path::end())
+    //     .and(warp::body::json())
+    //     .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
+    //         let cli: &CLIOptions = &cli_options_arc.deref();
+    //         let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
+    //         respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+    //     });
 
     let init_db = initialized_databases_arc.clone();
     let upload_file = file_api
@@ -257,10 +214,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
                 }
             });
 
-    let always_enabled_filters = version
-        .with(&headers)
-        .or(create_item.with(&headers))
-        .or(insert_tree.with(&headers));
+    let always_enabled_filters = version.with(&headers).or(create_item.with(&headers));
 
     let sensitive_filters = warp::any().and_then(|| async move {
         if command_line_interface::PARSED.shared_server {
@@ -277,14 +231,18 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(delete_item.with(&headers))
         .or(search_by_fields.with(&headers))
         .or(get_items_with_edges.with(&headers))
-        .or(run_downloader.with(&headers))
-        .or(run_importer.with(&headers))
-        .or(run_indexer.with(&headers))
+        // .or(run_downloader.with(&headers))
+        // .or(run_importer.with(&headers))
+        // .or(run_indexer.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);
 
-    let filters = always_enabled_filters.or(sensitive_filters);
+    let not_found = warp::any().map(|| {
+        warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
+    });
+
+    let filters = always_enabled_filters.or(sensitive_filters).or(not_found);
 
     if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {
         let ip = if let Some(ip) = cli_options.insecure_non_tls {
@@ -342,9 +300,12 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
         Err(err) => {
             let code = err.code.as_str();
             let code_canon = err.code.canonical_reason().unwrap_or("");
-            let msg = &err.msg;
-            info!("Returning HTTP failure {} {}: {}", code, code_canon, msg);
-            warp::reply::with_status(err.msg, err.code).into_response()
+            info!(
+                "Returning HTTP failure {} {}: {}",
+                code, code_canon, &err.msg
+            );
+            let msg = format!("Failure: {}", err.msg);
+            warp::reply::with_status(msg, err.code).into_response()
         }
         Ok(t) => t.into_response(),
     }

@@ -1,23 +1,20 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
-use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
-use crate::api_model::RunDownloader;
-use crate::api_model::RunImporter;
-use crate::api_model::RunIndexer;
-use crate::api_model::SearchByFields;
+use crate::database_api;
+// use crate::api_model::RunImporter;
+use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
 use crate::constants;
 use crate::database_migrate_refinery;
-use crate::database_migrate_schema;
 use crate::error::Error;
 use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
-use crate::services_api;
+// use crate::services_api;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -36,10 +33,12 @@ use warp::http::status::StatusCode;
 pub fn get_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<i64>,
+    body: PayloadWrapper<String>,
 ) -> Result<Vec<Value>> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    internal_api::get_item(&conn, body.payload)
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    in_transaction(&mut conn, |tx| {
+        internal_api::get_item_tx(&tx, &body.payload).map(|r| r.into_iter().collect())
+    })
 }
 
 pub fn get_all_items(
@@ -58,7 +57,8 @@ pub fn create_item(
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::create_item_tx(&tx, body.payload.fields)
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::create_item_tx(&tx, &schema, body.payload)
     })
 }
 
@@ -80,7 +80,8 @@ pub fn bulk_action(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::bulk_action_tx(&tx, body.payload)
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::bulk_action_tx(&tx, &schema, body.payload)
     })
 }
 
@@ -95,26 +96,15 @@ pub fn delete_item(
     })
 }
 
-pub fn insert_tree(
+pub fn search(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<InsertTreeItem>,
-    shared_server: bool,
-) -> Result<i64> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    in_transaction(&mut conn, |tx| {
-        internal_api::insert_tree(&tx, body.payload, shared_server)
-    })
-}
-
-pub fn search_by_fields(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<SearchByFields>,
+    body: PayloadWrapper<Search>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::search_by_fields(&tx, body.payload)
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::search(&tx, &schema, body.payload)
     })
 }
 
@@ -133,38 +123,18 @@ pub fn get_items_with_edges(
 // Services
 //
 
-pub fn run_downloader(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<RunDownloader>,
-    cli_options: &CLIOptions,
-) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_downloader(&conn, body.payload, cli_options)
-}
-
-pub fn run_importer(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<RunImporter>,
-    cli_options: &CLIOptions,
-) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_importer(&conn, body.payload, cli_options)
-}
-
-pub fn run_indexer(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<RunIndexer>,
-    cli_options: &CLIOptions,
-) -> Result<()> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-    services_api::run_indexers(&conn, body.payload, cli_options)
-}
+// pub fn run_importer(
+//     owner: String,
+//     init_db: &RwLock<HashSet<String>>,
+//     body: PayloadWrapper<RunImporter>,
+//     cli_options: &CLIOptions,
+// ) -> Result<()> {
+//     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+//     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
+//     in_transaction(&mut conn, |tx| {
+//         services_api::run_importer(&tx, body.payload, cli_options)
+//     })
+// }
 
 pub fn upload_file(
     owner: String,
@@ -227,13 +197,10 @@ fn initialize_db(
     let mut conn = Connection::open(database_path).unwrap();
     let pragma_sql = format!("PRAGMA key = \"x'{}'\";", database_key);
     conn.execute_batch(&pragma_sql)?;
+    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {
         database_migrate_refinery::migrate(&mut conn)?;
-        database_migrate_schema::migrate(&conn).map_err(|err| Error {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Failed to migrate database according to schema, {}", err),
-        })?;
         init_db.insert(owner.to_string());
     }
     Ok(conn)

@@ -1,20 +1,28 @@
 use crate::api_model::BulkAction;
+use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
-use crate::api_model::InsertTreeItem;
-use crate::api_model::SearchByFields;
+use crate::api_model::Search;
+use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
+use crate::schema::Schema;
+use crate::schema::SchemaPropertyType;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
 use crate::sql_converters::sqlite_rows_to_json;
+use crate::sql_converters::sqlite_value_to_json;
 use crate::sql_converters::validate_property_name;
+use crate::triggers;
 use chrono::Utc;
 use log::info;
+use log::warn;
+use rusqlite::params;
 use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
+use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -25,28 +33,137 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-pub fn get_item(conn: &Connection, uid: i64) -> Result<Vec<Value>> {
-    info!("Getting item {}", uid);
+fn get_item_properties_old(tx: &Transaction, id: i64) -> Result<HashMap<String, Value>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM itemproperties WHERE itemId = ?1")?;
+    let rows_iter = stmt.query_map(params![id], |row| {
+        let name: String = row.get(0)?;
+        let value = sqlite_value_to_json(row.get_raw(1), &name);
+        if let Some(value) = value {
+            Ok(Some((name, value)))
+        } else {
+            Ok(None)
+        }
+    })?;
+    let mut result = HashMap::new();
+    for row in rows_iter {
+        if let Some((k, v)) = row? {
+            result.insert(k, v);
+        }
+    }
+    Ok(result)
+}
 
-    let mut stmt = conn.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-    let rows = stmt.query_named(&[(":uid", &uid)])?;
+fn get_item_rowid(tx: &Transaction, id: &str) -> Result<Option<i64>> {
+    let mut stmt = tx.prepare_cached("SELECT rowid FROM items WHERE id = ?1")?;
+    let mut rows = stmt.query_map(params![id], |row| row.get(0))?;
+    if let Some(row) = rows.next() {
+        let rowid: i64 = row?;
+        Ok(Some(rowid))
+    } else {
+        Ok(None)
+    }
+}
 
-    let json = sqlite_rows_to_json(rows, true)?;
+/// Get all properties that the item has, ignoring those
+/// that exist in the DB but are not defined in the Schema
+pub fn get_item_properties(
+    tx: &Transaction,
+    rowid: i64,
+    schema: &Schema,
+) -> Result<Map<String, Value>> {
+    let mut json = serde_json::Map::new();
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: i64 = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Bool) => {
+                json.insert(name, (value == 1).into());
+            }
+            Some(SchemaPropertyType::DateTime) | Some(SchemaPropertyType::Integer) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: String = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Text) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: f64 = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Real) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
     Ok(json)
 }
 
-fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
-    let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
-    let mut rows = stmt.query_named(&[(":uid", &uid)])?;
-    let result = match rows.next()? {
-        None => false,
-        Some(row) => {
-            let count: isize = row.get(0)?;
-            count > 0
-        }
+pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
+    info!("Getting item {}", id);
+    let rowid = if let Some(rowid) = get_item_rowid(tx, id)? {
+        rowid
+    } else {
+        return Ok(None);
     };
-    Ok(result)
+    let mut result = get_item_properties_old(tx, rowid)?;
+    result.insert("id".to_string(), id.into());
+    let obj: Value = serde_json::to_value(result)?;
+    Ok(Some(obj))
 }
+
+// fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
+//     let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
+//     let mut rows = stmt.query_named(&[(":uid", &uid)])?;
+//     let result = match rows.next()? {
+//         None => false,
+//         Some(row) => {
+//             let count: isize = row.get(0)?;
+//             count > 0
+//         }
+//     };
+//     Ok(result)
+// }
 
 pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
     info!("Getting all items");
@@ -57,22 +174,7 @@ pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
 }
 
 fn is_array_or_object(value: &Value) -> bool {
-    match value {
-        Value::Array(_) => true,
-        Value::Object(_) => true,
-        _ => false,
-    }
-}
-
-fn write_sql_body(sql: &mut String, keys: &[&String], separator: &str) {
-    let mut first = true;
-    for key in keys {
-        if !first {
-            sql.push_str(separator);
-        }
-        sql.push_str(key);
-        first = false;
-    }
+    matches!(value, Value::Array(_) | Value::Object(_))
 }
 
 fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
@@ -98,29 +200,110 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
     Ok(())
 }
 
-pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
-    let mut fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-        .collect();
-    let time_now = Utc::now().timestamp_millis();
-    if !fields.contains_key("dateCreated") {
-        fields.insert("dateCreated".to_string(), time_now.into());
-    }
-    if !fields.contains_key("dateModified") {
-        fields.insert("dateModified".to_string(), time_now.into());
-    }
-    fields.insert("_dateServerModified".to_string(), time_now.into());
-    fields.insert("version".to_string(), Value::from(1));
+fn new_uuid() -> String {
+    uuid::Uuid::new_v4().to_simple().to_string()
+}
 
-    let mut sql = "INSERT INTO items (".to_string();
-    let keys: Vec<_> = fields.keys().collect();
-    write_sql_body(&mut sql, &keys, ", ");
-    sql.push_str(") VALUES (:");
-    write_sql_body(&mut sql, &keys, ", :");
-    sql.push_str(");");
-    execute_sql(tx, &sql, &fields)?;
-    Ok(tx.last_insert_rowid())
+fn insert_property(
+    tx: &Transaction,
+    schema: &Schema,
+    rowid: i64,
+    name: &str,
+    json: &Value,
+) -> Result<()> {
+    let dbtype = if let Some(t) = schema.property_types.get(name) {
+        t
+    } else {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Property {} not defined in Schema (attempted to use it for json value {})",
+                name, json,
+            ),
+        });
+    };
+    database_api::delete_property(tx, rowid, name)?;
+
+    match json {
+        Value::Null => (),
+        Value::String(value) if dbtype == &SchemaPropertyType::Text => {
+            database_api::insert_string(tx, rowid, name, value)?
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
+            if let Some(value) = n.as_i64() {
+                database_api::insert_integer(tx, rowid, name, value)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, name),
+                });
+            }
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
+            if let Some(value) = n.as_f64() {
+                database_api::insert_real(tx, rowid, name, value)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, name),
+                });
+            }
+        }
+        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
+            database_api::insert_integer(tx, rowid, name, if *b { 1 } else { 0 })?
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
+            if let Some(value) = n.as_i64() {
+                database_api::insert_integer(tx, rowid, name, value)?
+            } else if let Some(float) = n.as_f64() {
+                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
+                database_api::insert_integer(tx, rowid, name, float.round() as i64)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!(
+                        "Failed to parse JSON number {} to DateTime ({}), use i64 number instead",
+                        n, name
+                    ),
+                });
+            }
+        }
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!(
+                    "Failed to parse json value {} to {:?} ({})",
+                    json, dbtype, name
+                ),
+            })
+        }
+    };
+    Ok(())
+}
+
+pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Result<i64> {
+    let default_id: String;
+    let id = if let Some(id) = &item.id {
+        id
+    } else {
+        default_id = new_uuid();
+        &default_id
+    };
+    let time_now = Utc::now().timestamp_millis();
+    triggers::trigger_before_item_create(tx, schema, &item)?;
+    let rowid = database_api::insert_item_base(
+        tx,
+        id,
+        &item._type,
+        item.date_created.unwrap_or(time_now),
+        item.date_modified.unwrap_or(time_now),
+        time_now,
+        item.deleted,
+    )?;
+    for (prop_name, prop_value) in &item.fields {
+        insert_property(tx, schema, rowid, &prop_name, &prop_value)?;
+    }
+    Ok(rowid)
 }
 
 pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
@@ -136,7 +319,7 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
     if !fields.contains_key("dateModified") {
         fields.insert("dateModified".to_string(), time_now.into());
     }
-    fields.insert("_dateServerModified".to_string(), time_now.into());
+    fields.insert("dateServerModified".to_string(), time_now.into());
 
     fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
@@ -156,44 +339,61 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
 }
 
 fn create_edge(
-    tx: &Transaction,
+    _tx: &Transaction,
     _type: &str,
-    source: i64,
-    target: i64,
-    mut fields: HashMap<String, Value>,
+    _source: &str,
+    _target: &str,
+    _fields: HashMap<String, Value>,
 ) -> Result<()> {
-    fields.insert("_type".to_string(), _type.into());
-    fields.insert("_source".to_string(), source.into());
-    fields.insert("_target".to_string(), target.into());
-    let fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-        .collect();
-    let mut sql = "INSERT INTO edges (".to_string();
-    let keys: Vec<_> = fields.keys().collect();
-    write_sql_body(&mut sql, &keys, ", ");
-    sql.push_str(") VALUES (:");
-    write_sql_body(&mut sql, &keys, ", :");
-    sql.push_str(");");
-    if !check_item_exists(tx, source)? {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: format!(
-                "Failed to create edge {} {}->{} because source uid is not found",
-                _type, source, target
-            ),
-        });
-    };
-    if !check_item_exists(tx, target)? {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: format!(
-                "Failed to create edge {} {}->{} because target uid is not found",
-                _type, source, target
-            ),
-        });
-    };
-    execute_sql(tx, &sql, &fields)
+    // let source_rowid = if let Some(rowid) = get_item_rowid(tx, source)? {
+    //     rowid
+    // } else {
+    //     return Err(Error {
+    //         code: StatusCode::BAD_REQUEST,
+    //         msg: format!("Cannot create edge, source not found in edge {}->{} ({})", source, target, _type)
+    //     })
+    // };
+    // let target_rowid = if let Some(rowid) = get_item_rowid(tx, target)? {
+    //     rowid
+    // } else {
+    //     return Err(Error {
+    //         code: StatusCode::BAD_REQUEST,
+    //         msg: format!("Cannot create edge, target not found in edge {}->{} ({})", source, target, _type)
+    //     })
+    // };
+    // fields.insert("_type".to_string(), _type.into());
+    // fields.insert("_source".to_string(), source.into());
+    // fields.insert("_target".to_string(), target.into());
+    // let fields: HashMap<String, Value> = fields
+    //     .into_iter()
+    //     .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
+    //     .collect();
+    // let mut sql = "INSERT INTO edges (".to_string();
+    // let keys: Vec<_> = fields.keys().collect();
+    // write_sql_body(&mut sql, &keys, ", ");
+    // sql.push_str(") VALUES (:");
+    // write_sql_body(&mut sql, &keys, ", :");
+    // sql.push_str(");");
+    // if !check_item_exists(tx, source)? {
+    //     return Err(Error {
+    //         code: StatusCode::NOT_FOUND,
+    //         msg: format!(
+    //             "Failed to create edge {} {}->{} because source uid is not found",
+    //             _type, source, target
+    //         ),
+    //     });
+    // };
+    // if !check_item_exists(tx, target)? {
+    //     return Err(Error {
+    //         code: StatusCode::NOT_FOUND,
+    //         msg: format!(
+    //             "Failed to create edge {} {}->{} because target uid is not found",
+    //             _type, source, target
+    //         ),
+    //     });
+    // };
+    // execute_sql(tx, &sql, &fields)
+    panic!()
 }
 
 fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
@@ -215,11 +415,11 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
     fields.insert("dateModified".to_string(), time_now.into());
-    fields.insert("_dateServerModified".to_string(), time_now.into());
+    fields.insert("dateServerModified".to_string(), time_now.into());
     update_item_tx(tx, uid, fields)
 }
 
-pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
+pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items, {} created edges, {} deleted edges",
         bulk_action.create_items.len(),
@@ -236,16 +436,22 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
                 msg: format!("Creating items without uid in bulk_action is restricted for safety reasons (creating edges might be broken), item: {:?}", item.fields)
             });
         }
-        create_item_tx(tx, item.fields)?;
+        create_item_tx(tx, schema, item)?;
     }
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
     }
-    let sources_set: HashSet<_> = bulk_action.create_edges.iter().map(|e| e._source).collect();
+    let sources_set: HashSet<_> = bulk_action
+        .create_edges
+        .iter()
+        .map(|e| e._source.to_string())
+        .collect();
     for edge in bulk_action.create_edges {
-        create_edge(tx, &edge._type, edge._source, edge._target, edge.fields)?;
+        create_edge(tx, &edge._type, &edge._source, &edge._target, edge.fields)?;
     }
     for edge_source in sources_set {
+        println!("{}", edge_source);
+        let edge_source = -1; // TODO
         update_item_tx(tx, edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
@@ -257,78 +463,43 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     Ok(())
 }
 
-pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
-    info!(
-        "Inserting tree item with {} properties and {} edges",
-        item.fields.len(),
-        item._edges.len()
-    );
-    let source_uid: i64 = if item.fields.len() > 1 {
-        create_item_tx(tx, item.fields)?
-    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
-        if item._edges.is_empty() {
-        } else if shared_server {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!(
-                    "Cannot create edges from already existing items in a shared server {:?}",
-                    item
-                ),
-            });
-        } else {
-            update_item_tx(tx, uid, HashMap::new())?;
-        }
-        uid
-    } else {
+pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Value>> {
+    info!("Searching by fields {:?}", query);
+    if !query.other_properties.is_empty() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: format!("Cannot create item: {:?}", item),
+            msg: format!(
+                "Cannot search by non-base properties: {:?}. \
+                    In the future we will allow searching for other properties. \
+                    See HTTP_API.md for details.",
+                query.other_properties.keys()
+            ),
         });
-    };
-    for edge in item._edges {
-        let target_item = insert_tree(tx, edge._target, shared_server)?;
-        create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
     }
-    Ok(source_uid)
-}
-
-pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {
-    info!("Searching by fields {:?}", query);
-    let mut sql_body = "SELECT * FROM items WHERE ".to_string();
-    let mut first_parameter = true;
-    for (field, value) in &query.fields {
-        validate_property_name(field)?;
-        match value {
-            Value::Array(_) => continue,
-            Value::Object(_) => continue,
-            _ => (),
-        };
-        if !first_parameter {
-            sql_body.push_str(" AND ")
-        };
-        first_parameter = false;
-        sql_body.push_str(field);
-        sql_body.push_str(" = :");
-        sql_body.push_str(field);
+    let items = database_api::search_items(
+        tx,
+        None,
+        query.id.as_deref(),
+        query._type.as_deref(),
+        query._date_server_modified_gte,
+        query._date_server_modified_lt,
+        query.deleted,
+    )?;
+    let mut result = Vec::new();
+    for item in items {
+        let mut properties = get_item_properties(tx, item.rowid, schema)?;
+        properties.insert("id".to_string(), item.id.into());
+        properties.insert("type".to_string(), item._type.into());
+        properties.insert("dateCreated".to_string(), item.date_created.into());
+        properties.insert("dateModified".to_string(), item.date_modified.into());
+        properties.insert(
+            "dateServerModified".to_string(),
+            item.date_server_modified.into(),
+        );
+        properties.insert("deleted".to_string(), item.deleted.into());
+        result.push(Value::Object(properties))
     }
-    if query._date_server_modified_after.is_some() {
-        sql_body.push_str(" AND _dateServerModified > :_dateServerModified");
-    };
-    sql_body.push_str(";");
-
-    let mut sql_params = Vec::new();
-    for (key, value) in &query.fields {
-        sql_params.push((format!(":{}", key), json_value_to_sqlite(&value, &key)?));
-    }
-    if let Some(date) = query._date_server_modified_after {
-        let key = ":_dateServerModified".to_string();
-        sql_params.push((key, date.into()));
-    };
-    let sql_params = borrow_sql_params(sql_params.as_slice());
-    let mut stmt = tx.prepare_cached(&sql_body)?;
-    let rows = stmt.query_named(sql_params.as_slice())?;
-    let json = sqlite_rows_to_json(rows, true)?;
-    Ok(json)
+    Ok(result)
 }
 
 pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {

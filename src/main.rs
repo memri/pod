@@ -3,13 +3,16 @@ extern crate rusqlite;
 mod api_model;
 mod command_line_interface;
 mod constants;
+pub mod database_api;
 mod database_migrate_refinery;
 pub mod database_migrate_schema;
 mod error;
 pub mod file_api;
 pub mod internal_api;
+mod schema;
 pub mod services_api;
 mod sql_converters;
+mod triggers;
 mod warp_api;
 mod warp_endpoints;
 

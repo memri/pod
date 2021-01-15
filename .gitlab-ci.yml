@@ -1,9 +1,7 @@
 # WARNING:
-# Project currently GitLab shell runner state instead of proper caching.
+# Project currently uses GitLab shell runner instead of proper containers.
 #
-# If you have any ideas on how to make the gitlab runner
-# both isolated (not having access to docker and thus `root`) and properly cached, please tell!
-# Merge request or send an email or send a Slack message.
+# Merge requests to improve this are welcomed!
 
 stages:
   - test
@@ -14,7 +12,7 @@ test:
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
-    - if grep --recursive '::{' src/; then false; fi
+    - if grep --recursive '::{' src/; then exit -1; fi
     - cargo audit
     - cargo test
     - ./tools/test_curl.sh

@@ -42,7 +42,7 @@ pub fn sqlite_rows_to_json(mut rows: Rows, partial: bool) -> rusqlite::Result<Ve
     Ok(result)
 }
 
-fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
+pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
     match value {
         ValueRef::Null => None,
         ValueRef::Integer(i) => {
@@ -53,14 +53,19 @@ fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
             } else if i == 1 {
                 Some(Value::from(true))
             } else {
-                panic!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i)
+                warn!("Column {} should be a boolean, got {} in the database instead. Did column definitions change?", column_name, i);
+                None
             }
         }
         ValueRef::Real(f) => Some(Value::from(f)),
-        ValueRef::Text(t) => Some(Value::from(
-            std::str::from_utf8(t).expect("Non UTF-8 data in TEXT field of the database"),
-        )),
-        ValueRef::Blob(_) => panic!("BLOB conversion to JSON not supported"),
+        ValueRef::Text(t) => match std::str::from_utf8(t) {
+            Ok(t) => Some(Value::from(t)),
+            Err(err) => {
+                warn!("Non-UTF-8 TEXT in the database, {}", err);
+                None
+            }
+        },
+        ValueRef::Blob(_) => panic!("BLOB value found in the database, this should never happen"),
     }
 }
 
@@ -72,6 +77,14 @@ pub fn borrow_sql_params<'a>(
         .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
         .collect()
 }
+
+// pub fn json_value_and_schema_to_sqlite<'a>(
+//     _json: &'a Value,
+//     _property_name: &str,
+//     _schema: &Schema,
+// ) -> crate::error::Result<ToSqlOutput<'a>> {
+//     unimplemented!()
+// }
 
 pub fn json_value_to_sqlite<'a>(
     json: &'a Value,
@@ -143,7 +156,7 @@ pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
         static ref REGEXP: Regex =
             Regex::new(r"^[_a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
     }
-    if BLOCKLIST_COLUMN_NAMES.contains(property) {
+    if BLOCKLIST_COLUMN_NAMES.contains(&property.to_lowercase()) {
         Err(crate::error::Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!("Blocklisted item property {}", property),
@@ -315,7 +328,7 @@ lazy_static! {
     static ref BLOCKLIST_COLUMN_NAMES: HashSet<String> = {
         BLOCKLIST_COLUMN_NAMES_ARRAY
             .iter()
-            .map(|w| w.to_string())
+            .map(|w| w.to_lowercase())
             .collect()
     };
 }

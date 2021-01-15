@@ -35,7 +35,7 @@ Any person having this `owner` and `database_key` will then be able to
 connect to the shared pod and write data to it.
 
 This run mode is activated with the `--shared-server` CLI parameter, and it means that the
-server will only have `insert_tree` and `version` (write-only) endpoints working.
+server will only have `create_item` and `version` (write-only) endpoints working.
 Because it is write-only, other users won't be able to read your data,
 and you can submit even your sensitive data if you trust the Shared Pod maintainer.
 
