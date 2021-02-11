@@ -1,5 +1,6 @@
 use crate::database_migrate_schema;
 use crate::error::Error;
+// use crate::schema::Schema;
 use database_migrate_schema::ALL_COLUMN_TYPES;
 use database_migrate_schema::BOOL_COLUMNS;
 use database_migrate_schema::DATE_TIME_COLUMNS;
@@ -77,6 +78,14 @@ pub fn borrow_sql_params<'a>(
         .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
         .collect()
 }
+
+// pub fn json_value_and_schema_to_sqlite<'a>(
+//     _json: &'a Value,
+//     _property_name: &str,
+//     _schema: &Schema,
+// ) -> crate::error::Result<ToSqlOutput<'a>> {
+//     unimplemented!()
+// }
 
 pub fn json_value_to_sqlite<'a>(
     json: &'a Value,

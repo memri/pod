@@ -3,9 +3,7 @@ use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
-use crate::api_model::RunDownloader;
-use crate::api_model::RunImporter;
-use crate::api_model::RunIndexer;
+// use crate::api_model::RunImporter;
 use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
@@ -44,13 +42,13 @@ pub async fn run_server(cli_options: &CLIOptions) {
     }
     let headers = warp::reply::with::headers(headers);
 
-    let items_api = warp::path("v2")
+    let items_api = warp::path("v3")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
-    let services_api = warp::path("v2")
-        .and(warp::body::content_length_limit(32 * 1024))
-        .and(warp::post());
-    let file_api = warp::path("v2")
+    // let services_api = warp::path("v3")
+    //     .and(warp::body::content_length_limit(32 * 1024))
+    //     .and(warp::post());
+    let file_api = warp::path("v3")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 
@@ -162,44 +160,17 @@ pub async fn run_server(cli_options: &CLIOptions) {
             respond_with_result(result)
         });
 
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_downloader = services_api
-        // //! In fact, any type that implements `FromStr` can be used, in any order:
-        // ~/.cargo/registry.cache/src/github.com-1ecc6299db9ec823/warp-0.2.4/src/filters/path.rs:45
-        .and(warp::path!(String / "run_downloader"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunDownloader>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_downloader(owner, init_db.deref(), body, cli);
-            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_importer = services_api
-        .and(warp::path!(String / "run_importer"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
-            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let run_indexer = services_api
-        .and(warp::path!(String / "run_indexer"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<RunIndexer>| {
-            let cli: &CLIOptions = &cli_options_arc.deref();
-            let result = warp_endpoints::run_indexer(owner, init_db.deref(), body, cli);
-            respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
-        });
+    // let init_db = initialized_databases_arc.clone();
+    // let cli_options_arc = Arc::new(cli_options.clone());
+    // let run_importer = services_api
+    //     .and(warp::path!(String / "run_importer"))
+    //     .and(warp::path::end())
+    //     .and(warp::body::json())
+    //     .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
+    //         let cli: &CLIOptions = &cli_options_arc.deref();
+    //         let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
+    //         respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+    //     });
 
     let init_db = initialized_databases_arc.clone();
     let upload_file = file_api
@@ -277,9 +248,9 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(delete_item.with(&headers))
         .or(search_by_fields.with(&headers))
         .or(get_items_with_edges.with(&headers))
-        .or(run_downloader.with(&headers))
-        .or(run_importer.with(&headers))
-        .or(run_indexer.with(&headers))
+        // .or(run_downloader.with(&headers))
+        // .or(run_importer.with(&headers))
+        // .or(run_indexer.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);

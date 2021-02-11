@@ -27,9 +27,9 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-fn get_item_properties(tx: &Transaction, item_id: &str) -> Result<HashMap<String, Value>> {
+fn get_item_properties(tx: &Transaction, id: i64) -> Result<HashMap<String, Value>> {
     let mut stmt = tx.prepare_cached("SELECT name, value FROM itemproperties WHERE itemId = ?1")?;
-    let rows_iter = stmt.query_map(params![item_id], |row| {
+    let rows_iter = stmt.query_map(params![id], |row| {
         let name: String = row.get(0)?;
         let value = sqlite_value_to_json(row.get_raw(1), &name);
         if let Some(value) = value {
@@ -47,36 +47,42 @@ fn get_item_properties(tx: &Transaction, item_id: &str) -> Result<HashMap<String
     Ok(result)
 }
 
+fn get_item_rowid(tx: &Transaction, id: &str) -> Result<Option<i64>> {
+    let mut stmt = tx.prepare_cached("SELECT rowid FROM items WHERE id = ?1")?;
+    let mut rows = stmt.query_map(params![id], |row| row.get(0))?;
+    if let Some(row) = rows.next() {
+        let rowid: i64 = row?;
+        Ok(Some(rowid))
+    } else {
+        Ok(None)
+    }
+}
+
 pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
     info!("Getting item {}", id);
-
-    let mut stmt = tx.prepare_cached("SELECT * FROM items WHERE id = :id")?;
-    let mut rows = stmt.query_named(&[(":id", &id)])?;
-
-    let row = match rows.next()? {
-        Some(row) => row,
-        None => return Ok(None),
+    let rowid = if let Some(rowid) = get_item_rowid(tx, id)? {
+        rowid
+    } else {
+        return Ok(None);
     };
-    let mut map = get_item_properties(tx, &id.to_string())?;
-    for (k, v) in sqlite_row_to_map(row, true)? {
-        map.insert(k, v);
-    }
-    let obj: Value = serde_json::to_value(map)?;
+    let mut result = get_item_properties(tx, rowid)?;
+    result.insert("id".to_string(), id.into());
+    let obj: Value = serde_json::to_value(result)?;
     Ok(Some(obj))
 }
 
-fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
-    let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
-    let mut rows = stmt.query_named(&[(":uid", &uid)])?;
-    let result = match rows.next()? {
-        None => false,
-        Some(row) => {
-            let count: isize = row.get(0)?;
-            count > 0
-        }
-    };
-    Ok(result)
-}
+// fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
+//     let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
+//     let mut rows = stmt.query_named(&[(":uid", &uid)])?;
+//     let result = match rows.next()? {
+//         None => false,
+//         Some(row) => {
+//             let count: isize = row.get(0)?;
+//             count > 0
+//         }
+//     };
+//     Ok(result)
+// }
 
 pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
     info!("Getting all items");
@@ -140,7 +146,7 @@ pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Resul
     if !fields.contains_key("dateModified") {
         fields.insert("dateModified".to_string(), time_now.into());
     }
-    fields.insert("_dateServerModified".to_string(), time_now.into());
+    fields.insert("dateServerModified".to_string(), time_now.into());
     fields.insert("version".to_string(), Value::from(1));
 
     let mut sql = "INSERT INTO items (".to_string();
@@ -166,7 +172,7 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
     if !fields.contains_key("dateModified") {
         fields.insert("dateModified".to_string(), time_now.into());
     }
-    fields.insert("_dateServerModified".to_string(), time_now.into());
+    fields.insert("dateServerModified".to_string(), time_now.into());
 
     fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
@@ -186,44 +192,61 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
 }
 
 fn create_edge(
-    tx: &Transaction,
+    _tx: &Transaction,
     _type: &str,
-    source: i64,
-    target: i64,
-    mut fields: HashMap<String, Value>,
+    _source: &str,
+    _target: &str,
+    _fields: HashMap<String, Value>,
 ) -> Result<()> {
-    fields.insert("_type".to_string(), _type.into());
-    fields.insert("_source".to_string(), source.into());
-    fields.insert("_target".to_string(), target.into());
-    let fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-        .collect();
-    let mut sql = "INSERT INTO edges (".to_string();
-    let keys: Vec<_> = fields.keys().collect();
-    write_sql_body(&mut sql, &keys, ", ");
-    sql.push_str(") VALUES (:");
-    write_sql_body(&mut sql, &keys, ", :");
-    sql.push_str(");");
-    if !check_item_exists(tx, source)? {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: format!(
-                "Failed to create edge {} {}->{} because source uid is not found",
-                _type, source, target
-            ),
-        });
-    };
-    if !check_item_exists(tx, target)? {
-        return Err(Error {
-            code: StatusCode::NOT_FOUND,
-            msg: format!(
-                "Failed to create edge {} {}->{} because target uid is not found",
-                _type, source, target
-            ),
-        });
-    };
-    execute_sql(tx, &sql, &fields)
+    // let source_rowid = if let Some(rowid) = get_item_rowid(tx, source)? {
+    //     rowid
+    // } else {
+    //     return Err(Error {
+    //         code: StatusCode::BAD_REQUEST,
+    //         msg: format!("Cannot create edge, source not found in edge {}->{} ({})", source, target, _type)
+    //     })
+    // };
+    // let target_rowid = if let Some(rowid) = get_item_rowid(tx, target)? {
+    //     rowid
+    // } else {
+    //     return Err(Error {
+    //         code: StatusCode::BAD_REQUEST,
+    //         msg: format!("Cannot create edge, target not found in edge {}->{} ({})", source, target, _type)
+    //     })
+    // };
+    // fields.insert("_type".to_string(), _type.into());
+    // fields.insert("_source".to_string(), source.into());
+    // fields.insert("_target".to_string(), target.into());
+    // let fields: HashMap<String, Value> = fields
+    //     .into_iter()
+    //     .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
+    //     .collect();
+    // let mut sql = "INSERT INTO edges (".to_string();
+    // let keys: Vec<_> = fields.keys().collect();
+    // write_sql_body(&mut sql, &keys, ", ");
+    // sql.push_str(") VALUES (:");
+    // write_sql_body(&mut sql, &keys, ", :");
+    // sql.push_str(");");
+    // if !check_item_exists(tx, source)? {
+    //     return Err(Error {
+    //         code: StatusCode::NOT_FOUND,
+    //         msg: format!(
+    //             "Failed to create edge {} {}->{} because source uid is not found",
+    //             _type, source, target
+    //         ),
+    //     });
+    // };
+    // if !check_item_exists(tx, target)? {
+    //     return Err(Error {
+    //         code: StatusCode::NOT_FOUND,
+    //         msg: format!(
+    //             "Failed to create edge {} {}->{} because target uid is not found",
+    //             _type, source, target
+    //         ),
+    //     });
+    // };
+    // execute_sql(tx, &sql, &fields)
+    panic!()
 }
 
 fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
@@ -245,7 +268,7 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
     fields.insert("dateModified".to_string(), time_now.into());
-    fields.insert("_dateServerModified".to_string(), time_now.into());
+    fields.insert("dateServerModified".to_string(), time_now.into());
     update_item_tx(tx, uid, fields)
 }
 
@@ -271,11 +294,17 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
     }
-    let sources_set: HashSet<_> = bulk_action.create_edges.iter().map(|e| e._source).collect();
+    let sources_set: HashSet<_> = bulk_action
+        .create_edges
+        .iter()
+        .map(|e| e._source.to_string())
+        .collect();
     for edge in bulk_action.create_edges {
-        create_edge(tx, &edge._type, edge._source, edge._target, edge.fields)?;
+        create_edge(tx, &edge._type, &edge._source, &edge._target, edge.fields)?;
     }
     for edge_source in sources_set {
+        println!("{}", edge_source);
+        let edge_source = -1; // TODO
         update_item_tx(tx, edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
@@ -317,6 +346,9 @@ pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) 
     };
     for edge in item._edges {
         let target_item = insert_tree(tx, edge._target, shared_server)?;
+        println!("{}", target_item);
+        let source_uid = ""; // TODO
+        let target_item = ""; // TODO
         create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
     }
     Ok(source_uid)
@@ -342,7 +374,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
         sql_body.push_str(field);
     }
     if query._date_server_modified_after.is_some() {
-        sql_body.push_str(" AND _dateServerModified > :_dateServerModified");
+        sql_body.push_str(" AND dateServerModified > :dateServerModified");
     };
     sql_body.push_str(";");
 
@@ -351,7 +383,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
         sql_params.push((format!(":{}", key), json_value_to_sqlite(&value, &key)?));
     }
     if let Some(date) = query._date_server_modified_after {
-        let key = ":_dateServerModified".to_string();
+        let key = ":dateServerModified".to_string();
         sql_params.push((key, date.into()));
     };
     let sql_params = borrow_sql_params(sql_params.as_slice());

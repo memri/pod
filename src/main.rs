@@ -8,6 +8,7 @@ pub mod database_migrate_schema;
 mod error;
 pub mod file_api;
 pub mod internal_api;
+mod schema;
 pub mod services_api;
 mod sql_converters;
 mod warp_api;

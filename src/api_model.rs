@@ -21,8 +21,8 @@ pub struct UpdateItem {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateEdge {
     pub _type: String,
-    pub _source: i64,
-    pub _target: i64,
+    pub _source: String,
+    pub _target: String,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
 }
@@ -68,7 +68,7 @@ pub struct InsertTreeEdge {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchByFields {
-    #[serde(rename = "_dateServerModifiedAfter")]
+    #[serde(rename = "dateServerModifiedAfter")]
     pub _date_server_modified_after: Option<i64>,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
