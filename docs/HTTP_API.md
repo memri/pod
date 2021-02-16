@@ -5,7 +5,6 @@ HTTP API is the interface that Pod provides to store and access user data.
 This document explains the data types that Pod can store,
 and current API provided for that.
 
-You can read [Schema docs](./Schema.md) to understand how data is encoded in Pod.
 
 # API Authentication & Credentials
 Some endpoints require additional authentication / credentials.
@@ -122,8 +121,10 @@ Returns an empty object if the operation is successful.
 
 
 # Schema API
-TODO
+Schema defines what types can be stored in Pod. You can read more about Schema [here](./Schema.md).
+This section explains how to communicate the Schema over HTTP.
 
+TODO
 
 <!--
 # Services API
