@@ -56,3 +56,16 @@ CREATE TABLE reals (
 CREATE UNIQUE INDEX idx_reals_item_name on reals(item, name);
 CREATE        INDEX idx_reals_name_value on reals(name, value);
 CREATE        INDEX idx_reals_name_item on reals(name, item);
+
+
+CREATE TABLE itemSchema (
+    itemType TEXT NOT NULL,
+    propertyName TEXT NOT NULL,
+    valueType TEXT NOT NULL
+);
+
+CREATE TABLE edgeSchema (
+    sourceType TEXT NOT NULL,
+    edgeName TEXT NOT NULL,
+    targetType TEXT NOT NULL
+);
