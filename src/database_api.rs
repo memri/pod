@@ -1,8 +1,10 @@
 use crate::error::Result;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
+use rusqlite::params;
+use rusqlite::types::ToSqlOutput;
 use rusqlite::Transaction;
-use rusqlite::{params, NO_PARAMS};
+use rusqlite::NO_PARAMS;
 use std::collections::HashMap;
 
 type Rowid = i64;
@@ -85,7 +87,7 @@ fn insert_string_unchecked(tx: &Transaction, item: Rowid, name: &str, value: &st
 }
 
 #[allow(dead_code)]
-fn read_schema(tx: &Transaction) -> Result<Schema> {
+pub fn read_schema(tx: &Transaction) -> Result<Schema> {
     let mut stmt = tx.prepare_cached("SELECT propertyName, valueType FROM itemSchema;")?;
     let mut rows = stmt.query(NO_PARAMS)?;
     let mut property_types: HashMap<String, SchemaPropertyType> = HashMap::new();
@@ -95,27 +97,91 @@ fn read_schema(tx: &Transaction) -> Result<Schema> {
         let value_type = SchemaPropertyType::from_string(&value_type)?;
         property_types.insert(property_name, value_type);
     }
-    Ok(Schema {
-        property_types
-    })
+    Ok(Schema { property_types })
 }
 
-// #[derive(Debug, Copy, Clone, PartialEq)]
-// pub enum Comparison {
-//     Equals,
-//     GreaterThan,
-//     GreaterOrEquals,
-//     LessThan,
-//     LessOrEquals,
+pub fn read_item_schema_joins(tx: &Transaction) -> Result<Schema> {
+    let mut stmt = tx.prepare_cached(
+        "SELECT thisProperty.value, thisType.value \
+        FROM \
+            items as item,
+            strings as thisProperty,
+            strings as thisType
+        WHERE item.type = 'ItemPropertySchema'
+        AND thisProperty.item = item.rowid
+        AND thisType.item = item.rowid
+        AND thisProperty.name = 'propertyName'
+        AND thisType.name = 'valueType';",
+    )?;
+    let mut rows = stmt.query(NO_PARAMS)?;
+    let mut property_types: HashMap<String, SchemaPropertyType> = HashMap::new();
+    while let Some(row) = rows.next()? {
+        let this_property: String = row.get(0)?;
+        let this_type: String = row.get(1)?;
+        let value_type = SchemaPropertyType::from_string(&this_type)?;
+        property_types.insert(this_property, value_type);
+    }
+    Ok(Schema { property_types })
+}
+
+// pub fn read_item_schema_alternative2222222(tx: &Transaction) -> Result<Schema> {
+//     // Steps:
+//     // * find items by type
+//     // * find the two properties for each item
+//     // * aggregate the results into a Schema
 // }
 
-// fn add_integer_param<'a>(
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Comparison {
+    Equals,
+    GreaterThan,
+    GreaterOrEquals,
+    LessThan,
+    LessOrEquals,
+}
+
+fn add_query_integer_param(
+    mut query: String,
+    params: &mut Vec<ToSqlOutput>,
+    column: &str,
+    operation: &Comparison,
+    value: i64,
+) {
+    query.push_str("AND ");
+    query.push_str(column);
+    match operation {
+        Comparison::Equals => query.push_str(" = "),
+        Comparison::GreaterThan => query.push_str(" > "),
+        Comparison::GreaterOrEquals => query.push_str(" >= "),
+        Comparison::LessThan => query.push_str(" < "),
+        Comparison::LessOrEquals => query.push_str(" <= "),
+    };
+    query.push_str("?");
+    let value: ToSqlOutput = value.into();
+    params.push(value);
+}
+
+fn add_sql_param(mut query: String, column: &str, operation: &Comparison) -> Result<()> {
+    query.push_str("AND ");
+    query.push_str(column);
+    match operation {
+        Comparison::Equals => query.push_str(" = "),
+        Comparison::GreaterThan => query.push_str(" > "),
+        Comparison::GreaterOrEquals => query.push_str(" >= "),
+        Comparison::LessThan => query.push_str(" < "),
+        Comparison::LessOrEquals => query.push_str(" <= "),
+    };
+    query.push_str("?");
+    Ok(())
+}
+
+// fn add_query_string_param<'a>(
 //     mut query: String,
 //     params: &mut Vec<ToSqlOutput>,
 //     column: &str,
 //     operation: &Comparison,
-//     value: i64,
-// ) {
+//     value: &str,
+// ) -> Result<()> {
 //     query.push_str("AND ");
 //     query.push_str(column);
 //     match operation {
@@ -128,28 +194,64 @@ fn read_schema(tx: &Transaction) -> Result<Schema> {
 //     query.push_str("?");
 //     let value: ToSqlOutput = value.into();
 //     params.push(value);
+//     Ok(())
 // }
 
-// #[allow(dead_code)]
-// fn search_items_iter(
-//     tx: &Transaction,
-//     _rowid: Option<Rowid>,
-//     _type: Option<&str>,
-//     _date_created: Option<DBTime>,
-//     _date_modified: Option<DBTime>,
-//     _date_server_modified: Option<DBTime>,
-//     _deleted: DBTime,
-// ) -> Result<()>{
-//     // let mut p = params![0];
-//     let mut params_vec: Vec<ToSqlOutput> = Vec::new();
-//     add_integer_param(String::new(), &mut params_vec, "age", &Comparison::Equals, 0);
-//     add_integer_param(String::new(), &mut params_vec, "boo", &Comparison::Equals, 0);
-//     let mut stmt = tx.prepare_cached("")?;
-//     let r = stmt.query_map(params_vec, |_row| Ok(0))?;
-//     Ok(r)
-//
-//     // Ok(())
+// fn add_query_param<V>(
+//     mut query: String,
+//     params: &mut Vec<ToSqlOutput>,
+//     column: &str,
+//     operation: &Comparison,
+//     value: V,
+// ) -> Result<()>
+//     where
+//         V: ToSql,
+// {
+//     query.push_str("AND ");
+//     query.push_str(column);
+//     match operation {
+//         Comparison::Equals => query.push_str(" = "),
+//         Comparison::GreaterThan => query.push_str(" > "),
+//         Comparison::GreaterOrEquals => query.push_str(" >= "),
+//         Comparison::LessThan => query.push_str(" < "),
+//         Comparison::LessOrEquals => query.push_str(" <= "),
+//     };
+//     query.push_str("?");
+//     let value: ToSqlOutput = value.to_sql()?;
+//     params.push(value);
+//     Ok(())
 // }
+
+#[allow(dead_code)]
+fn search_items_iter(
+    tx: &Transaction,
+    _rowid: Option<Rowid>,
+    _type: Option<&str>,
+    _date_created: Option<DBTime>,
+    _date_modified: Option<DBTime>,
+    _date_server_modified: Option<DBTime>,
+    _deleted: DBTime,
+) -> Result<()> {
+    // let mut p = params![0];
+    let mut params_vec: Vec<ToSqlOutput> = Vec::new();
+    add_query_integer_param(
+        String::new(),
+        &mut params_vec,
+        "age",
+        &Comparison::Equals,
+        0,
+    );
+    add_query_integer_param(
+        String::new(),
+        &mut params_vec,
+        "boo",
+        &Comparison::Equals,
+        0,
+    );
+    let mut stmt = tx.prepare_cached("")?;
+    let r = stmt.query_map(params_vec, |_row| Ok(0))?;
+    Ok(())
+}
 
 // /// Low-level function to get an item.
 // /// No Schema/type checks are done. Use other functions around instead.
@@ -226,22 +328,20 @@ mod tests {
     #[test]
     fn test_insert_item() -> Result<()> {
         let mut conn = new_conn();
-        let date = Utc::now().timestamp_millis();
         let tx = conn.transaction()?;
-        let item = insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        assert_eq!(item, 1);
-        let item = insert_item_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
-        assert_eq!(item, 2);
+        let date = Utc::now().timestamp_millis();
+        let item1 = insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item2 = insert_item_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
+        assert_eq!(item2 - item1, 1);
         Ok(())
     }
 
     #[test]
     fn test_insert_scalars() -> Result<()> {
         let mut conn = new_conn();
-        let date = Utc::now().timestamp_millis();
         let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
         let item = insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        assert_eq!(item, 1);
         insert_integer_unchecked(&tx, item, "age", 20)?;
         insert_real_unchecked(&tx, item, "attack", 13.5)?;
         insert_string_unchecked(&tx, item, "trait", "resilient")?;
@@ -251,25 +351,70 @@ mod tests {
     #[test]
     fn test_insert_edge() -> Result<()> {
         let mut conn = new_conn();
-        let date = Utc::now().timestamp_millis();
         let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
         let source =
             insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        assert_eq!(source, 1);
         let target =
             insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        assert_eq!(target, 2);
+        assert_eq!(target - source, 1);
         let edge = insert_edge_unchecked(&tx, source, "friend", target, &random_id(), date, 1)?;
-        assert_eq!(edge, 3);
+        assert_eq!(edge - target, 1);
         Ok(())
     }
 
     #[test]
-    fn test_schema() -> Result<()> {
+    fn test_default_schema() -> Result<()> {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
-        let schema = read_schema(&tx)?;
-        assert!(schema.property_types.is_empty());
+        let schema = read_item_schema_joins(&tx)?;
+        assert_eq!(schema.property_types.len(), 3);
+        Ok(())
+    }
+
+    #[test]
+    fn test_full_schema() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
+        let item = insert_item_unchecked(
+            &tx,
+            &random_id(),
+            "ItemPropertySchema",
+            date,
+            date,
+            date,
+            false,
+            1,
+        )?;
+        insert_string_unchecked(&tx, item, "itemType", "Person")?;
+        insert_string_unchecked(&tx, item, "propertyName", "age")?;
+        insert_string_unchecked(&tx, item, "valueType", "integer")?;
+
+        let item = insert_item_unchecked(
+            &tx,
+            &random_id(),
+            "ItemPropertySchema",
+            date,
+            date,
+            date,
+            false,
+            1,
+        )?;
+        insert_string_unchecked(&tx, item, "itemType", "Person")?;
+        insert_string_unchecked(&tx, item, "propertyName", "name")?;
+        insert_string_unchecked(&tx, item, "valueType", "text")?;
+
+        let schema = read_item_schema_joins(&tx)?;
+        assert_eq!(
+            schema.property_types.get("age"),
+            Some(&SchemaPropertyType::Integer)
+        );
+        assert_eq!(
+            schema.property_types.get("name"),
+            Some(&SchemaPropertyType::Text)
+        );
+        assert_eq!(schema.property_types.len(), 5);
         Ok(())
     }
 }

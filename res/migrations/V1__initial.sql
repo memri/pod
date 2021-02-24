@@ -58,14 +58,20 @@ CREATE        INDEX idx_reals_name_value on reals(name, value);
 CREATE        INDEX idx_reals_name_item on reals(name, item);
 
 
-CREATE TABLE itemSchema (
-    itemType TEXT NOT NULL,
-    propertyName TEXT NOT NULL,
-    valueType TEXT NOT NULL
-);
+-- Items of type "ItemPropertySchema" have property "itemType" (text)
+INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted, version) VALUES(1, "b1710e04-76da-11eb-88cd-80fa5b7b2eec", "ItemPropertySchema", 0, 0, 0, 0, 1);
+INSERT INTO strings(item, name, value) VALUES(1, "itemType", "ItemPropertySchema");
+INSERT INTO strings(item, name, value) VALUES(1, "propertyName", "itemType");
+INSERT INTO strings(item, name, value) VALUES(1, "valueType", "text");
 
-CREATE TABLE edgeSchema (
-    sourceType TEXT NOT NULL,
-    edgeName TEXT NOT NULL,
-    targetType TEXT NOT NULL
-);
+-- Items of type "ItemPropertySchema" have property "propertyName" (text)
+INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted, version) VALUES(2, "b71d2df6-76da-11eb-9540-80fa5b7b2eec", "ItemPropertySchema", 0, 0, 0, 0, 1);
+INSERT INTO strings(item, name, value) VALUES(2, "itemType", "ItemPropertySchema");
+INSERT INTO strings(item, name, value) VALUES(2, "propertyName", "propertyName");
+INSERT INTO strings(item, name, value) VALUES(2, "valueType", "text");
+
+-- Items of type "ItemPropertySchema" have property "valueType" (text)
+INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted, version) VALUES(3, "bb5e0fac-76da-11eb-aa7f-80fa5b7b2eec", "ItemPropertySchema", 0, 0, 0, 0, 1);
+INSERT INTO strings(item, name, value) VALUES(3, "itemType", "ItemPropertySchema");
+INSERT INTO strings(item, name, value) VALUES(3, "propertyName", "valueType");
+INSERT INTO strings(item, name, value) VALUES(3, "valueType", "text");
