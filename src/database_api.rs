@@ -13,7 +13,7 @@ type DBTime = i64;
 /// Low-level function to insert an item.
 /// No Schema/type checks are done. Use other functions around instead.
 #[allow(dead_code)]
-fn insert_item_unchecked(
+fn insert_item_base_unchecked(
     tx: &Transaction,
     id: &str,
     _type: &str,
@@ -58,7 +58,7 @@ fn insert_edge_unchecked(
     date: DBTime,
     version: i64,
 ) -> Result<Rowid> {
-    let item = insert_item_unchecked(tx, id, name, date, date, date, false, version)?;
+    let item = insert_item_base_unchecked(tx, id, name, date, date, date, false, version)?;
     let mut stmt =
         tx.prepare_cached("INSERT INTO edges(self, source, name, target) VALUES(?, ?, ?, ?);")?;
     stmt.execute(params![item, source, name, target])?;
@@ -330,8 +330,8 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item1 = insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        let item2 = insert_item_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
+        let item1 = insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item2 = insert_item_base_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
         assert_eq!(item2 - item1, 1);
         Ok(())
     }
@@ -341,7 +341,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item = insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item = insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         insert_integer_unchecked(&tx, item, "age", 20)?;
         insert_real_unchecked(&tx, item, "attack", 13.5)?;
         insert_string_unchecked(&tx, item, "trait", "resilient")?;
@@ -354,9 +354,9 @@ mod tests {
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
         let source =
-            insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         let target =
-            insert_item_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         assert_eq!(target - source, 1);
         let edge = insert_edge_unchecked(&tx, source, "friend", target, &random_id(), date, 1)?;
         assert_eq!(edge - target, 1);
@@ -377,7 +377,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item = insert_item_unchecked(
+        let item = insert_item_base_unchecked(
             &tx,
             &random_id(),
             "ItemPropertySchema",
@@ -391,7 +391,7 @@ mod tests {
         insert_string_unchecked(&tx, item, "propertyName", "age")?;
         insert_string_unchecked(&tx, item, "valueType", "integer")?;
 
-        let item = insert_item_unchecked(
+        let item = insert_item_base_unchecked(
             &tx,
             &random_id(),
             "ItemPropertySchema",
