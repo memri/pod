@@ -10,6 +10,7 @@ CREATE TABLE items (
 );
 CREATE UNIQUE INDEX idx_items_id on items(id);
 CREATE        INDEX idx_items_type_dateServerModified on items(type, dateServerModified);
+CREATE        INDEX idx_items_dateServerModified on items(dateServerModified);
 
 
 CREATE TABLE edges (

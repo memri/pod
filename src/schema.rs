@@ -40,11 +40,3 @@ impl SchemaPropertyType {
 pub struct Schema {
     pub property_types: HashMap<String, SchemaPropertyType>,
 }
-
-// impl Schema {
-//     pub fn new_empty() -> Schema {
-//         Schema {
-//             property_types: HashMap::new(),
-//         }
-//     }
-// }

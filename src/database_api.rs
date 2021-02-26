@@ -86,20 +86,6 @@ fn insert_string_unchecked(tx: &Transaction, item: Rowid, name: &str, value: &st
     Ok(())
 }
 
-#[allow(dead_code)]
-pub fn read_schema(tx: &Transaction) -> Result<Schema> {
-    let mut stmt = tx.prepare_cached("SELECT propertyName, valueType FROM itemSchema;")?;
-    let mut rows = stmt.query(NO_PARAMS)?;
-    let mut property_types: HashMap<String, SchemaPropertyType> = HashMap::new();
-    while let Some(row) = rows.next()? {
-        let property_name: String = row.get(0)?;
-        let value_type: String = row.get(1)?;
-        let value_type = SchemaPropertyType::from_string(&value_type)?;
-        property_types.insert(property_name, value_type);
-    }
-    Ok(Schema { property_types })
-}
-
 pub fn read_item_schema_joins(tx: &Transaction) -> Result<Schema> {
     let mut stmt = tx.prepare_cached(
         "SELECT thisProperty.value, thisType.value \
@@ -124,13 +110,6 @@ pub fn read_item_schema_joins(tx: &Transaction) -> Result<Schema> {
     Ok(Schema { property_types })
 }
 
-// pub fn read_item_schema_alternative2222222(tx: &Transaction) -> Result<Schema> {
-//     // Steps:
-//     // * find items by type
-//     // * find the two properties for each item
-//     // * aggregate the results into a Schema
-// }
-
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Comparison {
     Equals,
@@ -140,29 +119,8 @@ pub enum Comparison {
     LessOrEquals,
 }
 
-fn add_query_integer_param(
-    mut query: String,
-    params: &mut Vec<ToSqlOutput>,
-    column: &str,
-    operation: &Comparison,
-    value: i64,
-) {
-    query.push_str("AND ");
-    query.push_str(column);
-    match operation {
-        Comparison::Equals => query.push_str(" = "),
-        Comparison::GreaterThan => query.push_str(" > "),
-        Comparison::GreaterOrEquals => query.push_str(" >= "),
-        Comparison::LessThan => query.push_str(" < "),
-        Comparison::LessOrEquals => query.push_str(" <= "),
-    };
-    query.push_str("?");
-    let value: ToSqlOutput = value.into();
-    params.push(value);
-}
-
-fn add_sql_param(mut query: String, column: &str, operation: &Comparison) -> Result<()> {
-    query.push_str("AND ");
+fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Result<()> {
+    query.push_str(" AND ");
     query.push_str(column);
     match operation {
         Comparison::Equals => query.push_str(" = "),
@@ -174,28 +132,6 @@ fn add_sql_param(mut query: String, column: &str, operation: &Comparison) -> Res
     query.push_str("?");
     Ok(())
 }
-
-// fn add_query_string_param<'a>(
-//     mut query: String,
-//     params: &mut Vec<ToSqlOutput>,
-//     column: &str,
-//     operation: &Comparison,
-//     value: &str,
-// ) -> Result<()> {
-//     query.push_str("AND ");
-//     query.push_str(column);
-//     match operation {
-//         Comparison::Equals => query.push_str(" = "),
-//         Comparison::GreaterThan => query.push_str(" > "),
-//         Comparison::GreaterOrEquals => query.push_str(" >= "),
-//         Comparison::LessThan => query.push_str(" < "),
-//         Comparison::LessOrEquals => query.push_str(" <= "),
-//     };
-//     query.push_str("?");
-//     let value: ToSqlOutput = value.into();
-//     params.push(value);
-//     Ok(())
-// }
 
 // fn add_query_param<V>(
 //     mut query: String,
@@ -223,67 +159,52 @@ fn add_sql_param(mut query: String, column: &str, operation: &Comparison) -> Res
 // }
 
 #[allow(dead_code)]
-fn search_items_iter(
+fn search_items(
     tx: &Transaction,
-    _rowid: Option<Rowid>,
+    rowid: Option<Rowid>,
     _type: Option<&str>,
-    _date_created: Option<DBTime>,
-    _date_modified: Option<DBTime>,
-    _date_server_modified: Option<DBTime>,
-    _deleted: DBTime,
-) -> Result<()> {
-    // let mut p = params![0];
+    date_server_modified_gt: Option<DBTime>,
+    date_server_modified_lte: Option<DBTime>,
+    deleted: Option<bool>,
+) -> Result<Vec<Rowid>> {
+    let mut sql_query = "SELECT rowid FROM items WHERE true".to_string();
     let mut params_vec: Vec<ToSqlOutput> = Vec::new();
-    add_query_integer_param(
-        String::new(),
-        &mut params_vec,
-        "age",
-        &Comparison::Equals,
-        0,
-    );
-    add_query_integer_param(
-        String::new(),
-        &mut params_vec,
-        "boo",
-        &Comparison::Equals,
-        0,
-    );
-    let mut stmt = tx.prepare_cached("")?;
-    let r = stmt.query_map(params_vec, |_row| Ok(0))?;
-    Ok(())
-}
+    if let Some(typ) = _type {
+        add_sql_param(&mut sql_query, "type", &Comparison::Equals)?;
+        params_vec.push(typ.into());
+    }
+    if let Some(r) = rowid {
+        add_sql_param(&mut sql_query, "rowid", &Comparison::Equals)?;
+        params_vec.push(r.into());
+    }
+    if let Some(dt) = date_server_modified_gt {
+        add_sql_param(
+            &mut sql_query,
+            "dateServerModified",
+            &Comparison::GreaterThan,
+        )?;
+        params_vec.push(dt.into());
+    }
+    if let Some(dt) = date_server_modified_lte {
+        add_sql_param(
+            &mut sql_query,
+            "dateServerModified",
+            &Comparison::LessOrEquals,
+        )?;
+        params_vec.push(dt.into());
+    }
+    add_sql_param(&mut sql_query, "deleted", &Comparison::Equals)?;
+    params_vec.push(deleted.unwrap_or(false).into());
+    sql_query.push(';');
 
-// /// Low-level function to get an item.
-// /// No Schema/type checks are done. Use other functions around instead.
-// #[allow(dead_code)]
-// fn get_item_unchecked(
-//     tx: &Transaction,
-//     rowid: Rowid
-// ) -> Result<Rowid> {
-//     let mut stmt = tx.prepare_cached(
-//         "SELECT \
-//             type, \
-//             dateCreated, \
-//             dateModified, \
-//             dateServerModified, \
-//             deleted, \
-//             version\
-//         FROM items WHERE rowid = ?;",
-//     )?;
-//     let rows_iter = stmt.query_map(params![rowid], |row| {
-//         let name: String = row.get(0)?;
-//         let value = sqlite_value_to_json(row.get_raw(1), &name);
-//         if let Some(value) = value {
-//             Ok(Some((name, value)))
-//         } else {
-//             Ok(None)
-//         }
-//     })?;
-//
-//
-//     stmt.execute(params![rowid])?;
-//     Ok(tx.last_insert_rowid())
-// }
+    let mut stmt = tx.prepare_cached(&sql_query)?;
+    let rows = stmt.query_map(params_vec, |row| row.get::<_, Rowid>(0))?;
+    let mut result = Vec::new();
+    for row in rows {
+        result.push(row?);
+    }
+    Ok(result)
+}
 
 // pub fn create_scalar_from_json(
 //     tx: &Transaction,
@@ -298,11 +219,6 @@ fn search_items_iter(
 //     Ok(())
 // }
 
-// #[allow(dead_code)]
-// fn real_insert_todo() {
-//     let mut conn = rusqlite::Connection::open_in_memory().unwrap();
-//     insert_scalar_unchecked(&conn.transaction().unwrap(), 0, "", "");
-// }
 
 #[cfg(test)]
 mod tests {
@@ -330,8 +246,10 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item1 = insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        let item2 = insert_item_base_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
+        let item1 =
+            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item2 =
+            insert_item_base_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
         assert_eq!(item2 - item1, 1);
         Ok(())
     }
@@ -341,7 +259,8 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item = insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item =
+            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         insert_integer_unchecked(&tx, item, "age", 20)?;
         insert_real_unchecked(&tx, item, "attack", 13.5)?;
         insert_string_unchecked(&tx, item, "trait", "resilient")?;
@@ -415,6 +334,50 @@ mod tests {
             Some(&SchemaPropertyType::Text)
         );
         assert_eq!(schema.property_types.len(), 5);
+        Ok(())
+    }
+
+    #[test]
+    fn test_search() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
+        let item1 = insert_item_base_unchecked(&tx, "one", "Person", date, date, date, false, 1)?;
+        let item2 = insert_item_base_unchecked(&tx, "two", "Book", date, date, date, false, 1)?;
+        let item3 = insert_item_base_unchecked(&tx, "three", "Street", date, date, date, false, 1)?;
+        assert_eq!(
+            search_items(&tx, None, Some("Person"), None, None, None)?.len(),
+            1,
+        );
+        assert_eq!(
+            search_items(&tx, None, Some("Void"), None, None, None)?.len(),
+            0,
+        );
+        assert_eq!(
+            search_items(&tx, Some(item2), None, None, None, None)?.len(),
+            1,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, Some(date), None, None)?.len(),
+            0,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, Some(date - 1), None, None)?.len(),
+            3,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, Some(date - 1), Some(date), None)?.len(),
+            3,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, None, None, Some(true))?.len(),
+            0,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, Some(date - 1), None, Some(false))?.len(),
+            3,
+        );
+        assert!(search_items(&tx, None, None, None, None, None)?.len() >= 3);
         Ok(())
     }
 }

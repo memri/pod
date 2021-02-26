@@ -1,5 +1,7 @@
 use crate::database_migrate_schema;
 use crate::error::Error;
+use crate::schema::Schema;
+use crate::schema::SchemaPropertyType;
 use database_migrate_schema::ALL_COLUMN_TYPES;
 use database_migrate_schema::BOOL_COLUMNS;
 use database_migrate_schema::DATE_TIME_COLUMNS;
@@ -18,8 +20,6 @@ use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashSet;
 use warp::http::status::StatusCode;
-use crate::schema::Schema;
-use crate::schema::SchemaPropertyType;
 
 pub fn sqlite_row_to_map(row: &Row, partial: bool) -> rusqlite::Result<Map<String, Value>> {
     let mut row_map = Map::new();
@@ -102,7 +102,7 @@ pub fn json_value_to_sqlite_schema<'a>(
                 "Property {} not defined in Schema (attempted to use it for json value {})",
                 property, json,
             ),
-        })
+        });
     };
     match json {
         Value::Null => Ok(ToSqlOutput::Borrowed(ValueRef::Null)),
@@ -129,7 +129,9 @@ pub fn json_value_to_sqlite_schema<'a>(
                 })
             }
         }
-        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => Ok((if *b { 1 } else { 0 }).into()),
+        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
+            Ok((if *b { 1 } else { 0 }).into())
+        }
         Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
             if let Some(int) = n.as_i64() {
                 Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
@@ -143,15 +145,13 @@ pub fn json_value_to_sqlite_schema<'a>(
                 })
             }
         }
-        _ => {
-            Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!(
-                    "Failed to parse json value {} to {:?} ({})",
-                    json, dbtype, property
-                ),
-            })
-        }
+        _ => Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Failed to parse json value {} to {:?} ({})",
+                json, dbtype, property
+            ),
+        }),
     }
 }
 
