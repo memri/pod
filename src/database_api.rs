@@ -135,7 +135,6 @@ pub enum Comparison {
 }
 
 fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Result<()> {
-    query.push_str(" AND ");
     query.push_str(column);
     match operation {
         Comparison::Equals => query.push_str(" = "),
@@ -144,7 +143,7 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Re
         Comparison::LessThan => query.push_str(" < "),
         Comparison::LessOrEquals => query.push_str(" <= "),
     };
-    query.push('?');
+    query.push_str("? AND ");
     Ok(())
 }
 
@@ -158,7 +157,7 @@ fn search_items(
     date_server_modified_lte: Option<DBTime>,
     deleted: Option<bool>,
 ) -> Result<Vec<Rowid>> {
-    let mut sql_query = "SELECT rowid FROM items WHERE true".to_string();
+    let mut sql_query = "SELECT rowid FROM items WHERE ".to_string();
     let mut params_vec: Vec<ToSqlOutput> = Vec::new();
     if let Some(r) = rowid {
         add_sql_param(&mut sql_query, "rowid", &Comparison::Equals)?;
@@ -190,6 +189,7 @@ fn search_items(
     }
     add_sql_param(&mut sql_query, "deleted", &Comparison::Equals)?;
     params_vec.push(deleted.unwrap_or(false).into());
+    sql_query.truncate(sql_query.len() - 4); // "AND "
     sql_query.push(';');
 
     let mut stmt = tx.prepare_cached(&sql_query)?;
