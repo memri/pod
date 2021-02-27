@@ -7,7 +7,6 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
-use crate::schema::SchemaPropertyType::DateTime;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;

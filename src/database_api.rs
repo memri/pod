@@ -45,6 +45,7 @@ pub fn insert_item_base(
 
 /// Low-level function to insert an edge.
 /// No Schema/type checks are done. Use other functions around instead.
+#[allow(dead_code)]
 fn insert_edge_unchecked(
     tx: &Transaction,
     source: Rowid,
@@ -146,6 +147,7 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Re
     Ok(())
 }
 
+#[allow(dead_code)]
 fn search_items(
     tx: &Transaction,
     rowid: Option<Rowid>,

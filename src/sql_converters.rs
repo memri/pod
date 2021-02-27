@@ -1,7 +1,5 @@
 use crate::database_migrate_schema;
 use crate::error::Error;
-use crate::schema::Schema;
-use crate::schema::SchemaPropertyType;
 use database_migrate_schema::ALL_COLUMN_TYPES;
 use database_migrate_schema::BOOL_COLUMNS;
 use database_migrate_schema::DATE_TIME_COLUMNS;
@@ -87,73 +85,6 @@ pub fn borrow_sql_params<'a>(
 // ) -> crate::error::Result<ToSqlOutput<'a>> {
 //     unimplemented!()
 // }
-
-pub fn json_value_to_sqlite_schema<'a>(
-    json: &'a Value,
-    property: &str,
-    schema: &Schema,
-) -> crate::error::Result<ToSqlOutput<'a>> {
-    let dbtype = if let Some(t) = schema.property_types.get(property) {
-        t
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Property {} not defined in Schema (attempted to use it for json value {})",
-                property, json,
-            ),
-        });
-    };
-    match json {
-        Value::Null => Ok(ToSqlOutput::Borrowed(ValueRef::Null)),
-        Value::String(s) if dbtype == &SchemaPropertyType::Text => {
-            Ok(ToSqlOutput::Borrowed(ValueRef::Text(s.as_bytes())))
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
-            if let Some(int) = n.as_i64() {
-                Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
-            } else {
-                Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, property),
-                })
-            }
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
-            if let Some(int) = n.as_f64() {
-                Ok(ToSqlOutput::Borrowed(ValueRef::Real(int)))
-            } else {
-                Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, property),
-                })
-            }
-        }
-        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
-            Ok((if *b { 1 } else { 0 }).into())
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
-            if let Some(int) = n.as_i64() {
-                Ok(ToSqlOutput::Borrowed(ValueRef::Integer(int)))
-            } else if let Some(float) = n.as_f64() {
-                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, property);
-                Ok((float.round() as i64).into())
-            } else {
-                Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: "Unsupported number precision (non-f64) of a JSON value.".to_string(),
-                })
-            }
-        }
-        _ => Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Failed to parse json value {} to {:?} ({})",
-                json, dbtype, property
-            ),
-        }),
-    }
-}
 
 pub fn json_value_to_sqlite<'a>(
     json: &'a Value,

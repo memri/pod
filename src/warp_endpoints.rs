@@ -10,7 +10,6 @@ use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
 use crate::constants;
 use crate::database_migrate_refinery;
-use crate::database_migrate_schema;
 use crate::error::Error;
 use crate::error::Result;
 use crate::file_api;
