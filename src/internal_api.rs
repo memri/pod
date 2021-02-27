@@ -209,7 +209,7 @@ fn insert_property(
 }
 
 pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Result<i64> {
-    let id = item.id.unwrap_or_else(|| new_uuid());
+    let id = item.id.unwrap_or_else(new_uuid);
     let time_now = Utc::now().timestamp_millis();
     let rowid = database_api::insert_item_base(
         tx,
@@ -406,7 +406,7 @@ pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<V
     if query._date_server_modified_after.is_some() {
         sql_body.push_str(" AND dateServerModified > :dateServerModified");
     };
-    sql_body.push_str(";");
+    sql_body.push(';');
 
     let mut sql_params = Vec::new();
     for (key, value) in &query.fields {

@@ -10,6 +10,7 @@ use std::collections::HashMap;
 type Rowid = i64;
 type DBTime = i64;
 
+#[allow(clippy::too_many_arguments)]
 pub fn insert_item_base(
     tx: &Transaction,
     id: &str,
@@ -143,7 +144,7 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Re
         Comparison::LessThan => query.push_str(" < "),
         Comparison::LessOrEquals => query.push_str(" <= "),
     };
-    query.push_str("?");
+    query.push('?');
     Ok(())
 }
 
