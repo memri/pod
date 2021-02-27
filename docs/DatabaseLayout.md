@@ -15,7 +15,7 @@ the following requirements determine the available choices:
 * quick filter (get all items with "age > 80", "dateServerModified > 1000")
 * both items and edges can reference items
 * (bonus) both items and edges can reference edges
-* both items and edges can have scalar properties
+* both items and edges can have "scalar" properties (raw values)
 
 
 ## Workflows:
@@ -49,9 +49,9 @@ A query that uses `dateServerModified` specifically,
 plus up to one additional property, can be fast in the proposed DB layout.
 Steps:
 
-* Query `scalars` table for lowest `item` value with scalar `name = "dateServerModified"`. 
+* Query `integers` table for lowest `item` value with scalar `name = "dateServerModified"`. 
   Store result as `r1`.
-* Query `scalars` table for `name = "author"`, `value = "Someone"`, `item > ?r1`
+* Query `integers` table for `name = "author"`, `value = "Someone"`, `item > ?r1`
 
 ?????????????????? ??????? ?????????????????????????????????    ????? ????? ????????
 

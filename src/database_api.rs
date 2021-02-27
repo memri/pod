@@ -234,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn test_insert_scalars() -> Result<()> {
+    fn test_insert_properties() -> Result<()> {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
