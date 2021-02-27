@@ -1,8 +1,8 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
-use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
+use crate::database_api;
 // use crate::api_model::RunImporter;
 use crate::api_model::SearchByFields;
 use crate::api_model::UpdateItem;
@@ -58,7 +58,8 @@ pub fn create_item(
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::create_item_tx(&tx, body.payload.fields)
+        let schema = database_api::read_item_schema_joins(&tx)?;
+        internal_api::create_item_tx(&tx, &schema, body.payload)
     })
 }
 
@@ -80,7 +81,8 @@ pub fn bulk_action(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::bulk_action_tx(&tx, body.payload)
+        let schema = database_api::read_item_schema_joins(&tx)?;
+        internal_api::bulk_action_tx(&tx, &schema, body.payload)
     })
 }
 
@@ -92,18 +94,6 @@ pub fn delete_item(
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
         internal_api::delete_item_tx(&tx, body.payload)
-    })
-}
-
-pub fn insert_tree(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<InsertTreeItem>,
-    shared_server: bool,
-) -> Result<i64> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    in_transaction(&mut conn, |tx| {
-        internal_api::insert_tree(&tx, body.payload, shared_server)
     })
 }
 
@@ -211,10 +201,6 @@ fn initialize_db(
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {
         database_migrate_refinery::migrate(&mut conn)?;
-        database_migrate_schema::migrate(&conn).map_err(|err| Error {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Failed to migrate database according to schema, {}", err),
-        })?;
         init_db.insert(owner.to_string());
     }
     Ok(conn)

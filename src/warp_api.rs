@@ -1,7 +1,6 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
-use crate::api_model::InsertTreeItem;
 use crate::api_model::PayloadWrapper;
 // use crate::api_model::RunImporter;
 use crate::api_model::SearchByFields;
@@ -60,6 +59,17 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .map(internal_api::get_project_version);
 
     let init_db = initialized_databases_arc.clone();
+    let create_item = items_api
+        .and(warp::path!(String / "create_item"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
+            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
     let get_item = items_api
         .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
@@ -77,17 +87,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<()>| {
             let result = warp_endpoints::get_all_items(owner, init_db.deref(), body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let create_item = items_api
-        .and(warp::path!(String / "create_item"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
-            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
@@ -122,19 +121,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .map(move |owner: String, body: PayloadWrapper<i64>| {
             let result = warp_endpoints::delete_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
-    let cli_options_arc = Arc::new(cli_options.clone());
-    let insert_tree = items_api
-        .and(warp::path!(String / "insert_tree"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<InsertTreeItem>| {
-            let shared_server = cli_options_arc.shared_server;
-            let result = warp_endpoints::insert_tree(owner, init_db.deref(), body, shared_server);
-            let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
 
@@ -228,10 +214,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
                 }
             });
 
-    let always_enabled_filters = version
-        .with(&headers)
-        .or(create_item.with(&headers))
-        .or(insert_tree.with(&headers));
+    let always_enabled_filters = version.with(&headers).or(create_item.with(&headers));
 
     let sensitive_filters = warp::any().and_then(|| async move {
         if command_line_interface::PARSED.shared_server {
@@ -317,9 +300,12 @@ fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
         Err(err) => {
             let code = err.code.as_str();
             let code_canon = err.code.canonical_reason().unwrap_or("");
-            let msg = &err.msg;
-            info!("Returning HTTP failure {} {}: {}", code, code_canon, msg);
-            warp::reply::with_status(err.msg, err.code).into_response()
+            info!(
+                "Returning HTTP failure {} {}: {}",
+                code, code_canon, &err.msg
+            );
+            let msg = format!("Failure: {}", err.msg);
+            warp::reply::with_status(msg, err.code).into_response()
         }
         Ok(t) => t.into_response(),
     }

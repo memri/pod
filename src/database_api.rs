@@ -10,10 +10,7 @@ use std::collections::HashMap;
 type Rowid = i64;
 type DBTime = i64;
 
-/// Low-level function to insert an item.
-/// No Schema/type checks are done. Use other functions around instead.
-#[allow(dead_code)]
-fn insert_item_base_unchecked(
+pub fn insert_item_base(
     tx: &Transaction,
     id: &str,
     _type: &str,
@@ -48,7 +45,6 @@ fn insert_item_base_unchecked(
 
 /// Low-level function to insert an edge.
 /// No Schema/type checks are done. Use other functions around instead.
-#[allow(dead_code)]
 fn insert_edge_unchecked(
     tx: &Transaction,
     source: Rowid,
@@ -58,31 +54,48 @@ fn insert_edge_unchecked(
     date: DBTime,
     version: i64,
 ) -> Result<Rowid> {
-    let item = insert_item_base_unchecked(tx, id, name, date, date, date, false, version)?;
+    let item = insert_item_base(tx, id, name, date, date, date, false, version)?;
     let mut stmt =
         tx.prepare_cached("INSERT INTO edges(self, source, name, target) VALUES(?, ?, ?, ?);")?;
     stmt.execute(params![item, source, name, target])?;
     Ok(item)
 }
 
-#[allow(dead_code)]
-fn insert_integer_unchecked(tx: &Transaction, item: Rowid, name: &str, value: i64) -> Result<()> {
+pub fn insert_integer_unchecked(
+    tx: &Transaction,
+    item: Rowid,
+    name: &str,
+    value: i64,
+) -> Result<()> {
     let mut stmt = tx.prepare_cached("INSERT INTO integers VALUES(?, ?, ?);")?;
     stmt.execute(params![item, name, value])?;
     Ok(())
 }
 
-#[allow(dead_code)]
-fn insert_real_unchecked(tx: &Transaction, item: Rowid, name: &str, value: f64) -> Result<()> {
+pub fn insert_real_unchecked(tx: &Transaction, item: Rowid, name: &str, value: f64) -> Result<()> {
     let mut stmt = tx.prepare_cached("INSERT INTO reals VALUES(?, ?, ?);")?;
     stmt.execute(params![item, name, value])?;
     Ok(())
 }
 
-#[allow(dead_code)]
-fn insert_string_unchecked(tx: &Transaction, item: Rowid, name: &str, value: &str) -> Result<()> {
+pub fn insert_string_unchecked(
+    tx: &Transaction,
+    item: Rowid,
+    name: &str,
+    value: &str,
+) -> Result<()> {
     let mut stmt = tx.prepare_cached("INSERT INTO strings VALUES(?, ?, ?);")?;
     stmt.execute(params![item, name, value])?;
+    Ok(())
+}
+
+pub fn delete_property(tx: &Transaction, item: Rowid, name: &str) -> Result<()> {
+    let mut stmt = tx.prepare_cached("DELETE FROM integers WHERE item = ? AND name = ?;")?;
+    stmt.execute(params![item, name])?;
+    let mut stmt = tx.prepare_cached("DELETE FROM strings WHERE item = ? AND name = ?;")?;
+    stmt.execute(params![item, name])?;
+    let mut stmt = tx.prepare_cached("DELETE FROM reals WHERE item = ? AND name = ?;")?;
+    stmt.execute(params![item, name])?;
     Ok(())
 }
 
@@ -133,35 +146,10 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) -> Re
     Ok(())
 }
 
-// fn add_query_param<V>(
-//     mut query: String,
-//     params: &mut Vec<ToSqlOutput>,
-//     column: &str,
-//     operation: &Comparison,
-//     value: V,
-// ) -> Result<()>
-//     where
-//         V: ToSql,
-// {
-//     query.push_str("AND ");
-//     query.push_str(column);
-//     match operation {
-//         Comparison::Equals => query.push_str(" = "),
-//         Comparison::GreaterThan => query.push_str(" > "),
-//         Comparison::GreaterOrEquals => query.push_str(" >= "),
-//         Comparison::LessThan => query.push_str(" < "),
-//         Comparison::LessOrEquals => query.push_str(" <= "),
-//     };
-//     query.push_str("?");
-//     let value: ToSqlOutput = value.to_sql()?;
-//     params.push(value);
-//     Ok(())
-// }
-
-#[allow(dead_code)]
 fn search_items(
     tx: &Transaction,
     rowid: Option<Rowid>,
+    id: Option<&str>,
     _type: Option<&str>,
     date_server_modified_gt: Option<DBTime>,
     date_server_modified_lte: Option<DBTime>,
@@ -169,13 +157,17 @@ fn search_items(
 ) -> Result<Vec<Rowid>> {
     let mut sql_query = "SELECT rowid FROM items WHERE true".to_string();
     let mut params_vec: Vec<ToSqlOutput> = Vec::new();
-    if let Some(typ) = _type {
-        add_sql_param(&mut sql_query, "type", &Comparison::Equals)?;
-        params_vec.push(typ.into());
-    }
     if let Some(r) = rowid {
         add_sql_param(&mut sql_query, "rowid", &Comparison::Equals)?;
         params_vec.push(r.into());
+    }
+    if let Some(id) = id {
+        add_sql_param(&mut sql_query, "id", &Comparison::Equals)?;
+        params_vec.push(id.into());
+    }
+    if let Some(typ) = _type {
+        add_sql_param(&mut sql_query, "type", &Comparison::Equals)?;
+        params_vec.push(typ.into());
     }
     if let Some(dt) = date_server_modified_gt {
         add_sql_param(
@@ -206,20 +198,6 @@ fn search_items(
     Ok(result)
 }
 
-// pub fn create_scalar_from_json(
-//     tx: &Transaction,
-//     item: Rowid,
-//     name: &str,
-//     value: serde_json::Value,
-//     schema: &Schema,
-// ) -> Result<()> {
-//     let mut stmt = tx.prepare_cached("INSERT INTO scalars VALUES(?, ?, ?);")?;
-//     let sql_val = sql_converters::json_value_and_schema_to_sqlite(&value, name, schema)?;
-//     stmt.execute(params![item, name, sql_val])?;
-//     Ok(())
-// }
-
-
 #[cfg(test)]
 mod tests {
     use super::super::database_migrate_refinery;
@@ -246,10 +224,8 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item1 =
-            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        let item2 =
-            insert_item_base_unchecked(&tx, &random_id(), "Book", date, date, date, false, 1)?;
+        let item1 = insert_item_base(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item2 = insert_item_base(&tx, &random_id(), "Book", date, date, date, false, 1)?;
         assert_eq!(item2 - item1, 1);
         Ok(())
     }
@@ -259,8 +235,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item =
-            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let item = insert_item_base(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         insert_integer_unchecked(&tx, item, "age", 20)?;
         insert_real_unchecked(&tx, item, "attack", 13.5)?;
         insert_string_unchecked(&tx, item, "trait", "resilient")?;
@@ -272,10 +247,8 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let source =
-            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
-        let target =
-            insert_item_base_unchecked(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let source = insert_item_base(&tx, &random_id(), "Person", date, date, date, false, 1)?;
+        let target = insert_item_base(&tx, &random_id(), "Person", date, date, date, false, 1)?;
         assert_eq!(target - source, 1);
         let edge = insert_edge_unchecked(&tx, source, "friend", target, &random_id(), date, 1)?;
         assert_eq!(edge - target, 1);
@@ -296,7 +269,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item = insert_item_base_unchecked(
+        let item = insert_item_base(
             &tx,
             &random_id(),
             "ItemPropertySchema",
@@ -310,7 +283,7 @@ mod tests {
         insert_string_unchecked(&tx, item, "propertyName", "age")?;
         insert_string_unchecked(&tx, item, "valueType", "integer")?;
 
-        let item = insert_item_base_unchecked(
+        let item = insert_item_base(
             &tx,
             &random_id(),
             "ItemPropertySchema",
@@ -342,42 +315,50 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        let item1 = insert_item_base_unchecked(&tx, "one", "Person", date, date, date, false, 1)?;
-        let item2 = insert_item_base_unchecked(&tx, "two", "Book", date, date, date, false, 1)?;
-        let item3 = insert_item_base_unchecked(&tx, "three", "Street", date, date, date, false, 1)?;
+        let item1 = insert_item_base(&tx, "one", "Person", date, date, date, false, 1)?;
+        let _item2 = insert_item_base(&tx, "two", "Book", date, date, date, false, 1)?;
+        let _item3 = insert_item_base(&tx, "three", "Street", date, date, date, false, 1)?;
         assert_eq!(
-            search_items(&tx, None, Some("Person"), None, None, None)?.len(),
+            search_items(&tx, None, None, Some("Person"), None, None, None)?.len(),
             1,
         );
         assert_eq!(
-            search_items(&tx, None, Some("Void"), None, None, None)?.len(),
+            search_items(&tx, None, None, Some("Void"), None, None, None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, Some(item2), None, None, None, None)?.len(),
+            search_items(&tx, Some(item1), None, None, None, None, None)?.len(),
             1,
         );
         assert_eq!(
-            search_items(&tx, None, None, Some(date), None, None)?.len(),
+            search_items(&tx, None, Some("one"), None, None, None, None)?.len(),
+            1,
+        );
+        assert_eq!(
+            search_items(&tx, None, Some("nothing"), None, None, None, None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, None, None, Some(date - 1), None, None)?.len(),
-            3,
-        );
-        assert_eq!(
-            search_items(&tx, None, None, Some(date - 1), Some(date), None)?.len(),
-            3,
-        );
-        assert_eq!(
-            search_items(&tx, None, None, None, None, Some(true))?.len(),
+            search_items(&tx, None, None, None, Some(date), None, None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, None, None, Some(date - 1), None, Some(false))?.len(),
+            search_items(&tx, None, None, None, Some(date - 1), None, None)?.len(),
             3,
         );
-        assert!(search_items(&tx, None, None, None, None, None)?.len() >= 3);
+        assert_eq!(
+            search_items(&tx, None, None, None, Some(date - 1), Some(date), None)?.len(),
+            3,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, None, None, None, Some(true))?.len(),
+            0,
+        );
+        assert_eq!(
+            search_items(&tx, None, None, None, Some(date - 1), None, Some(false))?.len(),
+            3,
+        );
+        assert!(search_items(&tx, None, None, None, None, None, None)?.len() >= 3);
         Ok(())
     }
 }

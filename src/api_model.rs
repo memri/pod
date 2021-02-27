@@ -6,6 +6,15 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateItem {
+    pub rowid: Option<i64>,
+    pub id: Option<String>,
+    /// Mandatory type of the item, serialized as just "type" (without underscore)
+    pub _type: String,
+    pub date_created: Option<i64>,
+    pub date_modified: Option<i64>,
+    #[serde(default)]
+    pub deleted: bool,
+    pub version: Option<i64>,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
 }
@@ -47,22 +56,6 @@ pub struct BulkAction {
     pub create_edges: Vec<CreateEdge>,
     #[serde(default)]
     pub delete_edges: Vec<DeleteEdge>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct InsertTreeItem {
-    #[serde(default)]
-    pub _edges: Vec<InsertTreeEdge>,
-    #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct InsertTreeEdge {
-    pub _type: String,
-    pub _target: InsertTreeItem,
-    #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

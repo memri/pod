@@ -1,9 +1,13 @@
 use crate::api_model::BulkAction;
+use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
-use crate::api_model::InsertTreeItem;
 use crate::api_model::SearchByFields;
+use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
+use crate::schema::Schema;
+use crate::schema::SchemaPropertyType;
+use crate::schema::SchemaPropertyType::DateTime;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
@@ -12,6 +16,7 @@ use crate::sql_converters::sqlite_value_to_json;
 use crate::sql_converters::validate_property_name;
 use chrono::Utc;
 use log::info;
+use log::warn;
 use rusqlite::params;
 use rusqlite::Connection;
 use rusqlite::ToSql;
@@ -100,17 +105,6 @@ fn is_array_or_object(value: &Value) -> bool {
     }
 }
 
-fn write_sql_body(sql: &mut String, keys: &[&String], separator: &str) {
-    let mut first = true;
-    for key in keys {
-        if !first {
-            sql.push_str(separator);
-        }
-        sql.push_str(key);
-        first = false;
-    }
-}
-
 fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
     let mut sql_params = Vec::new();
     for (key, value) in fields {
@@ -134,29 +128,104 @@ fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> 
     Ok(())
 }
 
-pub fn create_item_tx(tx: &Transaction, fields: HashMap<String, Value>) -> Result<i64> {
-    let mut fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-        .collect();
-    let time_now = Utc::now().timestamp_millis();
-    if !fields.contains_key("dateCreated") {
-        fields.insert("dateCreated".to_string(), time_now.into());
-    }
-    if !fields.contains_key("dateModified") {
-        fields.insert("dateModified".to_string(), time_now.into());
-    }
-    fields.insert("dateServerModified".to_string(), time_now.into());
-    fields.insert("version".to_string(), Value::from(1));
+fn new_uuid() -> String {
+    uuid::Uuid::new_v4().to_simple().to_string()
+}
 
-    let mut sql = "INSERT INTO items (".to_string();
-    let keys: Vec<_> = fields.keys().collect();
-    write_sql_body(&mut sql, &keys, ", ");
-    sql.push_str(") VALUES (:");
-    write_sql_body(&mut sql, &keys, ", :");
-    sql.push_str(");");
-    execute_sql(tx, &sql, &fields)?;
-    Ok(tx.last_insert_rowid())
+fn insert_property(
+    tx: &Transaction,
+    schema: &Schema,
+    rowid: i64,
+    name: &str,
+    json: &Value,
+) -> Result<()> {
+    let dbtype = if let Some(t) = schema.property_types.get(name) {
+        t
+    } else {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Property {} not defined in Schema (attempted to use it for json value {})",
+                name, json,
+            ),
+        });
+    };
+    database_api::delete_property(tx, rowid, name)?;
+
+    match json {
+        Value::Null => (),
+        Value::String(value) if dbtype == &SchemaPropertyType::Text => {
+            database_api::insert_string_unchecked(tx, rowid, name, value)?
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
+            if let Some(value) = n.as_i64() {
+                database_api::insert_integer_unchecked(tx, rowid, name, value)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, name),
+                });
+            }
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
+            if let Some(value) = n.as_f64() {
+                database_api::insert_real_unchecked(tx, rowid, name, value)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, name),
+                });
+            }
+        }
+        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
+            database_api::insert_integer_unchecked(tx, rowid, name, if *b { 1 } else { 0 })?
+        }
+        Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
+            if let Some(value) = n.as_i64() {
+                database_api::insert_integer_unchecked(tx, rowid, name, value)?
+            } else if let Some(float) = n.as_f64() {
+                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
+                database_api::insert_integer_unchecked(tx, rowid, name, float.round() as i64)?
+            } else {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!(
+                        "Failed to parse JSON number {} to DateTime ({}), use i64 number instead",
+                        n, name
+                    ),
+                });
+            }
+        }
+        _ => {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!(
+                    "Failed to parse json value {} to {:?} ({})",
+                    json, dbtype, name
+                ),
+            })
+        }
+    };
+    Ok(())
+}
+
+pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Result<i64> {
+    let id = item.id.unwrap_or_else(|| new_uuid());
+    let time_now = Utc::now().timestamp_millis();
+    let rowid = database_api::insert_item_base(
+        tx,
+        &id,
+        &item._type,
+        item.date_created.unwrap_or(time_now),
+        item.date_modified.unwrap_or(time_now),
+        time_now,
+        item.deleted,
+        item.version.map_or(1, |v| v.max(1)),
+    )?;
+    for (prop_name, prop_value) in item.fields {
+        insert_property(tx, schema, rowid, &prop_name, &prop_value)?;
+    }
+    Ok(rowid)
 }
 
 pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
@@ -272,7 +341,7 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     update_item_tx(tx, uid, fields)
 }
 
-pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
+pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items, {} created edges, {} deleted edges",
         bulk_action.create_items.len(),
@@ -289,7 +358,7 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
                 msg: format!("Creating items without uid in bulk_action is restricted for safety reasons (creating edges might be broken), item: {:?}", item.fields)
             });
         }
-        create_item_tx(tx, item.fields)?;
+        create_item_tx(tx, schema, item)?;
     }
     for item in bulk_action.update_items {
         update_item_tx(tx, item.uid, item.fields)?;
@@ -314,44 +383,6 @@ pub fn bulk_action_tx(tx: &Transaction, bulk_action: BulkAction) -> Result<()> {
         delete_edge_tx(tx, del_edge)?;
     }
     Ok(())
-}
-
-pub fn insert_tree(tx: &Transaction, item: InsertTreeItem, shared_server: bool) -> Result<i64> {
-    info!(
-        "Inserting tree item with {} properties and {} edges",
-        item.fields.len(),
-        item._edges.len()
-    );
-    let source_uid: i64 = if item.fields.len() > 1 {
-        create_item_tx(tx, item.fields)?
-    } else if let Some(uid) = item.fields.get("uid").map(|v| v.as_i64()).flatten() {
-        if item._edges.is_empty() {
-        } else if shared_server {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!(
-                    "Cannot create edges from already existing items in a shared server {:?}",
-                    item
-                ),
-            });
-        } else {
-            update_item_tx(tx, uid, HashMap::new())?;
-        }
-        uid
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!("Cannot create item: {:?}", item),
-        });
-    };
-    for edge in item._edges {
-        let target_item = insert_tree(tx, edge._target, shared_server)?;
-        println!("{}", target_item);
-        let source_uid = ""; // TODO
-        let target_item = ""; // TODO
-        create_edge(tx, &edge._type, source_uid, target_item, edge.fields)?;
-    }
-    Ok(source_uid)
 }
 
 pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {

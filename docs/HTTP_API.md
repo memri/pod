@@ -35,7 +35,7 @@ Get version of the Pod: the git commit and cargo version that it was built from.
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-  "payload": { "_type": "...", ... }
+  "payload": { "type": "...", ... }
 }
 ```
 Create a single item.
@@ -94,7 +94,7 @@ Mark an item as deleted:
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-  "payload": { "_type": "Label", "color": "#CCFF00", ... }
+  "payload": { "type": "Label", "color": "#CCFF00", ... }
 }
 ```
 Search items by their properties.
@@ -108,7 +108,7 @@ The endpoint will return an array of all items with exactly the same properties.
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
   "payload": {
     "createItems": [
-      { "id": "something-12345", "_type": "Person", ... }, ...
+      { "id": "something-12345", "type": "Person", ... }, ...
     ],
     "updateItems": [
       { "id": "something-67899", ... }, ...
