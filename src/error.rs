@@ -77,3 +77,45 @@ impl<T> From<std::sync::PoisonError<T>> for Error {
         }
     }
 }
+
+pub trait ErrorContext<T> {
+    fn context<F>(self, context_add: F) -> Result<T>
+    where
+        F: FnOnce() -> String;
+    fn context_str(self, context_add: &str) -> Result<T>;
+}
+
+impl<T, E> ErrorContext<T> for std::result::Result<T, E>
+where
+    E: Into<Error>,
+{
+    fn context<F>(self, context_add: F) -> Result<T>
+    where
+        F: FnOnce() -> String,
+    {
+        match self {
+            Ok(t) => Ok(t),
+            Err(err) => {
+                let err: Error = err.into();
+                let code = err.code;
+                let mut msg = err.msg;
+                msg.push_str(", ");
+                msg.push_str(&context_add());
+                Err(Error { code, msg })
+            }
+        }
+    }
+    fn context_str(self, context_add: &str) -> Result<T> {
+        match self {
+            Ok(t) => Ok(t),
+            Err(err) => {
+                let err: Error = err.into();
+                let code = err.code;
+                let mut msg = err.msg;
+                msg.push_str(", ");
+                msg.push_str(context_add);
+                Err(Error { code, msg })
+            }
+        }
+    }
+}

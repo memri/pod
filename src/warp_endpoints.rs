@@ -4,7 +4,7 @@ use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::database_api;
 // use crate::api_model::RunImporter;
-use crate::api_model::SearchByFields;
+use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
@@ -57,7 +57,7 @@ pub fn create_item(
 ) -> Result<i64> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::read_item_schema_joins(&tx)?;
+        let schema = database_api::get_schema(&tx)?;
         internal_api::create_item_tx(&tx, &schema, body.payload)
     })
 }
@@ -80,7 +80,7 @@ pub fn bulk_action(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::read_item_schema_joins(&tx)?;
+        let schema = database_api::get_schema(&tx)?;
         internal_api::bulk_action_tx(&tx, &schema, body.payload)
     })
 }
@@ -96,14 +96,15 @@ pub fn delete_item(
     })
 }
 
-pub fn search_by_fields(
+pub fn search(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<SearchByFields>,
+    body: PayloadWrapper<Search>,
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::search_by_fields(&tx, body.payload)
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::search(&tx, &schema, body.payload)
     })
 }
 

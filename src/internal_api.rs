@@ -1,7 +1,7 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
 use crate::api_model::DeleteEdge;
-use crate::api_model::SearchByFields;
+use crate::api_model::Search;
 use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
@@ -21,6 +21,7 @@ use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
 use rusqlite::NO_PARAMS;
+use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -31,7 +32,7 @@ pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
 }
 
-fn get_item_properties(tx: &Transaction, id: i64) -> Result<HashMap<String, Value>> {
+fn get_item_properties_old(tx: &Transaction, id: i64) -> Result<HashMap<String, Value>> {
     let mut stmt = tx.prepare_cached("SELECT name, value FROM itemproperties WHERE itemId = ?1")?;
     let rows_iter = stmt.query_map(params![id], |row| {
         let name: String = row.get(0)?;
@@ -62,6 +63,81 @@ fn get_item_rowid(tx: &Transaction, id: &str) -> Result<Option<i64>> {
     }
 }
 
+/// Get all properties that the item has, ignoring those
+/// that exist in the DB but are not defined in the Schema
+pub fn get_item_properties(
+    tx: &Transaction,
+    rowid: i64,
+    schema: &Schema,
+) -> Result<Map<String, Value>> {
+    let mut json = serde_json::Map::new();
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: i64 = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Bool) => {
+                json.insert(name, (value == 1).into());
+            }
+            Some(SchemaPropertyType::DateTime) | Some(SchemaPropertyType::Integer) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: String = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Text) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ? ;")?;
+    let mut integers = stmt.query(params![rowid])?;
+    while let Some(row) = integers.next()? {
+        let name: String = row.get(0)?;
+        let value: f64 = row.get(1)?;
+        match schema.property_types.get(&name) {
+            Some(SchemaPropertyType::Real) => {
+                json.insert(name, value.into());
+            }
+            other => {
+                log::warn!(
+                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
+                    name,
+                    value,
+                    other
+                );
+            }
+        };
+    }
+
+    Ok(json)
+}
+
 pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
     info!("Getting item {}", id);
     let rowid = if let Some(rowid) = get_item_rowid(tx, id)? {
@@ -69,7 +145,7 @@ pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
     } else {
         return Ok(None);
     };
-    let mut result = get_item_properties(tx, rowid)?;
+    let mut result = get_item_properties_old(tx, rowid)?;
     result.insert("id".to_string(), id.into());
     let obj: Value = serde_json::to_value(result)?;
     Ok(Some(obj))
@@ -97,11 +173,7 @@ pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
 }
 
 fn is_array_or_object(value: &Value) -> bool {
-    match value {
-        Value::Array(_) => true,
-        Value::Object(_) => true,
-        _ => false,
-    }
+    matches!(value, Value::Array(_) | Value::Object(_))
 }
 
 fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
@@ -154,11 +226,11 @@ fn insert_property(
     match json {
         Value::Null => (),
         Value::String(value) if dbtype == &SchemaPropertyType::Text => {
-            database_api::insert_string_unchecked(tx, rowid, name, value)?
+            database_api::insert_string(tx, rowid, name, value)?
         }
         Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
             if let Some(value) = n.as_i64() {
-                database_api::insert_integer_unchecked(tx, rowid, name, value)?
+                database_api::insert_integer(tx, rowid, name, value)?
             } else {
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -168,7 +240,7 @@ fn insert_property(
         }
         Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
             if let Some(value) = n.as_f64() {
-                database_api::insert_real_unchecked(tx, rowid, name, value)?
+                database_api::insert_real(tx, rowid, name, value)?
             } else {
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -177,14 +249,14 @@ fn insert_property(
             }
         }
         Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
-            database_api::insert_integer_unchecked(tx, rowid, name, if *b { 1 } else { 0 })?
+            database_api::insert_integer(tx, rowid, name, if *b { 1 } else { 0 })?
         }
         Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
             if let Some(value) = n.as_i64() {
-                database_api::insert_integer_unchecked(tx, rowid, name, value)?
+                database_api::insert_integer(tx, rowid, name, value)?
             } else if let Some(float) = n.as_f64() {
                 warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
-                database_api::insert_integer_unchecked(tx, rowid, name, float.round() as i64)?
+                database_api::insert_integer(tx, rowid, name, float.round() as i64)?
             } else {
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -384,43 +456,44 @@ pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction
     Ok(())
 }
 
-pub fn search_by_fields(tx: &Transaction, query: SearchByFields) -> Result<Vec<Value>> {
+pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     info!("Searching by fields {:?}", query);
-    let mut sql_body = "SELECT * FROM items WHERE ".to_string();
-    let mut first_parameter = true;
-    for (field, value) in &query.fields {
-        validate_property_name(field)?;
-        match value {
-            Value::Array(_) => continue,
-            Value::Object(_) => continue,
-            _ => (),
-        };
-        if !first_parameter {
-            sql_body.push_str(" AND ")
-        };
-        first_parameter = false;
-        sql_body.push_str(field);
-        sql_body.push_str(" = :");
-        sql_body.push_str(field);
+    if !query.other_properties.is_empty() {
+        return Err(Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Cannot search by non-base properties: {:?}. \
+                    In the future we will allow searching for other properties. \
+                    See HTTP_API.md for details.",
+                query.other_properties.keys()
+            ),
+        });
     }
-    if query._date_server_modified_after.is_some() {
-        sql_body.push_str(" AND dateServerModified > :dateServerModified");
-    };
-    sql_body.push(';');
-
-    let mut sql_params = Vec::new();
-    for (key, value) in &query.fields {
-        sql_params.push((format!(":{}", key), json_value_to_sqlite(&value, &key)?));
+    let items = database_api::search_items(
+        tx,
+        None,
+        query.id.as_deref(),
+        query._type.as_deref(),
+        query._date_server_modified_gte,
+        query._date_server_modified_lt,
+        query.deleted,
+    )?;
+    let mut result = Vec::new();
+    for item in items {
+        let mut properties = get_item_properties(tx, item.rowid, schema)?;
+        properties.insert("id".to_string(), item.id.into());
+        properties.insert("type".to_string(), item._type.into());
+        properties.insert("dateCreated".to_string(), item.date_created.into());
+        properties.insert("dateModified".to_string(), item.date_modified.into());
+        properties.insert(
+            "dateServerModified".to_string(),
+            item.date_server_modified.into(),
+        );
+        properties.insert("deleted".to_string(), item.deleted.into());
+        properties.insert("version".to_string(), item.version.into());
+        result.push(Value::Object(properties))
     }
-    if let Some(date) = query._date_server_modified_after {
-        let key = ":dateServerModified".to_string();
-        sql_params.push((key, date.into()));
-    };
-    let sql_params = borrow_sql_params(sql_params.as_slice());
-    let mut stmt = tx.prepare_cached(&sql_body)?;
-    let rows = stmt.query_named(sql_params.as_slice())?;
-    let json = sqlite_rows_to_json(rows, true)?;
-    Ok(json)
+    Ok(result)
 }
 
 pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {

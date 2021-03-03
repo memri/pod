@@ -9,7 +9,9 @@ fi
 
 cargo build
 
-#RUST_LOG=pod=debug,info \
+if ! test -v RUST_LOG; then
+  export RUST_LOG=pod=debug,info
+fi
 
 exec target/debug/pod \
   --owners=ANY \

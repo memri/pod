@@ -60,11 +60,16 @@ pub struct BulkAction {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchByFields {
-    #[serde(rename = "dateServerModifiedAfter")]
-    pub _date_server_modified_after: Option<i64>,
+pub struct Search {
+    pub id: Option<String>,
+    pub _type: Option<String>,
+    #[serde(rename = "dateServerModified>=")]
+    pub _date_server_modified_gte: Option<i64>,
+    #[serde(rename = "dateServerModified<")]
+    pub _date_server_modified_lt: Option<i64>,
+    pub deleted: Option<bool>,
     #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
+    pub other_properties: HashMap<String, Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

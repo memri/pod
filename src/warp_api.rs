@@ -3,7 +3,7 @@ use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 // use crate::api_model::RunImporter;
-use crate::api_model::SearchByFields;
+use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
@@ -126,11 +126,11 @@ pub async fn run_server(cli_options: &CLIOptions) {
 
     let init_db = initialized_databases_arc.clone();
     let search_by_fields = items_api
-        .and(warp::path!(String / "search_by_fields"))
+        .and(warp::path!(String / "search"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<SearchByFields>| {
-            let result = warp_endpoints::search_by_fields(owner, init_db.deref(), body);
+        .map(move |owner: String, body: PayloadWrapper<Search>| {
+            let result = warp_endpoints::search(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
