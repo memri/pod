@@ -1,4 +1,4 @@
-use crate::api_model::BulkAction;
+use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
 use crate::database_api;
@@ -277,20 +277,20 @@ pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()>
     update_item_tx(tx, schema, id, fields)
 }
 
-pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
+pub fn bulk_tx(tx: &Transaction, schema: &Schema, bulk: Bulk) -> Result<()> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items",
-        bulk_action.create_items.len(),
-        bulk_action.update_items.len(),
-        bulk_action.delete_items.len(),
+        bulk.create_items.len(),
+        bulk.update_items.len(),
+        bulk.delete_items.len(),
     );
-    for item in bulk_action.create_items {
+    for item in bulk.create_items {
         create_item_tx(tx, schema, item)?;
     }
-    for item in bulk_action.update_items {
+    for item in bulk.update_items {
         update_item_tx(tx, schema, &item.id, item.fields)?;
     }
-    for item_id in bulk_action.delete_items {
+    for item_id in bulk.delete_items {
         delete_item_tx(tx, schema, &item_id)?;
     }
     Ok(())

@@ -52,7 +52,7 @@ pub struct DeleteEdge {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BulkAction {
+pub struct Bulk {
     #[serde(default)]
     pub create_items: Vec<CreateItem>,
     #[serde(default)]

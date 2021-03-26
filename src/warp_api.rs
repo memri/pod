@@ -1,4 +1,4 @@
-use crate::api_model::BulkAction;
+use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
@@ -93,11 +93,11 @@ pub async fn run_server(cli_options: &CLIOptions) {
 
     let init_db = initialized_databases_arc.clone();
     let bulk_action = items_api
-        .and(warp::path!(String / "bulk_action"))
+        .and(warp::path!(String / "bulk"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<BulkAction>| {
-            let result = warp_endpoints::bulk_action(owner, init_db.deref(), body);
+        .map(move |owner: String, body: PayloadWrapper<Bulk>| {
+            let result = warp_endpoints::bulk(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });

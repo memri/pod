@@ -1,4 +1,4 @@
-use crate::api_model::BulkAction;
+use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
@@ -66,15 +66,15 @@ pub fn update_item(
     })
 }
 
-pub fn bulk_action(
+pub fn bulk(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<BulkAction>,
+    body: PayloadWrapper<Bulk>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::bulk_action_tx(&tx, &schema, body.payload)
+        internal_api::bulk_tx(&tx, &schema, body.payload)
     })
 }
 

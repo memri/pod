@@ -135,7 +135,7 @@ As a first step of the 2021-03 Pod rewrite, only the above properties are suppor
 In the future, any will be available.
 
 
-### POST /v3/$owner_key/bulk_action/
+### POST /v3/$owner_key/bulk
 ```json
 {
   "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
