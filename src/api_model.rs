@@ -21,6 +21,14 @@ pub struct CreateItem {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateItem {
+    pub id: String,
+    #[serde(flatten)]
+    pub fields: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateItemOld {
     pub uid: i64,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
@@ -48,7 +56,7 @@ pub struct BulkAction {
     #[serde(default)]
     pub create_items: Vec<CreateItem>,
     #[serde(default)]
-    pub update_items: Vec<UpdateItem>,
+    pub update_items: Vec<UpdateItemOld>,
     #[serde(default)]
     pub delete_items: Vec<i64>,
     #[serde(default)]

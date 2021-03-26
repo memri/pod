@@ -61,7 +61,7 @@ pub fn update_item(
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::update_item_tx(&tx, body.payload.uid, body.payload.fields)
+        internal_api::update_item_tx(&tx, &body.payload.id, body.payload.fields)
     })
 }
 

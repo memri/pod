@@ -5,12 +5,12 @@ use crate::api_model::Search;
 use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
+use crate::schema::validate_property_name;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
-use crate::schema::validate_property_name;
 use crate::triggers;
 use chrono::Utc;
 use log::info;
@@ -112,7 +112,7 @@ pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Va
         _date_server_modified_gte: None,
         _date_server_modified_lt: None,
         deleted: None,
-        other_properties: Default::default()
+        other_properties: Default::default(),
     };
     let result = search(tx, schema, search_query)?;
     Ok(result)
@@ -251,7 +251,65 @@ pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Re
     Ok(rowid)
 }
 
-pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>) -> Result<()> {
+pub fn update_item_tx(
+    tx: &Transaction,
+    id: &str,
+    mut fields: HashMap<String, Value>,
+) -> Result<()> {
+    log::debug!("Updating item {}", id);
+    for k in fields.keys() {
+        validate_property_name(k)?;
+    }
+    fields.remove("type");
+    fields.remove("dateCreated");
+
+    let time_now = Utc::now().timestamp_millis();
+    let date_modified = if let Some(dm) = fields.remove("dateModified") {
+        if let Some(dm) = dm.as_i64() {
+            dm
+        } else {
+            return Err(Error {
+                code: StatusCode::BAD_REQUEST,
+                msg: format!("Cannot parse dateModified {} to i64", dm),
+            });
+        }
+    } else {
+        time_now
+    };
+    fields.remove("dateServerModified");
+    let deleted = if let Some(d) = fields.remove("deleted") {
+        match d {
+            Value::Null => None,
+            Value::Bool(d) => Some(d),
+            _ => {
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Failed to parse deleted {} to bool", d),
+                })
+            }
+        }
+    } else {
+        None
+    };
+    let rowid = database_api::get_item_rowid(tx, id)?.ok_or_else(|| Error {
+        code: StatusCode::NOT_FOUND,
+        msg: format!("Item with id {} not found", id),
+    })?;
+    database_api::update_item_base(tx, rowid, date_modified, time_now, deleted)?;
+    if !fields.is_empty() {
+        return Err(Error {
+            code: StatusCode::NOT_IMPLEMENTED,
+            msg: format!("Updating of non-base item properties not implemented yet"),
+        });
+    }
+    Ok(())
+}
+
+pub fn update_item_tx_old(
+    tx: &Transaction,
+    uid: i64,
+    fields: HashMap<String, Value>,
+) -> Result<()> {
     let mut fields: HashMap<String, Value> = fields
         .into_iter()
         .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
@@ -266,7 +324,6 @@ pub fn update_item_tx(tx: &Transaction, uid: i64, fields: HashMap<String, Value>
     }
     fields.insert("dateServerModified".to_string(), time_now.into());
 
-    fields.remove("version");
     let mut sql = "UPDATE items SET ".to_string();
     let mut after_first = false;
     for key in fields.keys() {
@@ -361,7 +418,7 @@ pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
     fields.insert("deleted".to_string(), true.into());
     fields.insert("dateModified".to_string(), time_now.into());
     fields.insert("dateServerModified".to_string(), time_now.into());
-    update_item_tx(tx, uid, fields)
+    update_item_tx_old(tx, uid, fields)
 }
 
 pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
@@ -384,7 +441,7 @@ pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction
         create_item_tx(tx, schema, item)?;
     }
     for item in bulk_action.update_items {
-        update_item_tx(tx, item.uid, item.fields)?;
+        update_item_tx_old(tx, item.uid, item.fields)?;
     }
     let sources_set: HashSet<_> = bulk_action
         .create_edges
@@ -397,7 +454,7 @@ pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction
     for edge_source in sources_set {
         println!("{}", edge_source);
         let edge_source = -1; // TODO
-        update_item_tx(tx, edge_source, HashMap::new())?;
+        update_item_tx_old(tx, edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
         delete_item_tx(tx, edge_uid)?;

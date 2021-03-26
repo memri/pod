@@ -1,10 +1,10 @@
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use warp::http::StatusCode;
-use lazy_static::lazy_static;
 use std::collections::HashSet;
-use regex::Regex;
+use warp::http::StatusCode;
 
 /// See `README.md#understanding-the-schema` to understand possible
 /// property types and their meaning

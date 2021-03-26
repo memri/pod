@@ -141,6 +141,28 @@ pub fn search_items(
     Ok(result)
 }
 
+pub fn update_item_base(
+    tx: &Tx,
+    rowid: Rowid,
+    date_modified: DBTime,
+    date_server_modified: DBTime,
+    deleted: Option<bool>,
+) -> Result<()> {
+    let mut sql = "UPDATE items SET dateModified = ?, dateServerModified = ?".to_string();
+    if deleted.is_some() {
+        sql.push_str(", deleted = ?");
+    }
+    sql.push_str(" WHERE rowid = ?;");
+    let mut stmt = tx.prepare_cached(&sql)?;
+    if let Some(deleted) = deleted {
+        stmt.execute(params![date_modified, date_server_modified, deleted, rowid])?;
+        Ok(())
+    } else {
+        stmt.execute(params![date_modified, date_server_modified, rowid])?;
+        Ok(())
+    }
+}
+
 pub fn dangerous_permament_remove_item(tx: &Tx, rowid: Rowid) -> Result<()> {
     let mut stmt = tx.prepare_cached("DELETE FROM integers WHERE item = ?;")?;
     stmt.execute(params![rowid])?;
