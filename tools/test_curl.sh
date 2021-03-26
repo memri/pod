@@ -4,7 +4,8 @@ set -euETo pipefail
 
 
 #### Start Pod
-./examples/run_development.sh --port=4956 &
+cargo build
+target/debug/pod --insecure-non-tls=0.0.0.0 --owners=ANY --port=4956 &
 pid=$!
 trap 'kill $pid' EXIT
 
