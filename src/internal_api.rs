@@ -253,6 +253,7 @@ pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Re
 
 pub fn update_item_tx(
     tx: &Transaction,
+    schema: &Schema,
     id: &str,
     mut fields: HashMap<String, Value>,
 ) -> Result<()> {
@@ -296,11 +297,8 @@ pub fn update_item_tx(
         msg: format!("Item with id {} not found", id),
     })?;
     database_api::update_item_base(tx, rowid, date_modified, time_now, deleted)?;
-    if !fields.is_empty() {
-        return Err(Error {
-            code: StatusCode::NOT_IMPLEMENTED,
-            msg: format!("Updating of non-base item properties not implemented yet"),
-        });
+    for (k, v) in &fields {
+        insert_property(tx, schema, rowid, k, v)?;
     }
     Ok(())
 }
