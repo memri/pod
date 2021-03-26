@@ -597,11 +597,11 @@ mod tests {
         {
             let tx = conn.transaction().unwrap();
             let json = json!({
-            "type": "ItemPropertySchema",
-            "itemType": "Person",
-            "propertyName": "age",
-            "valueType": "Integer",
-        });
+                "type": "ItemPropertySchema",
+                "itemType": "Person",
+                "propertyName": "age",
+                "valueType": "Integer",
+            });
             let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
             let result = internal_api::create_item_tx(&tx, &minimal_schema, create_item).unwrap();
             assert!(result < 10); // no more than 10 items existed before in the DB
@@ -610,7 +610,8 @@ mod tests {
                 property_types: HashMap::new(),
             };
             let create_item: CreateItem = serde_json::from_value(json).unwrap();
-            let result = internal_api::create_item_tx(&tx, &bad_empty_schema, create_item).unwrap_err();
+            let result =
+                internal_api::create_item_tx(&tx, &bad_empty_schema, create_item).unwrap_err();
             assert_eq!(result.code, StatusCode::BAD_REQUEST);
             assert!(result.msg.contains("not defined in Schema"));
 
