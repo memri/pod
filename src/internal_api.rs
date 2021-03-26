@@ -410,7 +410,14 @@ fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
     Ok(result)
 }
 
-pub fn delete_item_tx(tx: &Transaction, uid: i64) -> Result<()> {
+pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()> {
+    log::debug!("Deleting item {}", id);
+    let mut fields = HashMap::new();
+    fields.insert("deleted".to_string(), true.into());
+    update_item_tx(tx, schema, id, fields)
+}
+
+pub fn delete_item_tx_old(tx: &Transaction, uid: i64) -> Result<()> {
     let mut fields = HashMap::new();
     let time_now = Utc::now().timestamp_millis();
     fields.insert("deleted".to_string(), true.into());
@@ -455,7 +462,7 @@ pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction
         update_item_tx_old(tx, edge_source, HashMap::new())?;
     }
     for edge_uid in bulk_action.delete_items {
-        delete_item_tx(tx, edge_uid)?;
+        delete_item_tx_old(tx, edge_uid)?;
     }
     for del_edge in bulk_action.delete_edges {
         delete_edge_tx(tx, del_edge)?;

@@ -107,7 +107,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .and(warp::path!(String / "delete_item"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<i64>| {
+        .map(move |owner: String, body: PayloadWrapper<String>| {
             let result = warp_endpoints::delete_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)

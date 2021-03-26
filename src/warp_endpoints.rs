@@ -81,11 +81,12 @@ pub fn bulk_action(
 pub fn delete_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<i64>,
+    body: PayloadWrapper<String>,
 ) -> Result<()> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::delete_item_tx(&tx, body.payload)
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::delete_item_tx(&tx, &schema, &body.payload)
     })
 }
 
