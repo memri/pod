@@ -141,7 +141,7 @@ pub fn search_items(
     Ok(result)
 }
 
-pub fn dangerous_permamently_remove_item(tx: &Tx, rowid: Rowid) -> Result<()> {
+pub fn dangerous_permament_remove_item(tx: &Tx, rowid: Rowid) -> Result<()> {
     let mut stmt = tx.prepare_cached("DELETE FROM integers WHERE item = ?;")?;
     stmt.execute(params![rowid])?;
     let mut stmt = tx.prepare_cached("DELETE FROM reals WHERE item = ?;")?;
@@ -246,7 +246,7 @@ pub fn delete_schema_items_by_item_type_and_prop(
     let mut rows = stmt.query(params![item_type, property_name])?;
     while let Some(row) = rows.next()? {
         let rowid: Rowid = row.get(0)?;
-        dangerous_permamently_remove_item(tx, rowid)?;
+        dangerous_permament_remove_item(tx, rowid)?;
     }
     Ok(())
 }
@@ -404,7 +404,7 @@ mod tests {
             search_items(&tx, Some(item), None, None, None, None, None)?.len(),
             1
         );
-        dangerous_permamently_remove_item(&tx, item)?;
+        dangerous_permament_remove_item(&tx, item)?;
         assert_eq!(
             search_items(&tx, Some(item), None, None, None, None, None)?.len(),
             0
