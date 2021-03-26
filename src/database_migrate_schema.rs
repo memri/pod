@@ -1,4 +1,4 @@
-use crate::sql_converters::validate_property_name;
+use crate::schema::validate_property_name;
 use lazy_static::lazy_static;
 use log::info;
 use rusqlite::Connection;

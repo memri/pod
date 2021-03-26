@@ -10,7 +10,7 @@ use crate::schema::SchemaPropertyType;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
-use crate::sql_converters::validate_property_name;
+use crate::schema::validate_property_name;
 use crate::triggers;
 use chrono::Utc;
 use log::info;

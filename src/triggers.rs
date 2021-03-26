@@ -8,6 +8,7 @@ use crate::error::ErrorContext;
 use crate::error::Result;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
+use crate::schema;
 use rusqlite::Transaction as Tx;
 use serde::Deserialize;
 use serde::Serialize;
@@ -29,6 +30,7 @@ pub fn trigger_before_item_create(tx: &Tx, _schema: &Schema, item: &CreateItem) 
         let json = serde_json::to_value(&item).context(|| format!("item {:?}", item))?;
         let parsed: SchemaItem = serde_json::from_value(json)
             .context(|| format!("Parsing of Schema item {:?}", item))?;
+        schema::validate_property_name(&parsed.property_name)?;
         database_api::delete_schema_items_by_item_type_and_prop(
             tx,
             &parsed.item_type,
