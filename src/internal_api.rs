@@ -139,17 +139,18 @@ pub fn get_item_properties(
     Ok(json)
 }
 
-pub fn get_item_tx(tx: &Transaction, id: &str) -> Result<Option<Value>> {
+pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Value>> {
     info!("Getting item {}", id);
-    let rowid = if let Some(rowid) = get_item_rowid(tx, id)? {
-        rowid
-    } else {
-        return Ok(None);
+    let search_query = Search {
+        id: Some(id.to_string()),
+        _type: None,
+        _date_server_modified_gte: None,
+        _date_server_modified_lt: None,
+        deleted: None,
+        other_properties: Default::default()
     };
-    let mut result = get_item_properties_old(tx, rowid)?;
-    result.insert("id".to_string(), id.into());
-    let obj: Value = serde_json::to_value(result)?;
-    Ok(Some(obj))
+    let result = search(tx, schema, search_query)?;
+    Ok(result)
 }
 
 // fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {

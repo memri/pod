@@ -57,6 +57,17 @@ pub fn insert_item_base(
     .context_str("Failed to execute insert_item with parameters")
 }
 
+pub fn get_item_rowid(tx: &Tx, id: &str) -> Result<Option<Rowid>> {
+    let mut stmt = tx.prepare_cached("SELECT rowid FROM items WHERE id = ?;")?;
+    let mut rows = stmt.query_map(params![id], |row| row.get(0))?;
+    if let Some(row) = rows.next() {
+        let rowid: i64 = row?;
+        Ok(Some(rowid))
+    } else {
+        Ok(None)
+    }
+}
+
 pub fn search_items(
     tx: &Tx,
     rowid: Option<Rowid>,

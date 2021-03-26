@@ -47,6 +47,19 @@ The following properties are expected:
 Get version of the Pod: the git commit and cargo version that it was built from.
 
 
+### POST /v3/$owner_key/get_item
+```json
+{
+  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "payload": $id
+}
+```
+Get a single item by its `id`.
+
+Returns an empty array if an item is not found,
+or an array with 1 item if item exists.
+
+
 ### POST /v3/$owner_key/create_item
 ```json
 {

@@ -37,7 +37,8 @@ pub fn get_item(
 ) -> Result<Vec<Value>> {
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
     in_transaction(&mut conn, |tx| {
-        internal_api::get_item_tx(&tx, &body.payload).map(|r| r.into_iter().collect())
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::get_item_tx(&tx, &schema, &body.payload)
     })
 }
 
