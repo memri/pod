@@ -11,7 +11,6 @@ pub mod file_api;
 pub mod internal_api;
 mod schema;
 pub mod services_api;
-mod sql_converters;
 mod triggers;
 mod warp_api;
 mod warp_endpoints;

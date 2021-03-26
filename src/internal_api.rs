@@ -7,14 +7,11 @@ use crate::error::Result;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
-use crate::sql_converters::json_value_to_sqlite;
-use crate::sql_converters::sqlite_row_to_map;
 use crate::triggers;
 use chrono::Utc;
 use log::info;
 use log::warn;
 use rusqlite::params;
-use rusqlite::ToSql;
 use rusqlite::Transaction;
 use serde_json::Map;
 use serde_json::Value;
@@ -113,33 +110,6 @@ pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Va
     };
     let result = search(tx, schema, search_query)?;
     Ok(result)
-}
-
-fn is_array_or_object(value: &Value) -> bool {
-    matches!(value, Value::Array(_) | Value::Object(_))
-}
-
-fn execute_sql(tx: &Transaction, sql: &str, fields: &HashMap<String, Value>) -> Result<()> {
-    let mut sql_params = Vec::new();
-    for (key, value) in fields {
-        sql_params.push((format!(":{}", key), json_value_to_sqlite(value, key)?));
-    }
-    let sql_params: Vec<_> = sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect();
-    let mut stmt = tx.prepare_cached(&sql)?;
-    stmt.execute_named(&sql_params).map_err(|err| {
-        let msg = format!(
-            "Database rusqlite error for parameters: {:?}, {}",
-            fields, err
-        );
-        Error {
-            code: StatusCode::BAD_REQUEST,
-            msg,
-        }
-    })?;
-    Ok(())
 }
 
 fn new_uuid() -> String {
@@ -300,55 +270,11 @@ pub fn update_item_tx(
     Ok(())
 }
 
-pub fn update_item_tx_old(
-    tx: &Transaction,
-    uid: i64,
-    fields: HashMap<String, Value>,
-) -> Result<()> {
-    let mut fields: HashMap<String, Value> = fields
-        .into_iter()
-        .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-        .collect();
-    fields.insert("uid".to_string(), uid.into());
-    fields.remove("_type");
-    fields.remove("dateCreated");
-
-    let time_now = Utc::now().timestamp_millis();
-    if !fields.contains_key("dateModified") {
-        fields.insert("dateModified".to_string(), time_now.into());
-    }
-    fields.insert("dateServerModified".to_string(), time_now.into());
-
-    let mut sql = "UPDATE items SET ".to_string();
-    let mut after_first = false;
-    for key in fields.keys() {
-        if after_first {
-            sql.push_str(", ");
-        }
-        after_first = true;
-        sql.push_str(key);
-        sql.push_str(" = :");
-        sql.push_str(key);
-    }
-    sql.push_str(", version = version + 1 ");
-    sql.push_str("WHERE uid = :uid ;");
-    execute_sql(tx, &sql, &fields)
-}
-
 pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()> {
     log::debug!("Deleting item {}", id);
     let mut fields = HashMap::new();
     fields.insert("deleted".to_string(), true.into());
     update_item_tx(tx, schema, id, fields)
-}
-
-pub fn delete_item_tx_old(tx: &Transaction, uid: i64) -> Result<()> {
-    let mut fields = HashMap::new();
-    let time_now = Utc::now().timestamp_millis();
-    fields.insert("deleted".to_string(), true.into());
-    fields.insert("dateModified".to_string(), time_now.into());
-    fields.insert("dateServerModified".to_string(), time_now.into());
-    update_item_tx_old(tx, uid, fields)
 }
 
 pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
@@ -405,63 +331,6 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
         );
         properties.insert("deleted".to_string(), item.deleted.into());
         result.push(Value::Object(properties))
-    }
-    Ok(result)
-}
-
-pub fn get_item_with_edges_tx(tx: &Transaction, uid: i64) -> Result<Value> {
-    let mut stmt_item = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-    let mut item_rows = stmt_item.query_named(&[(":uid", &uid)])?;
-    let mut item = match item_rows.next()? {
-        Some(row) => sqlite_row_to_map(row, false)?,
-        None => {
-            return Err(Error {
-                code: StatusCode::NOT_FOUND,
-                msg: format!("Item with uid {} not found", uid),
-            })
-        }
-    };
-    assert!(
-        item_rows.next()?.is_none(),
-        "Impossible to get multiple results for a single uid"
-    );
-
-    let mut stmt_edge = tx.prepare_cached(
-        "SELECT _type, sequence, edgeLabel, _target FROM edges WHERE _source = :_source",
-    )?;
-    let mut edge_rows = stmt_edge.query_named(&[(":_source", &uid)])?;
-    let mut edges = Vec::new();
-    while let Some(row) = edge_rows.next()? {
-        edges.push(sqlite_row_to_map(row, false)?);
-    }
-
-    let mut new_edges = Vec::new();
-    for mut edge in edges {
-        let target = edge
-            .get("_target")
-            .expect("Failed to get _target")
-            .as_i64()
-            .expect("Failed to get value as i64");
-        let mut stmt = tx.prepare_cached("SELECT * FROM items WHERE uid = :uid")?;
-        let mut rows = stmt.query_named(&[(":uid", &target)])?;
-        edge.remove("_target");
-        while let Some(row) = rows.next()? {
-            edge.insert(
-                "_target".to_string(),
-                Value::from(sqlite_row_to_map(row, true)?),
-            );
-        }
-        new_edges.push(edge);
-    }
-
-    item.insert("allEdges".to_string(), Value::from(new_edges));
-    Ok(item.into())
-}
-
-pub fn get_items_with_edges_tx(tx: &Transaction, uids: &[i64]) -> Result<Vec<Value>> {
-    let mut result = Vec::new();
-    for uid in uids {
-        result.push(get_item_with_edges_tx(tx, *uid)?);
     }
     Ok(result)
 }

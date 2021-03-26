@@ -102,17 +102,6 @@ pub fn search(
     })
 }
 
-pub fn get_items_with_edges(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<Vec<i64>>,
-) -> Result<Vec<Value>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    in_transaction(&mut conn, |tx| {
-        internal_api::get_items_with_edges_tx(&tx, &body.payload)
-    })
-}
-
 //
 // Services
 //

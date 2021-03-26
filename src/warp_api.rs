@@ -124,17 +124,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
             respond_with_result(result)
         });
 
-    let init_db = initialized_databases_arc.clone();
-    let get_items_with_edges = items_api
-        .and(warp::path!(String / "get_items_with_edges"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<Vec<i64>>| {
-            let result = warp_endpoints::get_items_with_edges(owner, init_db.deref(), body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
     // let init_db = initialized_databases_arc.clone();
     // let cli_options_arc = Arc::new(cli_options.clone());
     // let run_importer = services_api
@@ -218,10 +207,7 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
         .or(search_by_fields.with(&headers))
-        .or(get_items_with_edges.with(&headers))
-        // .or(run_downloader.with(&headers))
         // .or(run_importer.with(&headers))
-        // .or(run_indexer.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);
