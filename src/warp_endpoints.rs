@@ -42,15 +42,6 @@ pub fn get_item(
     })
 }
 
-pub fn get_all_items(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<()>,
-) -> Result<Vec<Value>> {
-    let conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
-    internal_api::get_all_items(&conn)
-}
-
 pub fn create_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,

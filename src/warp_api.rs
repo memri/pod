@@ -81,17 +81,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let get_all_items = items_api
-        .and(warp::path!(String / "get_all_items"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<()>| {
-            let result = warp_endpoints::get_all_items(owner, init_db.deref(), body);
-            let result = result.map(|result| warp::reply::json(&result));
-            respond_with_result(result)
-        });
-
-    let init_db = initialized_databases_arc.clone();
     let update_item = items_api
         .and(warp::path!(String / "update_item"))
         .and(warp::path::end())
@@ -225,7 +214,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
     });
     let sensitive_filters = sensitive_filters
         .or(get_item.with(&headers))
-        .or(get_all_items.with(&headers))
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))

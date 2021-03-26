@@ -10,18 +10,14 @@ use crate::schema::SchemaPropertyType;
 use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
-use crate::sql_converters::sqlite_rows_to_json;
-use crate::sql_converters::sqlite_value_to_json;
 use crate::sql_converters::validate_property_name;
 use crate::triggers;
 use chrono::Utc;
 use log::info;
 use log::warn;
 use rusqlite::params;
-use rusqlite::Connection;
 use rusqlite::ToSql;
 use rusqlite::Transaction;
-use rusqlite::NO_PARAMS;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -31,37 +27,6 @@ use warp::http::status::StatusCode;
 
 pub fn get_project_version() -> String {
     crate::command_line_interface::VERSION.to_string()
-}
-
-fn get_item_properties_old(tx: &Transaction, id: i64) -> Result<HashMap<String, Value>> {
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM itemproperties WHERE itemId = ?1")?;
-    let rows_iter = stmt.query_map(params![id], |row| {
-        let name: String = row.get(0)?;
-        let value = sqlite_value_to_json(row.get_raw(1), &name);
-        if let Some(value) = value {
-            Ok(Some((name, value)))
-        } else {
-            Ok(None)
-        }
-    })?;
-    let mut result = HashMap::new();
-    for row in rows_iter {
-        if let Some((k, v)) = row? {
-            result.insert(k, v);
-        }
-    }
-    Ok(result)
-}
-
-fn get_item_rowid(tx: &Transaction, id: &str) -> Result<Option<i64>> {
-    let mut stmt = tx.prepare_cached("SELECT rowid FROM items WHERE id = ?1")?;
-    let mut rows = stmt.query_map(params![id], |row| row.get(0))?;
-    if let Some(row) = rows.next() {
-        let rowid: i64 = row?;
-        Ok(Some(rowid))
-    } else {
-        Ok(None)
-    }
 }
 
 /// Get all properties that the item has, ignoring those
@@ -151,27 +116,6 @@ pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Va
     };
     let result = search(tx, schema, search_query)?;
     Ok(result)
-}
-
-// fn check_item_exists(tx: &Transaction, uid: i64) -> Result<bool> {
-//     let mut stmt = tx.prepare_cached("SELECT 1 FROM items WHERE uid = :uid")?;
-//     let mut rows = stmt.query_named(&[(":uid", &uid)])?;
-//     let result = match rows.next()? {
-//         None => false,
-//         Some(row) => {
-//             let count: isize = row.get(0)?;
-//             count > 0
-//         }
-//     };
-//     Ok(result)
-// }
-
-pub fn get_all_items(conn: &Connection) -> Result<Vec<Value>> {
-    info!("Getting all items");
-    let mut stmt = conn.prepare_cached("SELECT * FROM items")?;
-    let rows = stmt.query(NO_PARAMS)?;
-    let json = sqlite_rows_to_json(rows, true)?;
-    Ok(json)
 }
 
 fn is_array_or_object(value: &Value) -> bool {

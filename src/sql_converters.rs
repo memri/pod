@@ -12,7 +12,6 @@ use regex::Regex;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Row;
-use rusqlite::Rows;
 use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
@@ -31,15 +30,6 @@ pub fn sqlite_row_to_map(row: &Row, partial: bool) -> rusqlite::Result<Map<Strin
         row_map.insert("_partial".to_string(), Value::from(true));
     }
     Ok(row_map)
-}
-
-pub fn sqlite_rows_to_json(mut rows: Rows, partial: bool) -> rusqlite::Result<Vec<Value>> {
-    let mut result = Vec::new();
-    while let Some(row) = rows.next()? {
-        let json_object = sqlite_row_to_map(row, partial)?;
-        result.push(Value::from(json_object));
-    }
-    Ok(result)
 }
 
 pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value> {
