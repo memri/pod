@@ -1,6 +1,5 @@
 use crate::api_model::BulkAction;
 use crate::api_model::CreateItem;
-use crate::api_model::DeleteEdge;
 use crate::api_model::Search;
 use crate::database_api;
 use crate::error::Error;
@@ -8,7 +7,6 @@ use crate::error::Result;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
-use crate::sql_converters::borrow_sql_params;
 use crate::sql_converters::json_value_to_sqlite;
 use crate::sql_converters::sqlite_row_to_map;
 use crate::triggers;
@@ -21,7 +19,6 @@ use rusqlite::Transaction;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::str;
 use warp::http::status::StatusCode;
 
@@ -338,78 +335,6 @@ pub fn update_item_tx_old(
     execute_sql(tx, &sql, &fields)
 }
 
-fn create_edge(
-    _tx: &Transaction,
-    _type: &str,
-    _source: &str,
-    _target: &str,
-    _fields: HashMap<String, Value>,
-) -> Result<()> {
-    // let source_rowid = if let Some(rowid) = get_item_rowid(tx, source)? {
-    //     rowid
-    // } else {
-    //     return Err(Error {
-    //         code: StatusCode::BAD_REQUEST,
-    //         msg: format!("Cannot create edge, source not found in edge {}->{} ({})", source, target, _type)
-    //     })
-    // };
-    // let target_rowid = if let Some(rowid) = get_item_rowid(tx, target)? {
-    //     rowid
-    // } else {
-    //     return Err(Error {
-    //         code: StatusCode::BAD_REQUEST,
-    //         msg: format!("Cannot create edge, target not found in edge {}->{} ({})", source, target, _type)
-    //     })
-    // };
-    // fields.insert("_type".to_string(), _type.into());
-    // fields.insert("_source".to_string(), source.into());
-    // fields.insert("_target".to_string(), target.into());
-    // let fields: HashMap<String, Value> = fields
-    //     .into_iter()
-    //     .filter(|(k, v)| !is_array_or_object(v) && validate_property_name(k).is_ok())
-    //     .collect();
-    // let mut sql = "INSERT INTO edges (".to_string();
-    // let keys: Vec<_> = fields.keys().collect();
-    // write_sql_body(&mut sql, &keys, ", ");
-    // sql.push_str(") VALUES (:");
-    // write_sql_body(&mut sql, &keys, ", :");
-    // sql.push_str(");");
-    // if !check_item_exists(tx, source)? {
-    //     return Err(Error {
-    //         code: StatusCode::NOT_FOUND,
-    //         msg: format!(
-    //             "Failed to create edge {} {}->{} because source uid is not found",
-    //             _type, source, target
-    //         ),
-    //     });
-    // };
-    // if !check_item_exists(tx, target)? {
-    //     return Err(Error {
-    //         code: StatusCode::NOT_FOUND,
-    //         msg: format!(
-    //             "Failed to create edge {} {}->{} because target uid is not found",
-    //             _type, source, target
-    //         ),
-    //     });
-    // };
-    // execute_sql(tx, &sql, &fields)
-    panic!()
-}
-
-fn delete_edge_tx(tx: &Transaction, edge: DeleteEdge) -> Result<usize> {
-    let sql =
-        "DELETE FROM edges WHERE _source = :_source AND _target = :_target AND _type = :_type;";
-    let sql_params = vec![
-        (":_source".to_string(), edge._source.into()),
-        (":_target".to_string(), edge._target.into()),
-        (":_type".to_string(), edge._type.into()),
-    ];
-    let sql_params = borrow_sql_params(&sql_params);
-    let mut stmt = tx.prepare_cached(&sql)?;
-    let result = stmt.execute_named(sql_params.as_slice())?;
-    Ok(result)
-}
-
 pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()> {
     log::debug!("Deleting item {}", id);
     let mut fields = HashMap::new();
@@ -428,44 +353,19 @@ pub fn delete_item_tx_old(tx: &Transaction, uid: i64) -> Result<()> {
 
 pub fn bulk_action_tx(tx: &Transaction, schema: &Schema, bulk_action: BulkAction) -> Result<()> {
     info!(
-        "Performing bulk action with {} new items, {} updated items, {} deleted items, {} created edges, {} deleted edges",
+        "Performing bulk action with {} new items, {} updated items, {} deleted items",
         bulk_action.create_items.len(),
         bulk_action.update_items.len(),
         bulk_action.delete_items.len(),
-        bulk_action.create_edges.len(),
-        bulk_action.delete_edges.len(),
     );
-    let edges_will_be_created = !bulk_action.create_edges.is_empty();
     for item in bulk_action.create_items {
-        if !item.fields.contains_key("uid") && edges_will_be_created {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!("Creating items without uid in bulk_action is restricted for safety reasons (creating edges might be broken), item: {:?}", item.fields)
-            });
-        }
         create_item_tx(tx, schema, item)?;
     }
     for item in bulk_action.update_items {
-        update_item_tx_old(tx, item.uid, item.fields)?;
+        update_item_tx(tx, schema, &item.id, item.fields)?;
     }
-    let sources_set: HashSet<_> = bulk_action
-        .create_edges
-        .iter()
-        .map(|e| e._source.to_string())
-        .collect();
-    for edge in bulk_action.create_edges {
-        create_edge(tx, &edge._type, &edge._source, &edge._target, edge.fields)?;
-    }
-    for edge_source in sources_set {
-        println!("{}", edge_source);
-        let edge_source = -1; // TODO
-        update_item_tx_old(tx, edge_source, HashMap::new())?;
-    }
-    for edge_uid in bulk_action.delete_items {
-        delete_item_tx_old(tx, edge_uid)?;
-    }
-    for del_edge in bulk_action.delete_edges {
-        delete_edge_tx(tx, del_edge)?;
+    for item_id in bulk_action.delete_items {
+        delete_item_tx(tx, schema, &item_id)?;
     }
     Ok(())
 }

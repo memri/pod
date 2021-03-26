@@ -10,7 +10,6 @@ use log::warn;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::types::ValueRef;
 use rusqlite::Row;
-use rusqlite::ToSql;
 use serde_json::Map;
 use serde_json::Value;
 use warp::http::status::StatusCode;
@@ -54,15 +53,6 @@ pub fn sqlite_value_to_json(value: ValueRef, column_name: &str) -> Option<Value>
         },
         ValueRef::Blob(_) => panic!("BLOB value found in the database, this should never happen"),
     }
-}
-
-pub fn borrow_sql_params<'a>(
-    sql_params: &'a [(String, ToSqlOutput)],
-) -> Vec<(&'a str, &'a dyn ToSql)> {
-    sql_params
-        .iter()
-        .map(|(field, value)| (field.as_str(), value as &dyn ToSql))
-        .collect()
 }
 
 // pub fn json_value_and_schema_to_sqlite<'a>(

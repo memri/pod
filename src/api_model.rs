@@ -56,13 +56,9 @@ pub struct BulkAction {
     #[serde(default)]
     pub create_items: Vec<CreateItem>,
     #[serde(default)]
-    pub update_items: Vec<UpdateItemOld>,
+    pub update_items: Vec<UpdateItem>,
     #[serde(default)]
-    pub delete_items: Vec<i64>,
-    #[serde(default)]
-    pub create_edges: Vec<CreateEdge>,
-    #[serde(default)]
-    pub delete_edges: Vec<DeleteEdge>,
+    pub delete_items: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
