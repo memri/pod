@@ -40,6 +40,11 @@ The following properties are expected:
 }
 ```
 
+Note that you cannot both change the Schema and refer to the new Schema
+in one `bulk` request, so if you want changes to the Schema to happen first,
+split updates to the Schema into a separate request.
+(This constraint might be lifted in the future.)
+
 
 # Items API
 
