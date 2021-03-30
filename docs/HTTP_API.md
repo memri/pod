@@ -99,7 +99,7 @@ Get version of the Pod: the git commit and cargo version that it was built from.
 ### POST /v3/$owner_key/get_item
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": $id
 }
 ```
@@ -112,7 +112,7 @@ or an array with 1 item if item exists.
 ### POST /v3/$owner_key/create_item
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": { "type": "...", ... }
 }
 ```
@@ -134,7 +134,7 @@ Returns `id` of the created item if the operation is successful.
 ### POST /v3/$owner_key/update_item
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": { "id": $id, ... }
 }
 ```
@@ -154,7 +154,7 @@ Returns an empty object if the operation is successful.
 ### POST /v3/$owner_key/delete_item
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": $id
 }
 ```
@@ -167,7 +167,7 @@ Mark an item as deleted:
 ### POST /v3/$owner_key/search
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": {
     "type": "Label",
     "dateServerModified>=": 1234567890,
@@ -187,7 +187,7 @@ In the future, any will be available.
 ### POST /v3/$owner_key/bulk
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": {
     "createItems": [
       { "id": "something-12345", "type": "Person", ... }, ...
@@ -215,7 +215,7 @@ Typical examples of services are services that import emails/messages into Pod.
 ### POST /v3/$owner_key/run_importer
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": {
     "id": $id,
     "servicePayload": {
@@ -252,7 +252,7 @@ The properties `nonce` and `key` will be updated for this item.
 ### POST /v3/$owner_key/get_file
 ```json
 {
-  "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
+  "auth": $auth_json,
   "payload": {
     "sha256": $sha256
   }
