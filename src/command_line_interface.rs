@@ -96,7 +96,9 @@ pub struct CLIOptions {
     #[structopt(long)]
     pub shared_server: bool,
 
-    /// Schema file to use.
+    /// Deprecated: schema file to use.
+    /// Note that this Schema is in the process of being re-written to a different format,
+    /// The way it works will change in a breaking manner.
     #[structopt(
         long,
         name = "SCHEMA_FILE",
@@ -105,9 +107,7 @@ pub struct CLIOptions {
     )]
     pub schema_file: PathBuf,
 
-    /// Validate the schema file, and exit. Useful in combination with the --schema-file CLI key.
-    /// Note that running project tests or starting the Pod will also automatically validate
-    /// the schema.
+    /// Validate the schema file and exit. Useful in combination with the --schema-file CLI key.
     #[structopt(long)]
     pub validate_schema: bool,
 }
