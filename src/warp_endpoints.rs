@@ -1,4 +1,6 @@
+use crate::api_model::AuthKey;
 use crate::api_model::Bulk;
+use crate::api_model::ClientAuth;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
@@ -35,7 +37,7 @@ pub fn get_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<String>,
 ) -> Result<Vec<Value>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::get_item_tx(&tx, &schema, &body.payload)
@@ -47,7 +49,7 @@ pub fn create_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<CreateItem>,
 ) -> Result<i64> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::create_item_tx(&tx, &schema, body.payload)
@@ -59,7 +61,7 @@ pub fn update_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<UpdateItem>,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::update_item_tx(&tx, &schema, &body.payload.id, body.payload.fields)
@@ -71,7 +73,7 @@ pub fn bulk(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Bulk>,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::bulk_tx(&tx, &schema, body.payload)
@@ -83,7 +85,7 @@ pub fn delete_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<String>,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::delete_item_tx(&tx, &schema, &body.payload)
@@ -95,7 +97,7 @@ pub fn search(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Search>,
 ) -> Result<Vec<Value>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::search(&tx, &schema, body.payload)
@@ -112,7 +114,7 @@ pub fn search(
 //     body: PayloadWrapper<RunImporter>,
 //     cli_options: &CLIOptions,
 // ) -> Result<()> {
-//     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+//     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
 //     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
 //     in_transaction(&mut conn, |tx| {
 //         services_api::run_importer(&tx, body.payload, cli_options)
@@ -126,7 +128,10 @@ pub fn upload_file(
     expected_sha256: String,
     body: &[u8],
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    // auth_wrapper and the HTTP request will be re-done for more proper structure later
+    let auth_wrapper = ClientAuth { database_key };
+    let mut conn: Connection =
+        check_owner_and_initialize_db(&owner, &init_db, &AuthKey::ClientAuth(auth_wrapper))?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
         file_api::upload_file(tx, owner, expected_sha256, body)
@@ -138,7 +143,7 @@ pub fn get_file(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<GetFile>,
 ) -> Result<Vec<u8>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
         file_api::get_file(tx, &owner, &body.payload.sha256)
@@ -164,8 +169,11 @@ fn in_transaction<T, F: FnOnce(&Transaction) -> Result<T>>(
 fn check_owner_and_initialize_db(
     owner: &str,
     init_db: &RwLock<HashSet<String>>,
-    database_key: &str,
+    auth: &AuthKey,
 ) -> Result<Connection> {
+    let database_key = match auth {
+        AuthKey::ClientAuth(c) => &c.database_key,
+    };
     check_owner(owner)?;
     initialize_db(owner, init_db, database_key)
 }

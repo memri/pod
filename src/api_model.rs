@@ -3,6 +3,40 @@ use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 
+//
+// Wrapper structs:
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginAuth {
+    pub blob: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ClientAuth {
+    pub database_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum AuthKey {
+    // Plugin(PluginAuth),
+    ClientAuth(ClientAuth),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PayloadWrapper<T> {
+    pub auth: AuthKey,
+    pub payload: T,
+}
+
+//
+// Item API:
+//
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateItem {
@@ -24,30 +58,6 @@ pub struct UpdateItem {
     pub id: String,
     #[serde(flatten)]
     pub fields: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateItemOld {
-    pub uid: i64,
-    #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateEdge {
-    pub _type: String,
-    pub _source: String,
-    pub _target: String,
-    #[serde(flatten)]
-    pub fields: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DeleteEdge {
-    pub _source: i64,
-    pub _target: i64,
-    pub _type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -75,23 +85,9 @@ pub struct Search {
     pub other_properties: HashMap<String, Value>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PayloadWrapper<T> {
-    pub database_key: String,
-    pub payload: T,
-}
-
 //
-// Services:
+// Services API:
 //
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RunDownloader {
-    pub id: String,
-    pub service_payload: Value,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -102,13 +98,12 @@ pub struct RunImporter {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct RunIndexer {
-    pub id: String,
-    pub service_payload: Value,
+pub struct RunIntegratorItem {
+    pub repository: String,
 }
 
 //
-// Files:
+// Files API:
 //
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -117,12 +112,22 @@ pub struct GetFile {
     pub sha256: String,
 }
 
-//
-// Items:
-//
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RunIntegratorItem {
-    pub repository: String,
+    #[test]
+    fn test_serialization_examples() {
+        let client_auth = ClientAuth {
+            database_key: "0000".to_string(),
+        };
+        let client_auth_ser = serde_json::to_string(&client_auth).unwrap();
+        assert_eq!(client_auth_ser, r#"{"databaseKey":"0000"}"#);
+        let auth_key = AuthKey::ClientAuth(client_auth);
+        let auth_key_ser = serde_json::to_string(&auth_key).unwrap();
+        assert_eq!(
+            auth_key_ser,
+            r#"{"type":"ClientAuth","databaseKey":"0000"}"#
+        );
+    }
 }
