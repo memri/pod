@@ -8,7 +8,9 @@ mod database_migrate_refinery;
 pub mod database_migrate_schema;
 mod error;
 pub mod file_api;
+mod global_static;
 pub mod internal_api;
+mod plugin_auth_crypto;
 mod schema;
 pub mod services_api;
 mod triggers;
@@ -56,7 +58,7 @@ async fn main() {
     info!("Running Pod with configuration {:#?}", cli_options);
 
     create_config_directory(constants::DATABASE_DIR);
-    create_config_directory(constants::MEDIA_DIR);
+    create_config_directory(constants::FILES_DIR);
 
     // Start web framework
     warp_api::run_server(cli_options).await;

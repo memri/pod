@@ -12,7 +12,7 @@ services:
       - memri-net
     volumes:
       - ./data/db:/data/db
-      - ./data/media:/data/media
+      - ./data/files:/data/files
       - ./data/certs:/data/certs
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint:

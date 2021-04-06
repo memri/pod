@@ -9,8 +9,15 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct PluginAuthData {
+    pub nonce: String,
+    pub encrypted_permissions: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PluginAuth {
-    pub blob: String,
+    pub data: PluginAuthData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,7 +29,7 @@ pub struct ClientAuth {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum AuthKey {
-    // Plugin(PluginAuth),
+    PluginAuth(PluginAuth),
     ClientAuth(ClientAuth),
 }
 

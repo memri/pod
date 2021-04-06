@@ -3,10 +3,12 @@ use crate::error::Error;
 use crate::error::Result;
 use chacha20poly1305::aead::Aead;
 use chacha20poly1305::aead::NewAead;
-use chacha20poly1305::ChaCha20Poly1305;
 use chacha20poly1305::Key;
-use chacha20poly1305::Nonce;
+use chacha20poly1305::XChaCha20Poly1305;
+// use chacha20poly1305::Nonce;
+use chacha20poly1305::XNonce;
 use log::warn;
+use rand::random;
 use rusqlite::named_params;
 use rusqlite::OptionalExtension;
 use rusqlite::Transaction;
@@ -38,11 +40,13 @@ pub fn upload_file(
         });
     };
     validate_hash(&expected_sha256, body)?;
-    let key: [u8; 32] = rand::random();
+
+    let key: [u8; 32] = random();
     let key = Key::from_slice(&key);
-    let cipher = ChaCha20Poly1305::new(key);
-    let nonce: [u8; 12] = rand::random();
-    let nonce = Nonce::from_slice(&nonce); // unique per file
+    let cipher = XChaCha20Poly1305::new(key);
+
+    let nonce: [u8; 24] = rand::random();
+    let nonce = XNonce::from_slice(&nonce); // unique per file
     let body = cipher.encrypt(nonce, body)?;
     update_key_and_nonce(tx, key.deref(), nonce.deref(), &expected_sha256)?;
 
@@ -75,8 +79,8 @@ pub fn get_file(tx: &Transaction, owner: &str, sha256: &str) -> Result<Vec<u8>> 
         msg: format!("Failed to read data from target file, {}", err),
     })?;
     let (key, nonce) = find_key_and_nonce_by_sha256(tx, sha256)?;
-    let (key, nonce) = (Key::from_slice(&key), Nonce::from_slice(&nonce));
-    let cipher = ChaCha20Poly1305::new(key);
+    let (key, nonce) = (Key::from_slice(&key), XNonce::from_slice(&nonce));
+    let cipher = XChaCha20Poly1305::new(key);
     let plaintext = cipher.decrypt(&nonce, file.as_ref())?;
     Ok(plaintext)
 }
@@ -87,11 +91,14 @@ fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
 }
 
 fn final_path(owner: &str, sha256: &str) -> Result<PathBuf> {
-    let result = media_dir()?;
+    let result = files_dir()?;
     let final_dir = result.join(owner).join(FINAL_DIR);
     create_dir_all(&final_dir).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
-        msg: format!("Failed to create media owner directory, {}", err),
+        msg: format!(
+            "Failed to create files directory for owner {}, {}",
+            owner, err
+        ),
     })?;
     Ok(final_dir.join(sha256))
 }
@@ -114,6 +121,7 @@ fn validate_hash(expected_sha256: &str, data: &[u8]) -> Result<()> {
     }
 }
 
+/// Update `key` and `nonce` in DB for items that have the given `sha256`
 fn update_key_and_nonce(
     tx: &Transaction,
     key: &[u8],
@@ -136,6 +144,7 @@ fn update_key_and_nonce(
     }
 }
 
+// Find `key` and `nonce` in the database for an item with the desired `sha256`
 fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u8>, Vec<u8>)> {
     let key_nonce: Option<(String, String)> = tx
         .query_row(
@@ -158,9 +167,10 @@ fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u
     Ok((key, nonce))
 }
 
-fn media_dir() -> Result<PathBuf> {
-    PathBuf::from_str(constants::MEDIA_DIR).map_err(|err| {
-        warn!("Failed to create file upload path {}", constants::MEDIA_DIR);
+/// Directory where files (e.g. media) are stored
+fn files_dir() -> Result<PathBuf> {
+    PathBuf::from_str(constants::FILES_DIR).map_err(|err| {
+        warn!("Failed to create file upload path {}", constants::FILES_DIR);
         Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!("Failed to create file upload path, {}", err),

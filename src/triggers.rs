@@ -36,6 +36,8 @@ pub fn trigger_before_item_create(tx: &Tx, _schema: &Schema, item: &CreateItem) 
             &parsed.item_type,
             &parsed.property_name,
         )?;
+    } else if item._type == "StartPlugin" {
+        // TODO
     }
     Ok(())
 }

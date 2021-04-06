@@ -16,6 +16,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
+use crate::plugin_auth_crypto;
 // use crate::services_api;
 use lazy_static::lazy_static;
 use log::error;
@@ -31,6 +32,10 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::RwLock;
 use warp::http::status::StatusCode;
+
+//
+// Items API:
+//
 
 pub fn get_item(
     owner: String,
@@ -105,21 +110,8 @@ pub fn search(
 }
 
 //
-// Services
+// Files API:
 //
-
-// pub fn run_importer(
-//     owner: String,
-//     init_db: &RwLock<HashSet<String>>,
-//     body: PayloadWrapper<RunImporter>,
-//     cli_options: &CLIOptions,
-// ) -> Result<()> {
-//     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
-//     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
-//     in_transaction(&mut conn, |tx| {
-//         services_api::run_importer(&tx, body.payload, cli_options)
-//     })
-// }
 
 pub fn upload_file(
     owner: String,
@@ -171,8 +163,13 @@ fn check_owner_and_initialize_db(
     init_db: &RwLock<HashSet<String>>,
     auth: &AuthKey,
 ) -> Result<Connection> {
+    let result_database_key: String;
     let database_key = match auth {
         AuthKey::ClientAuth(c) => &c.database_key,
+        AuthKey::PluginAuth(p) => {
+            result_database_key = plugin_auth_crypto::extract_database_key(&p)?;
+            &result_database_key
+        }
     };
     check_owner(owner)?;
     initialize_db(owner, init_db, database_key)

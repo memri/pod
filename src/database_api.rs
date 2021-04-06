@@ -300,7 +300,6 @@ mod tests {
     use super::super::error::Result;
     use super::*;
     use chrono::Utc;
-    use rand::Rng;
     use rusqlite::Connection;
 
     fn new_conn() -> Connection {
@@ -312,7 +311,7 @@ mod tests {
     }
 
     fn random_id() -> String {
-        rand::thread_rng().gen::<i64>().to_string()
+        rand::random::<i64>().to_string()
     }
 
     #[test]

@@ -20,7 +20,7 @@ For debugging, you can fake `owner_key` by providing any 64 hex characters, e.g.
 Note that for now, we don't really use any cryptography for the `owner_key`,
 but in the future we probably will.
 
-## Auth key
+## Auth json
 The `auth` value is used by Pod to *validate* that this is you,
 and to temporarily *decrypt* parts of your data required to serve your request.
 This key is immediately lost by Pod when the HTTP request is closed.
@@ -30,26 +30,8 @@ There are two types of `auth` keys,
 * a plugin key (that plugins get from Pod and will use to authorize in Pod),
 * and a client key (that Memri clients will use, e.g. a phone or desktop app).
 
-#### Auth key of "plugin" type
-Note: plugin keys are NOT implemented yet, use "client" keys for now (to be changed 2021-04 - 2021-05).
-
-As a plugin, you don't have access to a database_key,
-so you can only use plugin authorization.
-In text below `$POD_AUTH` is the key you [received from Pod](./Plugins.md).
-
-Your auth key should be of the form:
-```json5
-{
-  "type": "PluginAuth",
-  "blob": "******"  /* POD_AUTH_BLOB string that you received from Pod */
-}
-```
-
-For debugging, if you run your own Pod locally,
-you can use client auth (below) by just making up a fake user and a fake database key.
-
-#### Auth key of "client" type
-If you're a memri client, you keep the secret locally,
+#### Auth json of "client" type
+If you're a memri client (mobile, desktop), you keep the secret locally,
 in an encrypted/protected form.
 
 Your auth key should be of the form:
@@ -59,6 +41,7 @@ Your auth key should be of the form:
   "database_key": "*********"
 }
 ```
+
 The `databaseKey` is a 64-character hex string to be used for validation and encryption.
 You can use any [*cryptographically secure* PRNG](https://en.wikipedia.org/wiki/Cryptographically_secure_pseudorandom_number_generator)
 to generate the key.
@@ -66,7 +49,26 @@ It should be generated once and stored securely, e.g. in a hardware-backed keyst
 [secure enclave](https://support.apple.com/guide/security/secure-enclave-sec59b0b31ff/web), etc.
 The key will internally be used with [sqlcipher](https://github.com/sqlcipher/sqlcipher).
 
-For debugging (and for debugging only!) you can use any 64 hex characters, e.g. all zeroes.
+For testing (and for testing only!) you can use any 64 hex characters, e.g. all zeroes.
+
+#### Auth json of "plugin" type
+Note: plugin keys are NOT implemented yet, use "client" keys for now (to be changed 2021-04 - 2021-05).
+
+Plugins receive authentication information when they [are started by the Pod](./Plugins.md).
+
+Their authentication key should be:
+```json5
+{
+  "type": "PluginAuth",
+  "data": $POD_AUTH_JSON
+}
+```
+Where `$POD_AUTH_JSON` is the JSON set by Pod, see the link above again.
+
+As a plugin, you only have access to a subset of Items and their properties, as configured by the user.
+
+For testing/debugging, if you run your own Pod locally,
+you can use client auth (below) by just making up a fake user and a fake database key.
 
 
 # Schema API
@@ -88,6 +90,9 @@ Note that you cannot both change the Schema and refer to the new Schema
 in one `bulk` request, so if you want changes to the Schema to happen first,
 split updates to the Schema into a separate request.
 (This constraint might be lifted in the future.)
+
+⚠️ UNSTABLE: We might require more properties to be defined here in the future,
+e.g. to what Plugin does the Schema addition belong to.
 
 
 # Items API
@@ -206,29 +211,30 @@ or the database won't be changed at all.
 Returns an empty object if the operation is successful.
 
 
-<!--
-# Services API
-Services help getting data into your Pod and enriching it.
-Services can only be ever run / authorized to run by the user.
-Typical examples of services are services that import emails/messages into Pod.
+# Plugins API
+⚠️ Isn't fully implemented yet, assume the real implementation to arrive 2021-04 - 2021-05
 
-### POST /v3/$owner_key/run_importer
-```json
+Plugins help getting data into your Pod and enriching it.
+Plugins must be authorized and started by the user.
+
+In the future we plan to have configurable permissions and automatic rules to start plugins.
+For now, plugins are started when items of a particular types are inserted into Pod.
+
+Items of the following structure need to be inserted to Pod to start a plugin:
+```json5
 {
-  "auth": $auth_json,
-  "payload": {
-    "id": $id,
-    "servicePayload": {
-      "databaseKey": "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99",
-      "ownerKey": $owner_key
-    }
-  }
+  "type": "StartPlugin", /* exactly this, and nothing else */
+  "container": "your_docker_container:optional_version", /* any locally available docker container if you run Pod locally */
+  /* Any other optional fields that your plugin might need... */
 }
 ```
-Run an importer on an item with the given id.
-See [Integrators](./Integrators.md).
 
+See [Plugins](./Plugins.md) on how plugins are started exactly.
 
+⚠️ UNSTABLE: We might require more properties for Plugins to start in the future,
+e.g. permission limitation.
+
+<!--
 # File API
 
 
