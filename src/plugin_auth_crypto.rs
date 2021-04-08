@@ -24,7 +24,8 @@ pub fn create_plugin_auth(database_key: &str) -> Result<PluginAuth> {
     let nonce: [u8; 24] = rand::random();
     let nonce = XNonce::from_slice(&nonce); // MUST be unique
     let cipher = &global_static::CIPHER;
-    let encrypted = cipher.encrypt(nonce, database_key.as_bytes())?;
+    let database_key: Vec<u8> = hex::decode(database_key)?;
+    let encrypted = cipher.encrypt(nonce, database_key.as_slice())?;
     Ok(PluginAuth {
         data: PluginAuthData {
             nonce: hex::encode(nonce),
@@ -46,26 +47,15 @@ pub fn extract_database_key(plugin_auth: &PluginAuth) -> Result<DatabaseKey> {
     let nonce = XNonce::from_slice(&nonce);
     let cipher = &global_static::CIPHER;
     let decrypted = cipher.decrypt(&nonce, encrypted_permissions.as_ref())?;
-    if decrypted.len() != 64 {
+    if decrypted.len() != 32 {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
-            msg: "Key should be 64 hex characters".to_string(),
+            msg: format!("Key has incorrect length: {}", decrypted.len()),
         });
     }
-    match String::from_utf8(decrypted) {
-        Ok(utf) => match hex::decode(&utf) {
-            Ok(_decoded) => Ok(DatabaseKey { database_key: utf }),
-            Err(_dangerous_error_reason_that_should_never_be_logged) => Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: "Incorrect permissions. This should never be possible, please report this"
-                    .to_string(),
-            }),
-        },
-        Err(_never_log_this) => Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: "Failed to decrypt permissions, internal non-valid UTF".to_string(),
-        }),
-    }
+    Ok(DatabaseKey {
+        database_key: hex::encode_upper(&decrypted),
+    })
 }
 
 /// Database key stored in raw String format (as supplied to sqlcipher).
@@ -98,10 +88,21 @@ impl DatabaseKey {
         Ok(())
     }
 
-    pub fn from(key_as_hex_string: String) -> DatabaseKey {
-        DatabaseKey {
-            database_key: key_as_hex_string,
+    pub fn from(mut key_as_hex_string: String) -> Result<DatabaseKey> {
+        key_as_hex_string.make_ascii_uppercase();
+        for c in key_as_hex_string.chars() {
+            if !((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                key_as_hex_string.zeroize();
+                return Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    // important: don't log the actual char
+                    msg: "Invalid database key character".to_string()
+                })
+            }
         }
+        Ok(DatabaseKey {
+            database_key: key_as_hex_string,
+        })
     }
     pub fn create_plugin_auth(&self) -> Result<PluginAuth> {
         create_plugin_auth(&self.database_key)
@@ -115,7 +116,8 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt() {
         let db_key = "0".repeat(64);
-        let auth = create_plugin_auth(&db_key).unwrap();
+        let db_key_struct = DatabaseKey::from(db_key.clone()).unwrap();
+        let auth = db_key_struct.create_plugin_auth().unwrap();
         assert!(!auth.data.nonce.contains(&db_key));
         assert!(!auth.data.encrypted_permissions.contains(&db_key));
         let decrypted = extract_database_key(&auth).unwrap();

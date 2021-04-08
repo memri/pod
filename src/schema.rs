@@ -44,13 +44,13 @@ pub struct Schema {
 pub fn validate_create_item_id(item_id: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
-            Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{1,35}$").expect("Cannot create regex");
+            Regex::new(r"^[a-zA-Z0-9_-]{6,36}$").expect("Cannot create regex");
     }
     if !REGEXP.is_match(item_id) {
         Err(crate::error::Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!(
-                "Item id '{}' does not satisfy the format {} (use UUIDv4 if in doubt on item id creation)",
+                "Item id '{}' does not satisfy the format {} (use 32 random hex characters if in doubt on item id creation)",
                 item_id,
                 REGEXP.as_str()
             ),

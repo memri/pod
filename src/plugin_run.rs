@@ -32,7 +32,7 @@ pub fn run_plugin_container(
             target_item_id
         ),
     })?;
-    let item = serde_json::to_string_pretty(&item)?;
+    let item = serde_json::to_string(&item)?;
     let mut args: Vec<String> = Vec::new();
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
@@ -41,7 +41,7 @@ pub fn run_plugin_container(
     args.push(format!("--env=POD_TARGET_ITEM={}", item));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     let auth = database_key.create_plugin_auth()?;
-    let auth = serde_json::to_string_pretty(&auth)?;
+    let auth = serde_json::to_string(&auth)?;
     args.push(format!("--env=POD_AUTH_JSON={}", auth));
     args.push("--rm".to_string());
     args.push(format!("--name={}-{}", &container, triggered_by_item_id));

@@ -430,7 +430,7 @@ mod tests {
             schema_file: Default::default(),
             validate_schema: false,
         };
-        let database_key = DatabaseKey::from("".to_string());
+        let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         {
             let tx = conn.transaction().unwrap();

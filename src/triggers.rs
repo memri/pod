@@ -6,7 +6,7 @@ use crate::api_model::CreateItem;
 use crate::command_line_interface::CLIOptions;
 use crate::database_api;
 use crate::database_api::Rowid;
-use crate::error::{ErrorContext};
+use crate::error::ErrorContext;
 use crate::error::Result;
 use crate::internal_api;
 use crate::plugin_auth_crypto::DatabaseKey;
@@ -49,7 +49,7 @@ pub fn trigger_after_item_create(
     // This is easier code-wise than to do manual conversions.
     // It only triggers for specific, rarely used items. This implementation might change later.
     if let Err(err) = schema::validate_create_item_id(source_id) {
-        return Err(err)
+        return Err(err);
     }
     if item._type == "ItemPropertySchema" {
         let json = internal_api::get_item_from_rowid(tx, schema, source_rowid)?;

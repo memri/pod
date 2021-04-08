@@ -139,7 +139,7 @@ pub fn upload_file(
     body: &[u8],
 ) -> Result<()> {
     // auth_wrapper and the HTTP request will be re-done for more proper structure later
-    let database_key = DatabaseKey::from(database_key);
+    let database_key = DatabaseKey::from(database_key)?;
     let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
@@ -178,7 +178,7 @@ fn in_transaction<T, F: FnOnce(&Transaction) -> Result<T>>(
 
 fn auth_to_database_key(auth: AuthKey) -> Result<DatabaseKey> {
     match auth {
-        AuthKey::ClientAuth(c) => Ok(DatabaseKey::from(c.database_key)),
+        AuthKey::ClientAuth(c) => DatabaseKey::from(c.database_key),
         AuthKey::PluginAuth(p) => plugin_auth_crypto::extract_database_key(&p),
     }
 }
