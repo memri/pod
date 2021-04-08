@@ -2,7 +2,6 @@ use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
-// use crate::api_model::RunImporter;
 use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
@@ -30,7 +29,7 @@ use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server(cli_options: &CLIOptions) {
+pub async fn run_server(cli_options: CLIOptions) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
@@ -44,14 +43,12 @@ pub async fn run_server(cli_options: &CLIOptions) {
     let items_api = warp::path("v3")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
-    // let services_api = warp::path("v3")
-    //     .and(warp::body::content_length_limit(32 * 1024))
-    //     .and(warp::post());
     let file_api = warp::path("v3")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 
     let initialized_databases_arc = Arc::new(RwLock::new(HashSet::<String>::new()));
+    let cli_options_arc = Arc::new(cli_options.clone());
 
     let version = warp::path("version")
         .and(warp::path::end())
@@ -59,12 +56,14 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .map(internal_api::get_project_version);
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc_clone = cli_options_arc.clone();
     let create_item = items_api
         .and(warp::path!(String / "create_item"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
-            let result = warp_endpoints::create_item(owner, init_db.deref(), body);
+            let cli = cli_options_arc_clone.deref();
+            let result = warp_endpoints::create_item(owner, init_db.deref(), body, cli);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
@@ -92,12 +91,14 @@ pub async fn run_server(cli_options: &CLIOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
+    let cli_options_arc_clone = cli_options_arc.clone();
     let bulk_action = items_api
         .and(warp::path!(String / "bulk"))
         .and(warp::path::end())
         .and(warp::body::json())
         .map(move |owner: String, body: PayloadWrapper<Bulk>| {
-            let result = warp_endpoints::bulk(owner, init_db.deref(), body);
+            let cli = cli_options_arc_clone.deref();
+            let result = warp_endpoints::bulk(owner, init_db.deref(), body, cli);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
@@ -123,18 +124,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
         });
-
-    // let init_db = initialized_databases_arc.clone();
-    // let cli_options_arc = Arc::new(cli_options.clone());
-    // let run_importer = services_api
-    //     .and(warp::path!(String / "run_importer"))
-    //     .and(warp::path::end())
-    //     .and(warp::body::json())
-    //     .map(move |owner: String, body: PayloadWrapper<RunImporter>| {
-    //         let cli: &CLIOptions = &cli_options_arc.deref();
-    //         let result = warp_endpoints::run_importer(owner, init_db.deref(), body, cli);
-    //         respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
-    //     });
 
     let init_db = initialized_databases_arc.clone();
     let upload_file = file_api
@@ -207,7 +196,6 @@ pub async fn run_server(cli_options: &CLIOptions) {
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
         .or(search_by_fields.with(&headers))
-        // .or(run_importer.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);

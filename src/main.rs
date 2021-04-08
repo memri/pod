@@ -11,8 +11,8 @@ pub mod file_api;
 mod global_static;
 pub mod internal_api;
 mod plugin_auth_crypto;
+pub mod plugin_run;
 mod schema;
-pub mod services_api;
 mod triggers;
 mod warp_api;
 mod warp_endpoints;
@@ -40,7 +40,7 @@ async fn main() {
             )
         })
         .init();
-    let cli_options: &CLIOptions = &*command_line_interface::PARSED;
+    let cli_options: CLIOptions = command_line_interface::PARSED.clone();
     if cli_options.validate_schema {
         if let Err(err) = database_migrate_schema::validate_schema_file(&cli_options.schema_file) {
             log::error!("Schema validation failed: {}", err);

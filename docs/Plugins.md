@@ -20,10 +20,7 @@ Pod will set the following environment variables for plugins:
 * `POD_FULL_ADDRESS` = the address of Pod to call back,
   e.g. `https://x.x.x.x:80` or `http://localhost:3030`.
   You can call the endpoints via a URL like `$POD_FULL_ADDRESS/version`.
-* `POD_ADDRESS` = same of the above, but without the scheme and port.
-* `POD_ITEM_ID` = the item `id` that the plugin needs to run against.
-  This item is commonly the first thing that the item requests from the Pod in order
-  to understand the task and continue going forward.
+* `POD_TARGET_ITEM` = the JSON of the item that the plugin needs to run against.
 * `POD_OWNER` = Pod owner information (to be used for auth).
 * `POD_AUTH_JSON` = Data used for plugin authorization, "black box" style 
   (you're not expected and should not be able to see what's inside as contents are encrypted).

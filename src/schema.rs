@@ -39,10 +39,32 @@ pub struct Schema {
     pub property_types: HashMap<String, SchemaPropertyType>,
 }
 
+/// Validation of _new_ item ids. Note that it is not applied to already existing
+/// ids or endpoints that access already existing ids.
+pub fn validate_create_item_id(item_id: &str) -> crate::error::Result<()> {
+    lazy_static! {
+        static ref REGEXP: Regex =
+            Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{1,35}$").expect("Cannot create regex");
+    }
+    if !REGEXP.is_match(item_id) {
+        Err(crate::error::Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!(
+                "Item id '{}' does not satisfy the format {} (use UUIDv4 if in doubt on item id creation)",
+                item_id,
+                REGEXP.as_str()
+            ),
+        })
+    } else {
+        Ok(())
+    }
+}
+
+/// All item properties should be of this format
 pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
-            Regex::new(r"^[_a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
+            Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
     }
     if !REGEXP.is_match(property) {
         Err(crate::error::Error {
@@ -63,8 +85,30 @@ pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
     }
 }
 
+lazy_static! {
+    static ref BLOCKLIST_COLUMN_NAMES: HashSet<String> = {
+        SQLITE_RESERVED_KEYWORDS
+            .iter()
+            .chain(POD_ITEM_MANDATORY_PROPERTIES)
+            .map(|w| w.to_lowercase())
+            .collect()
+    };
+}
+
+const POD_ITEM_MANDATORY_PROPERTIES: &[&str] = &[
+    "rowid",
+    "id",
+    "type",
+    "dateCreated",
+    "dateModified",
+    "dateServerModified",
+    "deleted",
+    "source",
+    "target",
+];
+
 // SQLite keywords taken from https://www.sqlite.org/lang_keywords.html
-const BLOCKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
+const SQLITE_RESERVED_KEYWORDS: &[&str] = &[
     "ABORT",
     "ACTION",
     "ADD",
@@ -211,12 +255,3 @@ const BLOCKLIST_COLUMN_NAMES_ARRAY: &[&str] = &[
     "WITH",
     "WITHOUT",
 ];
-
-lazy_static! {
-    static ref BLOCKLIST_COLUMN_NAMES: HashSet<String> = {
-        BLOCKLIST_COLUMN_NAMES_ARRAY
-            .iter()
-            .map(|w| w.to_lowercase())
-            .collect()
-    };
-}

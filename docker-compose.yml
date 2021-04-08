@@ -19,8 +19,8 @@ services:
       - "/pod"
       - "--owners=ANY"
       - "--insecure-non-tls=0.0.0.0"
-      - "--services-callback-address=pod_pod_1:3030"
-      - "--services-docker-network=pod_memri-net"
+      - "--plugins-callback-address=pod_pod_1:3030"
+      - "--plugins-docker-network=pod_memri-net"
 
 volumes:
   db:

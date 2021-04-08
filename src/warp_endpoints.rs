@@ -1,23 +1,21 @@
 use crate::api_model::AuthKey;
 use crate::api_model::Bulk;
-use crate::api_model::ClientAuth;
 use crate::api_model::CreateItem;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
-use crate::database_api;
-// use crate::api_model::RunImporter;
 use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CLIOptions;
 use crate::constants;
+use crate::database_api;
 use crate::database_migrate_refinery;
 use crate::error::Error;
 use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
 use crate::plugin_auth_crypto;
-// use crate::services_api;
+use crate::plugin_auth_crypto::DatabaseKey;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -42,10 +40,13 @@ pub fn get_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<String>,
 ) -> Result<Vec<Value>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::get_item_tx(&tx, &schema, &body.payload)
+        internal_api::get_item_tx(&tx, &schema, &payload)
     })
 }
 
@@ -53,11 +54,15 @@ pub fn create_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<CreateItem>,
+    cli: &CLIOptions,
 ) -> Result<i64> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::create_item_tx(&tx, &schema, body.payload)
+        internal_api::create_item_tx(&tx, &schema, payload, &owner, cli, &database_key)
     })
 }
 
@@ -66,10 +71,13 @@ pub fn update_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<UpdateItem>,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::update_item_tx(&tx, &schema, &body.payload.id, body.payload.fields)
+        internal_api::update_item_tx(&tx, &schema, &payload.id, payload.fields)
     })
 }
 
@@ -77,11 +85,15 @@ pub fn bulk(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Bulk>,
+    cli: &CLIOptions,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::bulk_tx(&tx, &schema, body.payload)
+        internal_api::bulk_tx(&tx, &schema, payload, &owner, cli, &database_key)
     })
 }
 
@@ -90,10 +102,13 @@ pub fn delete_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<String>,
 ) -> Result<()> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::delete_item_tx(&tx, &schema, &body.payload)
+        internal_api::delete_item_tx(&tx, &schema, &payload)
     })
 }
 
@@ -102,10 +117,13 @@ pub fn search(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Search>,
 ) -> Result<Vec<Value>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
-        internal_api::search(&tx, &schema, body.payload)
+        internal_api::search(&tx, &schema, payload)
     })
 }
 
@@ -121,9 +139,8 @@ pub fn upload_file(
     body: &[u8],
 ) -> Result<()> {
     // auth_wrapper and the HTTP request will be re-done for more proper structure later
-    let auth_wrapper = ClientAuth { database_key };
-    let mut conn: Connection =
-        check_owner_and_initialize_db(&owner, &init_db, &AuthKey::ClientAuth(auth_wrapper))?;
+    let database_key = DatabaseKey::from(database_key);
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
         file_api::upload_file(tx, owner, expected_sha256, body)
@@ -135,10 +152,13 @@ pub fn get_file(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<GetFile>,
 ) -> Result<Vec<u8>> {
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &body.auth)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
-        file_api::get_file(tx, &owner, &body.payload.sha256)
+        file_api::get_file(tx, &owner, &payload.sha256)
     })
 }
 
@@ -156,21 +176,20 @@ fn in_transaction<T, F: FnOnce(&Transaction) -> Result<T>>(
     Ok(result)
 }
 
+fn auth_to_database_key(auth: AuthKey) -> Result<DatabaseKey> {
+    match auth {
+        AuthKey::ClientAuth(c) => Ok(DatabaseKey::from(c.database_key)),
+        AuthKey::PluginAuth(p) => plugin_auth_crypto::extract_database_key(&p),
+    }
+}
+
 /// Two methods combined into one to prevent creating a database connection without owner checks.
 /// As additional failsafe to the fact that non-owners don't have the database key.
 fn check_owner_and_initialize_db(
     owner: &str,
     init_db: &RwLock<HashSet<String>>,
-    auth: &AuthKey,
+    database_key: &DatabaseKey,
 ) -> Result<Connection> {
-    let result_database_key: String;
-    let database_key = match auth {
-        AuthKey::ClientAuth(c) => &c.database_key,
-        AuthKey::PluginAuth(p) => {
-            result_database_key = plugin_auth_crypto::extract_database_key(&p)?;
-            &result_database_key
-        }
-    };
     check_owner(owner)?;
     initialize_db(owner, init_db, database_key)
 }
@@ -178,13 +197,12 @@ fn check_owner_and_initialize_db(
 fn initialize_db(
     owner: &str,
     init_db: &RwLock<HashSet<String>>,
-    database_key: &str,
+    database_key: &DatabaseKey,
 ) -> Result<Connection> {
     let database_path = format!("{}{}", &owner, constants::DATABASE_SUFFIX);
     let database_path = PathBuf::from(constants::DATABASE_DIR).join(database_path);
     let mut conn = Connection::open(database_path).unwrap();
-    let pragma_sql = format!("PRAGMA key = \"x'{}'\";", database_key);
-    conn.execute_batch(&pragma_sql)?;
+    DatabaseKey::execute_sqlite_pragma(database_key, &conn)?;
     conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {

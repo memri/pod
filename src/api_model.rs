@@ -93,23 +93,6 @@ pub struct Search {
 }
 
 //
-// Services API:
-//
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RunImporter {
-    pub id: String,
-    pub service_payload: Value,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RunIntegratorItem {
-    pub repository: String,
-}
-
-//
 // Files API:
 //
 

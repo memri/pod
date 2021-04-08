@@ -1,9 +1,12 @@
 use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
+use crate::command_line_interface::CLIOptions;
 use crate::database_api;
+use crate::database_api::{ItemBase, Rowid};
 use crate::error::Error;
 use crate::error::Result;
+use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
@@ -96,6 +99,21 @@ pub fn get_item_properties(
     }
 
     Ok(json)
+}
+
+pub fn get_item_from_rowid(tx: &Transaction, schema: &Schema, rowid: Rowid) -> Result<Value> {
+    let item = database_api::search_items(tx, Some(rowid), None, None, None, None, None)?;
+    let item = if let Some(item) = item.into_iter().next() {
+        item
+    } else {
+        return Err(Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!("Item rowid {} not found right after inserting", rowid),
+        });
+    };
+    let mut props = get_item_properties(tx, rowid, schema)?;
+    add_item_base_properties(&mut props, item);
+    Ok(Value::Object(props))
 }
 
 pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Value>> {
@@ -193,7 +211,14 @@ fn insert_property(
     Ok(())
 }
 
-pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Result<i64> {
+pub fn create_item_tx(
+    tx: &Transaction,
+    schema: &Schema,
+    item: CreateItem,
+    pod_owner: &str,
+    cli: &CLIOptions,
+    database_key: &DatabaseKey,
+) -> Result<i64> {
     let default_id: String;
     let id = if let Some(id) = &item.id {
         id
@@ -202,7 +227,6 @@ pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Re
         &default_id
     };
     let time_now = Utc::now().timestamp_millis();
-    triggers::trigger_before_item_create(tx, schema, &item)?;
     let rowid = database_api::insert_item_base(
         tx,
         id,
@@ -215,6 +239,16 @@ pub fn create_item_tx(tx: &Transaction, schema: &Schema, item: CreateItem) -> Re
     for (prop_name, prop_value) in &item.fields {
         insert_property(tx, schema, rowid, &prop_name, &prop_value)?;
     }
+    triggers::trigger_after_item_create(
+        tx,
+        schema,
+        rowid,
+        id,
+        &item,
+        pod_owner,
+        cli,
+        database_key,
+    )?;
     Ok(rowid)
 }
 
@@ -277,7 +311,14 @@ pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()>
     update_item_tx(tx, schema, id, fields)
 }
 
-pub fn bulk_tx(tx: &Transaction, schema: &Schema, bulk: Bulk) -> Result<()> {
+pub fn bulk_tx(
+    tx: &Transaction,
+    schema: &Schema,
+    bulk: Bulk,
+    pod_owner: &str,
+    cli: &CLIOptions,
+    database_key: &DatabaseKey,
+) -> Result<()> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items",
         bulk.create_items.len(),
@@ -285,7 +326,7 @@ pub fn bulk_tx(tx: &Transaction, schema: &Schema, bulk: Bulk) -> Result<()> {
         bulk.delete_items.len(),
     );
     for item in bulk.create_items {
-        create_item_tx(tx, schema, item)?;
+        create_item_tx(tx, schema, item, pod_owner, cli, database_key)?;
     }
     for item in bulk.update_items {
         update_item_tx(tx, schema, &item.id, item.fields)?;
@@ -294,6 +335,18 @@ pub fn bulk_tx(tx: &Transaction, schema: &Schema, bulk: Bulk) -> Result<()> {
         delete_item_tx(tx, schema, &item_id)?;
     }
     Ok(())
+}
+
+fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
+    props.insert("id".to_string(), item.id.into());
+    props.insert("type".to_string(), item._type.into());
+    props.insert("dateCreated".to_string(), item.date_created.into());
+    props.insert("dateModified".to_string(), item.date_modified.into());
+    props.insert(
+        "dateServerModified".to_string(),
+        item.date_server_modified.into(),
+    );
+    props.insert("deleted".to_string(), item.deleted.into());
 }
 
 pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Value>> {
@@ -321,15 +374,7 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
     let mut result = Vec::new();
     for item in items {
         let mut properties = get_item_properties(tx, item.rowid, schema)?;
-        properties.insert("id".to_string(), item.id.into());
-        properties.insert("type".to_string(), item._type.into());
-        properties.insert("dateCreated".to_string(), item.date_created.into());
-        properties.insert("dateModified".to_string(), item.date_modified.into());
-        properties.insert(
-            "dateServerModified".to_string(),
-            item.date_server_modified.into(),
-        );
-        properties.insert("deleted".to_string(), item.deleted.into());
+        add_item_base_properties(&mut properties, item);
         result.push(Value::Object(properties))
     }
     Ok(result)
@@ -338,8 +383,10 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
 #[cfg(test)]
 mod tests {
     use crate::api_model::CreateItem;
+    use crate::command_line_interface::CLIOptions;
     use crate::database_migrate_refinery;
     use crate::internal_api;
+    use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
     use crate::schema::SchemaPropertyType;
     use rusqlite::Connection;
@@ -369,6 +416,21 @@ mod tests {
     fn test_item_insert_schema() {
         let mut conn = new_conn();
         let minimal_schema = minimal_schema();
+        let cli = CLIOptions {
+            port: 0,
+            owners: "".to_string(),
+            plugins_callback_address: None,
+            plugins_docker_network: None,
+            tls_pub_crt: "".to_string(),
+            tls_priv_key: "".to_string(),
+            non_tls: false,
+            insecure_non_tls: None,
+            insecure_http_headers: false,
+            shared_server: false,
+            schema_file: Default::default(),
+            validate_schema: false,
+        };
+        let database_key = DatabaseKey::from("".to_string());
 
         {
             let tx = conn.transaction().unwrap();
@@ -379,15 +441,30 @@ mod tests {
                 "valueType": "Integer",
             });
             let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
-            let result = internal_api::create_item_tx(&tx, &minimal_schema, create_item).unwrap();
+            let result = internal_api::create_item_tx(
+                &tx,
+                &minimal_schema,
+                create_item,
+                "",
+                &cli,
+                &database_key,
+            )
+            .unwrap();
             assert!(result < 10); // no more than 10 items existed before in the DB
 
             let bad_empty_schema = Schema {
                 property_types: HashMap::new(),
             };
             let create_item: CreateItem = serde_json::from_value(json).unwrap();
-            let result =
-                internal_api::create_item_tx(&tx, &bad_empty_schema, create_item).unwrap_err();
+            let result = internal_api::create_item_tx(
+                &tx,
+                &bad_empty_schema,
+                create_item,
+                "",
+                &cli,
+                &database_key,
+            )
+            .unwrap_err();
             assert_eq!(result.code, StatusCode::BAD_REQUEST);
             assert!(result.msg.contains("not defined in Schema"));
 

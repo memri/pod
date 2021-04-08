@@ -29,18 +29,18 @@ pub struct CLIOptions {
     #[structopt(short = "o", long, required = true, env = "POD_OWNER_HASHES")]
     pub owners: String,
 
-    /// Set the callback address for services launched from within Pod.
-    /// This should be the Pod-s address as seen by external services.
+    /// Set the callback address for plugins launched from within Pod.
+    /// This should be the Pod-s address as seen by external plugins.
     /// It defaults to "pod_pod_1:3030" if Pod is inside docker,
     /// or "localhost:3030" on Linux,
     /// or "host.docker.internal:3030" on other operating systems.
-    #[structopt(short = "s", long, name = "ADDRESS", env = "SERVICES_CALLBACK_ADDRESS")]
-    pub services_callback_address: Option<String>,
+    #[structopt(short = "s", long, name = "ADDRESS", env = "PLUGINS_CALLBACK_ADDRESS")]
+    pub plugins_callback_address: Option<String>,
 
-    /// Docker network to use when running services, e.g. `docker run --network=XXX ...`
-    /// If not set, "host" will be used, which means that started services
+    /// Docker network to use when running plugins, e.g. `docker run --network=XXX ...`
+    /// If not set, "host" will be used, which means that started plugins
     /// will share the network with the host system.
-    /// If Pod itself is running inside docker, please run both Pod and services
+    /// If Pod itself is running inside docker, please run both Pod and plugins
     /// in identical network that will then not be shared with the host system
     /// (this is covered in docker-compose.yml by default).
     #[structopt(
@@ -48,7 +48,7 @@ pub struct CLIOptions {
         name = "SERVICES_DOCKER_NETWORK",
         env = "SERVICES_DOCKER_NETWORK"
     )]
-    pub services_docker_network: Option<String>,
+    pub plugins_docker_network: Option<String>,
 
     /// File to read https public certificate from.
     #[structopt(
