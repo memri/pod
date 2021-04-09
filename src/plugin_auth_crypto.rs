@@ -91,7 +91,7 @@ impl DatabaseKey {
     pub fn from(mut key_as_hex_string: String) -> Result<DatabaseKey> {
         key_as_hex_string.make_ascii_uppercase();
         for c in key_as_hex_string.chars() {
-            if !((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+            if !(('A'..='Z').contains(&c) || ('0'..='9').contains(&c)) {
                 key_as_hex_string.zeroize();
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
