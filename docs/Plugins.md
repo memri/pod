@@ -22,7 +22,7 @@ Pod will set the following environment variables for plugins:
   You can call the endpoints via a URL like `$POD_FULL_ADDRESS/version`.
 * `POD_TARGET_ITEM` = the JSON of the item that the plugin needs to run against.
 * `POD_OWNER` = Pod owner information (to be used for auth).
-* `POD_AUTH_JSON` = Data used for plugin authorization, "black box" style 
+* `POD_AUTH_JSON` = Data used for plugin authorization, "secretbox" style 
   (you're not expected and should not be able to see what's inside as contents are encrypted).
   This JSON should be passed back to Pod the way it is, no parsing or change is required
   (see HTTP_API for details).

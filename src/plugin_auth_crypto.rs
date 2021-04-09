@@ -96,8 +96,8 @@ impl DatabaseKey {
                 return Err(Error {
                     code: StatusCode::BAD_REQUEST,
                     // important: don't log the actual char
-                    msg: "Invalid database key character".to_string()
-                })
+                    msg: "Invalid database key character".to_string(),
+                });
             }
         }
         Ok(DatabaseKey {
@@ -120,6 +120,11 @@ mod tests {
         let auth = db_key_struct.create_plugin_auth().unwrap();
         assert!(!auth.data.nonce.contains(&db_key));
         assert!(!auth.data.encrypted_permissions.contains(&db_key));
+        assert_eq!(
+            auth.data.encrypted_permissions.len(),
+            db_key.len() + 32,
+            "Encrypted permissions should include the 16-byte (32 hex characters) TAG."
+        );
         let decrypted = extract_database_key(&auth).unwrap();
         assert_eq!(decrypted.database_key, db_key);
     }
