@@ -94,14 +94,14 @@ This flow can be illustrated by the following diagram:
 <!--
 mermaid
 sequenceDiagram
-    participant MoP as Memri Client <br/> or Plugin
-    MoP->>Pod: 🔑 <br/>Create item <br/>{"type": "StartPlugin", ...}
+    participant MCoP as Memri Client <br/> or Plugin
+    MCoP->>Pod: 🔑 <br/>Create item <br/>{"type": "StartPlugin", ...}
     Pod->>Pod: Encrypt key 🔑 -> 📦 <br/>
     Pod->>Plugin: 📦 <br/> start plugin
-    Note over Pod: Immediately after starting the plugin,<br/>All keys are DROPPED/removed 🔑/📦 <br/> - <br/> Database is inaccessible to Pod.
+    Note over Pod: Immediately after starting the plugin,<br/>both keys are DROPPED/removed 🔑/📦 <br/> - <br/> Database is inaccessible to Pod.
     Note over Plugin: Plugin has no access to raw database keys 🔑. <br/> Encrypted box 📦 can be used for auth.
     Plugin->>Pod: 📦 <br/>get, update, insert, ...
-    Pod->>Pod: * Decrypt the key 📦 -> 🔑 <br/> * Execute required APIs
+    Pod->>Pod: Decrypt the key 📦 -> 🔑 <br/> Check expiration and permissions <br/> Execute required APIs
 -->
 
 
