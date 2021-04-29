@@ -8,6 +8,3 @@
 !Cargo.toml
 !Cargo.lock
 !build.rs
-
-#### To inline `git describe` at build-time
-!.git
