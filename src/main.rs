@@ -18,7 +18,7 @@ mod warp_api;
 mod warp_endpoints;
 
 use chrono::Utc;
-use command_line_interface::CLIOptions;
+use command_line_interface::CliOptions;
 use env_logger::Env;
 use log::error;
 use log::info;
@@ -40,7 +40,7 @@ async fn main() {
             )
         })
         .init();
-    let cli_options: CLIOptions = command_line_interface::PARSED.clone();
+    let cli_options: CliOptions = command_line_interface::PARSED.clone();
     if cli_options.validate_schema {
         if let Err(err) = database_migrate_schema::validate_schema_file(&cli_options.schema_file) {
             log::error!("Schema validation failed: {}", err);

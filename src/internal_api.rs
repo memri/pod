@@ -1,7 +1,7 @@
 use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
-use crate::command_line_interface::CLIOptions;
+use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::ItemBase;
 use crate::database_api::Rowid;
@@ -217,7 +217,7 @@ pub fn create_item_tx(
     schema: &Schema,
     item: CreateItem,
     pod_owner: &str,
-    cli: &CLIOptions,
+    cli: &CliOptions,
     database_key: &DatabaseKey,
 ) -> Result<i64> {
     let default_id: String;
@@ -317,7 +317,7 @@ pub fn bulk_tx(
     schema: &Schema,
     bulk: Bulk,
     pod_owner: &str,
-    cli: &CLIOptions,
+    cli: &CliOptions,
     database_key: &DatabaseKey,
 ) -> Result<()> {
     info!(
@@ -384,7 +384,7 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
 #[cfg(test)]
 mod tests {
     use crate::api_model::CreateItem;
-    use crate::command_line_interface::CLIOptions;
+    use crate::command_line_interface::CliOptions;
     use crate::database_migrate_refinery;
     use crate::internal_api;
     use crate::plugin_auth_crypto::DatabaseKey;
@@ -417,7 +417,7 @@ mod tests {
     fn test_item_insert_schema() {
         let mut conn = new_conn();
         let minimal_schema = minimal_schema();
-        let cli = CLIOptions {
+        let cli = CliOptions {
             port: 0,
             owners: "".to_string(),
             plugins_callback_address: None,

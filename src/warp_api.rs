@@ -5,7 +5,7 @@ use crate::api_model::PayloadWrapper;
 use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
-use crate::command_line_interface::CLIOptions;
+use crate::command_line_interface::CliOptions;
 use crate::internal_api;
 use crate::warp_endpoints;
 use log::error;
@@ -29,7 +29,7 @@ use warp::Filter;
 use warp::Reply;
 
 /// Start web framework with specified APIs.
-pub async fn run_server(cli_options: CLIOptions) {
+pub async fn run_server(cli_options: CliOptions) {
     let package_name = env!("CARGO_PKG_NAME").to_uppercase();
     info!("Starting {} HTTP server", package_name);
 
