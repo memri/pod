@@ -2,7 +2,6 @@
 #### Second stage of the Dockerfile (below) should use the same base (rust:slim or it's parent)
 FROM rust:slim as cargo-build
 
-ENV PATH="/root/.cargo/bin:${PATH}"
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /usr/src/pod
 RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
