@@ -11,7 +11,7 @@ use structopt::StructOpt;
     setting = AppSettings::UnifiedHelpMessage,
     version = VERSION.as_ref(),
 )]
-pub struct CLIOptions {
+pub struct CliOptions {
     /// Port to listen to.
     #[structopt(short, long, default_value = "3030")]
     pub port: u16,
@@ -123,5 +123,5 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref PARSED: CLIOptions = CLIOptions::from_args();
+    pub static ref PARSED: CliOptions = CliOptions::from_args();
 }

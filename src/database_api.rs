@@ -12,15 +12,15 @@ use std::collections::HashMap;
 use warp::http::StatusCode;
 
 pub type Rowid = i64;
-pub type DBTime = i64;
+pub type DbTime = i64;
 
 pub struct ItemBase {
     pub rowid: Rowid,
     pub id: String,
     pub _type: String,
-    pub date_created: DBTime,
-    pub date_modified: DBTime,
-    pub date_server_modified: DBTime,
+    pub date_created: DbTime,
+    pub date_modified: DbTime,
+    pub date_server_modified: DbTime,
     pub deleted: bool,
 }
 
@@ -29,9 +29,9 @@ pub fn insert_item_base(
     tx: &Tx,
     id: &str,
     _type: &str,
-    date_created_millis: DBTime,
-    date_modified_millis: DBTime,
-    date_server_modified_millis: DBTime,
+    date_created_millis: DbTime,
+    date_modified_millis: DbTime,
+    date_server_modified_millis: DbTime,
     deleted: bool,
 ) -> Result<Rowid> {
     let mut stmt = tx
@@ -73,8 +73,8 @@ pub fn search_items(
     rowid: Option<Rowid>,
     id: Option<&str>,
     _type: Option<&str>,
-    date_server_modified_gte: Option<DBTime>,
-    date_server_modified_lt: Option<DBTime>,
+    date_server_modified_gte: Option<DbTime>,
+    date_server_modified_lt: Option<DbTime>,
     deleted: Option<bool>,
 ) -> Result<Vec<ItemBase>> {
     let mut sql_query = "\
@@ -144,8 +144,8 @@ pub fn search_items(
 pub fn update_item_base(
     tx: &Tx,
     rowid: Rowid,
-    date_modified: DBTime,
-    date_server_modified: DBTime,
+    date_modified: DbTime,
+    date_server_modified: DbTime,
     deleted: Option<bool>,
 ) -> Result<()> {
     let mut sql = "UPDATE items SET dateModified = ?, dateServerModified = ?".to_string();
@@ -212,7 +212,7 @@ fn insert_edge_unchecked(
     name: &str,
     target: Rowid,
     id: &str,
-    date: DBTime,
+    date: DbTime,
 ) -> Result<Rowid> {
     let item = insert_item_base(tx, id, name, date, date, date, false)?;
     let mut stmt =

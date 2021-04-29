@@ -3,7 +3,7 @@
 //
 
 use crate::api_model::CreateItem;
-use crate::command_line_interface::CLIOptions;
+use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::Rowid;
 use crate::error::ErrorContext;
@@ -41,7 +41,7 @@ pub fn trigger_after_item_create(
     source_id: &str,
     item: &CreateItem,
     pod_owner: &str,
-    cli: &CLIOptions,
+    cli: &CliOptions,
     database_key: &DatabaseKey,
 ) -> Result<()> {
     // We'll do something ugly here.

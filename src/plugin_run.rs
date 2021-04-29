@@ -1,4 +1,4 @@
-use crate::command_line_interface::CLIOptions;
+use crate::command_line_interface::CliOptions;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
@@ -18,7 +18,7 @@ pub fn run_plugin_container(
     triggered_by_item_id: &str,
     pod_owner: &str,
     database_key: &DatabaseKey,
-    cli_options: &CLIOptions,
+    cli_options: &CliOptions,
 ) -> Result<()> {
     info!(
         "Trying to run plugin container for target_item_id {}",
@@ -33,7 +33,7 @@ pub fn run_plugin_container(
         ),
     })?;
     let item = serde_json::to_string(&item)?;
-    let mut args: Vec<String> = Vec::new();
+    let mut args: Vec<String> = Vec::with_capacity(12);
     args.push("run".to_string());
     for arg in docker_arguments(cli_options) {
         args.push(arg);
@@ -66,7 +66,7 @@ pub fn run_plugin_container(
     }
 }
 
-fn docker_arguments(cli_options: &CLIOptions) -> Vec<String> {
+fn docker_arguments(cli_options: &CliOptions) -> Vec<String> {
     let is_https = cli_options.insecure_non_tls.is_none() && !cli_options.non_tls;
     let schema = if is_https { "https" } else { "http" };
     let port: u16 = cli_options.port;

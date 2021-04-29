@@ -6,7 +6,7 @@ use crate::api_model::PayloadWrapper;
 use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
-use crate::command_line_interface::CLIOptions;
+use crate::command_line_interface::CliOptions;
 use crate::constants;
 use crate::database_api;
 use crate::database_migrate_refinery;
@@ -54,7 +54,7 @@ pub fn create_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<CreateItem>,
-    cli: &CLIOptions,
+    cli: &CliOptions,
 ) -> Result<i64> {
     let auth = body.auth;
     let payload = body.payload;
@@ -85,7 +85,7 @@ pub fn bulk(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Bulk>,
-    cli: &CLIOptions,
+    cli: &CliOptions,
 ) -> Result<()> {
     let auth = body.auth;
     let payload = body.payload;
@@ -212,7 +212,7 @@ fn initialize_db(
     Ok(conn)
 }
 
-fn allowed_owner_hashes_fn(cli_options: &CLIOptions) -> HashSet<Vec<u8>> {
+fn allowed_owner_hashes_fn(cli_options: &CliOptions) -> HashSet<Vec<u8>> {
     let owners: &str = &cli_options.owners;
     let mut result = HashSet::new();
     for owner in owners.split(',') {
