@@ -32,7 +32,7 @@ so here are the exact requirements:
         your doctor, then your health insurance company in the
         same hour. But they don't know what was discussed"
 
-    (Quoting the famous EFF presentation).  
+    (Quoting the [famous EFF presentation](https://www.eff.org/deeplinks/2013/06/why-metadata-matters)).  
     This type of data remains encrypted and protected same as any
     other kind of information in Memri.
 

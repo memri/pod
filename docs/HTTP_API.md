@@ -38,7 +38,7 @@ Your auth key should be of the form:
 ```json5
 {
   "type": "ClientAuth",
-  "database_key": "*********"
+  "databaseKey": "*********"
 }
 ```
 
@@ -244,7 +244,7 @@ e.g. permission limitation.
 # File API
 
 
-### POST /v3/$owner_key/upload_file/$database_key/$sha256hashOfTheFile
+### POST /v3/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
 ```text
 RAW-FILE-BINARY
 ```
