@@ -449,7 +449,7 @@ mod tests {
             "type": "Person",
             "age": 20,
         });
-        let item_struct: CreateItem = serde_json::from_value(item_json.clone()).unwrap();
+        let item_struct: CreateItem = serde_json::from_value(item_json).unwrap();
         let result = internal_api::create_item_tx(
             &tx,
             &database_api::get_schema(&tx)?,
@@ -467,7 +467,7 @@ mod tests {
             "propertyName": "age",
             "valueType": "Integer",
         });
-        let schema_struct: CreateItem = serde_json::from_value(schema_json.clone()).unwrap();
+        let schema_struct: CreateItem = serde_json::from_value(schema_json).unwrap();
         let result = internal_api::create_item_tx(
             &tx,
             &database_api::get_schema(&tx)?,
@@ -482,7 +482,7 @@ mod tests {
         let result = internal_api::create_item_tx(
             &tx,
             &database_api::get_schema(&tx)?,
-            item_struct.clone(),
+            item_struct,
             "",
             &cli,
             &database_key,
