@@ -8,6 +8,7 @@ use crate::database_api::Rowid;
 use crate::error::Error;
 use crate::error::Result;
 use crate::plugin_auth_crypto::DatabaseKey;
+use crate::schema;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
@@ -227,7 +228,11 @@ pub fn create_item_tx(
         default_id = new_uuid();
         &default_id
     };
+    if let Err(err) = schema::validate_create_item_id(id) {
+        return Err(err);
+    }
     let time_now = Utc::now().timestamp_millis();
+    triggers::trigger_before_item_create(tx, &item)?;
     let rowid = database_api::insert_item_base(
         tx,
         id,

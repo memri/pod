@@ -33,6 +33,25 @@ pub struct StartPluginItem {
     pub target_item_id: String,
 }
 
+pub fn trigger_before_item_create(tx: &Tx, item: &CreateItem) -> Result<()> {
+    // We'll do something ugly here.
+    // We'll convert the item into JSON and back into the desired type for type check and parsing.
+    // This is easier code-wise than to do manual conversions.
+    // It only triggers for specific, rarely used items. This implementation might change later.
+    if item._type == "ItemPropertySchema" {
+        let json = serde_json::to_value(item)?;
+        let parsed: SchemaItem = serde_json::from_value(json)
+            .context(|| format!("Parsing of Schema item {:?}, {}:{}", item, file!(), line!()))?;
+        schema::validate_property_name(&parsed.property_name)?;
+        database_api::delete_schema_items_by_item_type_and_prop(
+            tx,
+            &parsed.item_type,
+            &parsed.property_name,
+        )?;
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn trigger_after_item_create(
     tx: &Tx,
@@ -44,24 +63,7 @@ pub fn trigger_after_item_create(
     cli: &CliOptions,
     database_key: &DatabaseKey,
 ) -> Result<()> {
-    // We'll do something ugly here.
-    // We'll convert the item into JSON and back into the desired type for type check and parsing.
-    // This is easier code-wise than to do manual conversions.
-    // It only triggers for specific, rarely used items. This implementation might change later.
-    if let Err(err) = schema::validate_create_item_id(source_id) {
-        return Err(err);
-    }
-    if item._type == "ItemPropertySchema" {
-        let json = internal_api::get_item_from_rowid(tx, schema, source_rowid)?;
-        let parsed: SchemaItem = serde_json::from_value(json)
-            .context(|| format!("Parsing of Schema item {:?}, {}:{}", item, file!(), line!()))?;
-        schema::validate_property_name(&parsed.property_name)?;
-        database_api::delete_schema_items_by_item_type_and_prop(
-            tx,
-            &parsed.item_type,
-            &parsed.property_name,
-        )?;
-    } else if item._type == "StartPlugin" {
+    if item._type == "StartPlugin" {
         let json = internal_api::get_item_from_rowid(tx, schema, source_rowid)?;
         let parsed: StartPluginItem = serde_json::from_value(json)
             .context(|| format!("Parsing of item {:?}, {}:{}", item, file!(), line!()))?;
