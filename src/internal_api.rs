@@ -390,7 +390,9 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
 mod tests {
     use crate::api_model::CreateItem;
     use crate::command_line_interface::CliOptions;
+    use crate::database_api;
     use crate::database_migrate_refinery;
+    use crate::error::Result;
     use crate::internal_api;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
@@ -418,11 +420,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_item_insert_schema() {
-        let mut conn = new_conn();
-        let minimal_schema = minimal_schema();
-        let cli = CliOptions {
+    fn new_cli() -> CliOptions {
+        CliOptions {
             port: 0,
             owners: "".to_string(),
             plugins_callback_address: None,
@@ -435,46 +434,97 @@ mod tests {
             shared_server: false,
             schema_file: Default::default(),
             validate_schema: false,
-        };
+        }
+    }
+
+    #[test]
+    fn test_schema_checking() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction().unwrap();
+        let database_key = DatabaseKey::from("".to_string()).unwrap();
+        let cli = new_cli();
+
+        // first try to insert the Person without Schema
+        let item_json = json!({
+            "type": "Person",
+            "age": 20,
+        });
+        let item_struct: CreateItem = serde_json::from_value(item_json.clone()).unwrap();
+        let result = internal_api::create_item_tx(
+            &tx,
+            &database_api::get_schema(&tx)?,
+            item_struct.clone(),
+            "",
+            &cli,
+            &database_key,
+        );
+        assert_eq!(result.unwrap_err().code, StatusCode::BAD_REQUEST);
+
+        // Then insert the Schema, it should succeed
+        let schema_json = json!({
+            "type": "ItemPropertySchema",
+            "itemType": "Person",
+            "propertyName": "age",
+            "valueType": "Integer",
+        });
+        let schema_struct: CreateItem = serde_json::from_value(schema_json.clone()).unwrap();
+        let result = internal_api::create_item_tx(
+            &tx,
+            &database_api::get_schema(&tx)?,
+            schema_struct,
+            "",
+            &cli,
+            &database_key,
+        );
+        assert!(result.is_ok());
+
+        // Now insert the Person with already in place
+        let result = internal_api::create_item_tx(
+            &tx,
+            &database_api::get_schema(&tx)?,
+            item_struct.clone(),
+            "",
+            &cli,
+            &database_key,
+        );
+        assert!(result.is_ok());
+
+        Ok(())
+    }
+    #[test]
+    fn test_item_insert_schema() {
+        let mut conn = new_conn();
+        let minimal_schema = minimal_schema();
+        let cli = new_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
-        {
-            let tx = conn.transaction().unwrap();
-            let json = json!({
-                "type": "ItemPropertySchema",
-                "itemType": "Person",
-                "propertyName": "age",
-                "valueType": "Integer",
-            });
-            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
-            let result = internal_api::create_item_tx(
-                &tx,
-                &minimal_schema,
-                create_item,
-                "",
-                &cli,
-                &database_key,
-            )
+        let tx = conn.transaction().unwrap();
+        let json = json!({
+            "type": "ItemPropertySchema",
+            "itemType": "Person",
+            "propertyName": "age",
+            "valueType": "Integer",
+        });
+        let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+        internal_api::create_item_tx(&tx, &minimal_schema, create_item, "", &cli, &database_key)
             .unwrap();
-            assert!(result < 10); // no more than 10 items existed before in the DB
 
-            let bad_empty_schema = Schema {
-                property_types: HashMap::new(),
-            };
-            let create_item: CreateItem = serde_json::from_value(json).unwrap();
-            let result = internal_api::create_item_tx(
-                &tx,
-                &bad_empty_schema,
-                create_item,
-                "",
-                &cli,
-                &database_key,
-            )
-            .unwrap_err();
-            assert_eq!(result.code, StatusCode::BAD_REQUEST);
-            assert!(result.msg.contains("not defined in Schema"));
+        let bad_empty_schema = Schema {
+            property_types: HashMap::new(),
+        };
+        let create_item: CreateItem = serde_json::from_value(json).unwrap();
+        let result = internal_api::create_item_tx(
+            &tx,
+            &bad_empty_schema,
+            create_item,
+            "",
+            &cli,
+            &database_key,
+        )
+        .unwrap_err();
+        assert_eq!(result.code, StatusCode::BAD_REQUEST);
+        assert!(result.msg.contains("not defined in Schema"));
 
-            tx.commit().unwrap();
-        }
+        tx.commit().unwrap();
     }
 }
