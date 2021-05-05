@@ -203,7 +203,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction().unwrap();
         let schema = database_api::get_schema(&tx)?;
-        let cli = command_line_interface::tests::new_cli();
+        let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
         let owner = "testOwner".to_string();
         let owner_dir = files_dir()?.join(&owner);

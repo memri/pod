@@ -6,6 +6,7 @@ use crate::api_model::Search;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
+use crate::error::Result;
 use crate::internal_api;
 use crate::warp_endpoints;
 use log::error;
@@ -257,7 +258,7 @@ pub async fn run_server(cli_options: CliOptions) {
     }
 }
 
-fn respond_with_result<T: Reply>(result: crate::error::Result<T>) -> Response {
+fn respond_with_result<T: Reply>(result: Result<T>) -> Response {
     match result {
         Err(err) => {
             let code = err.code.as_str();

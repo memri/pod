@@ -2,6 +2,7 @@ use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
 use crate::api_model::SortOrder;
+use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::DatabaseSearch;
@@ -29,7 +30,7 @@ use std::str;
 use warp::http::status::StatusCode;
 
 pub fn get_project_version() -> String {
-    crate::command_line_interface::VERSION.to_string()
+    command_line_interface::VERSION.to_string()
 }
 
 /// Get all properties that the item has, ignoring those
@@ -432,7 +433,7 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction().unwrap();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
-        let cli = command_line_interface::tests::new_cli();
+        let cli = command_line_interface::tests::test_cli();
 
         // first try to insert the Person without Schema
         let item_json = json!({
@@ -485,7 +486,7 @@ mod tests {
     fn test_item_insert_schema() {
         let mut conn = new_conn();
         let minimal_schema = minimal_schema();
-        let cli = command_line_interface::tests::new_cli();
+        let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();

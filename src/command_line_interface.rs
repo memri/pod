@@ -129,12 +129,15 @@ lazy_static! {
 #[cfg(test)]
 pub mod tests {
     use super::CliOptions;
-    use std::net::{IpAddr, Ipv4Addr};
+    use std::net::IpAddr;
+    use std::net::Ipv4Addr;
 
-    pub fn new_cli() -> CliOptions {
+    /// Example test CLI. Purely for convenience,
+    /// you can instantiate your own / unrelated ones as well.
+    pub fn test_cli() -> CliOptions {
         CliOptions {
-            port: 0,
-            owners: "".to_string(),
+            port: 3030,
+            owners: "ANY".to_string(),
             plugins_callback_address: None,
             plugins_docker_network: None,
             tls_pub_crt: "".to_string(),
