@@ -2,11 +2,15 @@ use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
 use crate::api_model::SortOrder;
+use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::DatabaseSearch;
+use crate::database_api::IntegersNameValue;
 use crate::database_api::ItemBase;
+use crate::database_api::RealsNameValue;
 use crate::database_api::Rowid;
+use crate::database_api::StringsNameValue;
 use crate::error::Error;
 use crate::error::Result;
 use crate::plugin_auth_crypto::DatabaseKey;
@@ -18,7 +22,6 @@ use crate::triggers;
 use chrono::Utc;
 use log::info;
 use log::warn;
-use rusqlite::params;
 use rusqlite::Transaction;
 use serde_json::Map;
 use serde_json::Value;
@@ -27,7 +30,7 @@ use std::str;
 use warp::http::status::StatusCode;
 
 pub fn get_project_version() -> String {
-    crate::command_line_interface::VERSION.to_string()
+    command_line_interface::VERSION.to_string()
 }
 
 /// Get all properties that the item has, ignoring those
@@ -39,11 +42,8 @@ pub fn get_item_properties(
 ) -> Result<Map<String, Value>> {
     let mut json = serde_json::Map::new();
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: i64 = row.get(1)?;
+    for IntegersNameValue { name, value } in database_api::get_integers_records_for_item(tx, rowid)?
+    {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Bool) => {
                 json.insert(name, (value == 1).into());
@@ -62,11 +62,7 @@ pub fn get_item_properties(
         };
     }
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: String = row.get(1)?;
+    for StringsNameValue { name, value } in database_api::get_strings_records_for_item(tx, rowid)? {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Text) => {
                 json.insert(name, value.into());
@@ -79,14 +75,10 @@ pub fn get_item_properties(
                     other
                 );
             }
-        };
+        }
     }
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: f64 = row.get(1)?;
+    for RealsNameValue { name, value } in database_api::get_reals_records_for_item(tx, rowid)? {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Real) => {
                 json.insert(name, value.into());
@@ -405,7 +397,7 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
 #[cfg(test)]
 mod tests {
     use crate::api_model::CreateItem;
-    use crate::command_line_interface::CliOptions;
+    use crate::command_line_interface;
     use crate::database_api;
     use crate::database_migrate_refinery;
     use crate::error::Result;
@@ -436,29 +428,12 @@ mod tests {
         }
     }
 
-    fn new_cli() -> CliOptions {
-        CliOptions {
-            port: 0,
-            owners: "".to_string(),
-            plugins_callback_address: None,
-            plugins_docker_network: None,
-            tls_pub_crt: "".to_string(),
-            tls_priv_key: "".to_string(),
-            non_tls: false,
-            insecure_non_tls: None,
-            insecure_http_headers: false,
-            shared_server: false,
-            schema_file: Default::default(),
-            validate_schema: false,
-        }
-    }
-
     #[test]
     fn test_schema_checking() -> Result<()> {
         let mut conn = new_conn();
         let tx = conn.transaction().unwrap();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
-        let cli = new_cli();
+        let cli = command_line_interface::tests::test_cli();
 
         // first try to insert the Person without Schema
         let item_json = json!({
@@ -511,7 +486,7 @@ mod tests {
     fn test_item_insert_schema() {
         let mut conn = new_conn();
         let minimal_schema = minimal_schema();
-        let cli = new_cli();
+        let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();

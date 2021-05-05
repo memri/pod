@@ -7,6 +7,7 @@ use crate::schema::SchemaPropertyType;
 use log::debug;
 use rusqlite::params;
 use rusqlite::types::ToSqlOutput;
+use rusqlite::Row;
 use rusqlite::Transaction as Tx;
 use rusqlite::NO_PARAMS;
 use std::collections::HashMap;
@@ -80,6 +81,18 @@ pub struct DatabaseSearch<'a> {
     pub _limit: u64,
 }
 
+fn parse_item_base(row: &Row) -> Result<ItemBase> {
+    Ok(ItemBase {
+        rowid: row.get(0)?,
+        id: row.get(1)?,
+        _type: row.get(2)?,
+        date_created: row.get(3)?,
+        date_modified: row.get(4)?,
+        date_server_modified: row.get(5)?,
+        deleted: row.get(6)?,
+    })
+}
+
 pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
     let mut sql_query = "\
         SELECT \
@@ -140,14 +153,96 @@ pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
         } else {
             num_left -= 1;
         }
-        result.push(ItemBase {
-            rowid: row.get(0)?,
-            id: row.get(1)?,
-            _type: row.get(2)?,
-            date_created: row.get(3)?,
-            date_modified: row.get(4)?,
-            date_server_modified: row.get(5)?,
-            deleted: row.get(6)?,
+        result.push(parse_item_base(row)?);
+    }
+    Ok(result)
+}
+
+/// Search for items that have a certain property equal to certain value
+pub fn search_strings(tx: &Tx, property_name: &str, value: &str) -> Result<Vec<Rowid>> {
+    let mut stmt = tx.prepare_cached("SELECT item FROM strings WHERE name = ? AND value = ?;")?;
+    let mut rows = stmt.query(params![property_name, value])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        let item: Rowid = row.get(0)?;
+        result.push(item);
+    }
+    Ok(result)
+}
+
+pub fn get_strings_for_item(tx: &Tx, item_rowid: Rowid) -> Result<HashMap<String, String>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = HashMap::new();
+    while let Some(row) = rows.next()? {
+        result.insert(row.get(0)?, row.get(1)?);
+    }
+    Ok(result)
+}
+pub struct StringsNameValue {
+    pub name: String,
+    pub value: String,
+}
+pub fn get_strings_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<StringsNameValue>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        result.push(StringsNameValue {
+            name: row.get(0)?,
+            value: row.get(1)?,
+        });
+    }
+    Ok(result)
+}
+
+pub fn get_integers_for_item(tx: &Tx, item_rowid: Rowid) -> Result<HashMap<String, i64>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = HashMap::new();
+    while let Some(row) = rows.next()? {
+        result.insert(row.get(0)?, row.get(1)?);
+    }
+    Ok(result)
+}
+pub struct IntegersNameValue {
+    pub name: String,
+    pub value: i64,
+}
+pub fn get_integers_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<IntegersNameValue>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        result.push(IntegersNameValue {
+            name: row.get(0)?,
+            value: row.get(1)?,
+        });
+    }
+    Ok(result)
+}
+
+pub fn get_reals_for_item(tx: &Tx, item_rowid: Rowid) -> Result<HashMap<String, f64>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = HashMap::new();
+    while let Some(row) = rows.next()? {
+        result.insert(row.get(0)?, row.get(1)?);
+    }
+    Ok(result)
+}
+pub struct RealsNameValue {
+    pub name: String,
+    pub value: f64,
+}
+pub fn get_reals_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<RealsNameValue>> {
+    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ?;")?;
+    let mut rows = stmt.query(params![item_rowid])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        result.push(RealsNameValue {
+            name: row.get(0)?,
+            value: row.get(1)?,
         });
     }
     Ok(result)

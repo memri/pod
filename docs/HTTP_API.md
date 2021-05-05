@@ -242,9 +242,8 @@ See [Plugins](./Plugins.md) on how plugins are started exactly.
 ⚠️ UNSTABLE: We might require more properties for Plugins to start in the future,
 e.g. permission limitation.
 
-<!--
-# File API
 
+# File API
 
 ### POST /v3/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
 ```text
@@ -274,4 +273,3 @@ The properties `nonce` and `key` will be updated for this item.
 ```
 Get a file by its sha256 hash.
 If the file does not yet exist in Pod, a 404 NOT FOUND error will be returned.
--->

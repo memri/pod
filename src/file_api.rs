@@ -1,16 +1,14 @@
 use crate::constants;
+use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
 use chacha20poly1305::aead::Aead;
 use chacha20poly1305::aead::NewAead;
 use chacha20poly1305::Key;
 use chacha20poly1305::XChaCha20Poly1305;
-// use chacha20poly1305::Nonce;
 use chacha20poly1305::XNonce;
 use log::warn;
 use rand::random;
-use rusqlite::named_params;
-use rusqlite::OptionalExtension;
 use rusqlite::Transaction;
 use sha2::Digest;
 use sha2::Sha256;
@@ -24,11 +22,11 @@ use warp::http::status::StatusCode;
 
 pub fn upload_file(
     tx: &Transaction,
-    owner: String,
-    expected_sha256: String,
+    owner: &str,
+    expected_sha256: &str,
     body: &[u8],
 ) -> Result<()> {
-    if file_exists_on_disk(&owner, &expected_sha256)? {
+    if file_exists_on_disk(owner, expected_sha256)? {
         // Note that checking once for file existence here is not enough.
         // To prevent TOCTOU attack, we also need to check file existence below.
         // We could avoid doing a check here at all, but we do it to avoid spending CPU power
@@ -39,7 +37,7 @@ pub fn upload_file(
             msg: "File already exists".to_string(),
         });
     };
-    validate_hash(&expected_sha256, body)?;
+    validate_hash(expected_sha256, body)?;
 
     let key: [u8; 32] = random();
     let key = Key::from_slice(&key);
@@ -48,9 +46,9 @@ pub fn upload_file(
     let nonce: [u8; 24] = rand::random();
     let nonce = XNonce::from_slice(&nonce); // unique per file
     let body = cipher.encrypt(nonce, body)?;
-    update_key_and_nonce(tx, key.deref(), nonce.deref(), &expected_sha256)?;
+    update_key_and_nonce(tx, key.deref(), nonce.deref(), expected_sha256)?;
 
-    let file = final_path(&owner, &expected_sha256)?;
+    let file = final_path(owner, expected_sha256)?;
     let file = OpenOptions::new().write(true).create_new(true).open(file);
     let mut file = file.map_err(|err| {
         if err.raw_os_error() == Some(libc::EEXIST) {
@@ -92,7 +90,7 @@ fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
 
 fn final_path(owner: &str, sha256: &str) -> Result<PathBuf> {
     let result = files_dir()?;
-    let final_dir = result.join(owner).join(FINAL_DIR);
+    let final_dir = result.join(owner).join(constants::FILES_FINAL_SUBDIR);
     create_dir_all(&final_dir).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
         msg: format!(
@@ -128,43 +126,51 @@ fn update_key_and_nonce(
     nonce: &[u8],
     for_sha256: &str,
 ) -> Result<()> {
-    let mut stmt =
-        tx.prepare("UPDATE items SET key = :key , nonce = :nonce WHERE sha256 = :sha256")?;
-    let key = hex::encode(key);
-    let nonce = hex::encode(nonce);
-    let result = stmt
-        .execute_named(named_params! { ":key": &key, ":nonce": &nonce, ":sha256": for_sha256 })?;
-    if result == 0 {
+    let item_rowids = database_api::search_strings(tx, "sha256", for_sha256)?;
+    if item_rowids.is_empty() {
         Err(Error {
             code: StatusCode::NOT_FOUND,
             msg: format!("Item with sha256 {} not found in database", for_sha256),
         })
     } else {
+        let key = hex::encode(key);
+        let nonce = hex::encode(nonce);
+        for item in item_rowids {
+            database_api::insert_string(tx, item, "key", &key)?;
+            database_api::insert_string(tx, item, "nonce", &nonce)?;
+        }
         Ok(())
     }
 }
 
-/// Find `key` and `nonce` in the database for an item with the desired `sha256`
+/// Find first `key` and `nonce` pair in the database for an item with the desired `sha256`
 fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u8>, Vec<u8>)> {
-    let key_nonce: Option<(String, String)> = tx
-        .query_row(
-            "SELECT key, nonce FROM items WHERE sha256 = ?",
-            &[sha256],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()?;
-    let key_nonce = if let Some(key_nonce) = key_nonce {
-        key_nonce
+    let item_rowids = database_api::search_strings(tx, "sha256", sha256)?;
+    if let Some(rowid) = item_rowids.first() {
+        let mut other_props = database_api::get_strings_for_item(tx, *rowid)?;
+        let key = other_props.remove("key").ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!(
+                "Item with required hash {} found, but it does not have a 'key' property",
+                sha256
+            ),
+        })?;
+        let nonce = other_props.remove("nonce").ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!(
+                "Item with required hash {} found, but it does not have a 'nonce' property",
+                sha256
+            ),
+        })?;
+        let key = hex::decode(key)?;
+        let nonce = hex::decode(nonce)?;
+        Ok((key, nonce))
     } else {
-        return Err(Error {
+        Err(Error {
             code: StatusCode::NOT_FOUND,
             msg: format!("Item with sha256={} not found", sha256),
-        });
-    };
-    let (key, nonce) = key_nonce;
-    let key = hex::decode(key)?;
-    let nonce = hex::decode(nonce)?;
-    Ok((key, nonce))
+        })
+    }
 }
 
 /// Directory where files (e.g. media) are stored
@@ -178,6 +184,52 @@ fn files_dir() -> Result<PathBuf> {
     })
 }
 
-/// Directory where fully uploaded and hash-checked files are stored
-/// (in future, the files should also be s3-uploaded).
-const FINAL_DIR: &str = "final";
+#[cfg(test)]
+mod tests {
+    use super::files_dir;
+    use super::get_file;
+    use super::upload_file;
+    use crate::command_line_interface;
+    use crate::database_api;
+    use crate::database_migrate_refinery;
+    use crate::error::Result;
+    use crate::internal_api;
+    use crate::plugin_auth_crypto::DatabaseKey;
+    use rusqlite::Connection;
+    use serde_json::json;
+
+    #[test]
+    fn test_file_upload_get() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction().unwrap();
+        let schema = database_api::get_schema(&tx)?;
+        let cli = command_line_interface::tests::test_cli();
+        let database_key = DatabaseKey::from("".to_string()).unwrap();
+        let owner = "testOwner".to_string();
+        let owner_dir = files_dir()?.join(&owner);
+        std::fs::remove_dir_all(&owner_dir).ok();
+        let sha = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string();
+
+        let json = json!({
+            "type": "File",
+            "sha256": &sha,
+        });
+        let sha_item = serde_json::from_value(json)?;
+        internal_api::create_item_tx(&tx, &schema, sha_item, &owner, &cli, &database_key)?;
+
+        upload_file(&tx, &owner, &sha, &[])?;
+
+        let result = get_file(&tx, &owner, &sha)?;
+        assert_eq!(result.len(), 0, "{}:{}", file!(), line!());
+        std::fs::remove_dir_all(owner_dir).ok();
+        Ok(())
+    }
+
+    fn new_conn() -> Connection {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        database_migrate_refinery::embedded::migrations::runner()
+            .run(&mut conn)
+            .expect("Failed to run refinery migrations");
+        conn
+    }
+}

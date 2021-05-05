@@ -1,3 +1,5 @@
+use crate::error::Error;
+use crate::error::Result;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
@@ -41,13 +43,13 @@ pub struct Schema {
 
 /// Validation of _new_ item ids. Note that it is not applied to already existing
 /// ids or endpoints that access already existing ids.
-pub fn validate_create_item_id(item_id: &str) -> crate::error::Result<()> {
+pub fn validate_create_item_id(item_id: &str) -> Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
             Regex::new(r"^[a-zA-Z0-9_-]{6,36}$").expect("Cannot create regex");
     }
     if !REGEXP.is_match(item_id) {
-        Err(crate::error::Error {
+        Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!(
                 "Item id '{}' does not satisfy the format {} (use 32 random hex characters if in doubt on item id creation)",
@@ -61,13 +63,13 @@ pub fn validate_create_item_id(item_id: &str) -> crate::error::Result<()> {
 }
 
 /// All item properties should be of this format
-pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
+pub fn validate_property_name(property: &str) -> Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
-            Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
+            Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{0,30}[a-zA-Z0-9]$").expect("Cannot create regex");
     }
     if !REGEXP.is_match(property) {
-        Err(crate::error::Error {
+        Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!(
                 "Property name {} does not satisfy the format {}",
@@ -76,7 +78,7 @@ pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
             ),
         })
     } else if BLOCKLIST_COLUMN_NAMES.contains(&property.to_lowercase()) {
-        Err(crate::error::Error {
+        Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!("Blocklisted item property {}", property),
         })
