@@ -175,23 +175,25 @@ Mark an item as deleted:
 
 
 ### POST /v3/$owner_key/search
-```json
+```json5
 {
   "auth": $auth_json,
   "payload": {
     "type": "Label",
     "dateServerModified>=": 1234567890,
     "dateServerModified<": 1234567890,
-    "deleted": false
+    "deleted": false,
+    "_sortOrder": "DESC", // either "ASC" (by default) or "DESC"
+    "_limit": 100, // exclude this field to have no limit
   }
 }
 ```
-Search items by their properties.
+Search items by their properties, all fields above are optional.
 
 The endpoint will return an array of all items with exactly the same properties.
 
 As a first step of the 2021-03 Pod rewrite, only the above properties are supported.
-In the future, any will be available.
+In the future, any item properties will be available.
 
 
 ### POST /v3/$owner_key/bulk

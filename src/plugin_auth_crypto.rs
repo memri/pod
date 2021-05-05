@@ -18,8 +18,8 @@ pub fn generate_xchacha20poly1305_cipher() -> XChaCha20Poly1305 {
     XChaCha20Poly1305::new(key)
 }
 
-// Given a `database_key` from an already authorized request,
-// create a new PluginAuth to be passed to external Plugins.
+/// Given a `database_key` from an already authorized request,
+/// create a new PluginAuth to be passed to external Plugins.
 pub fn create_plugin_auth(database_key: &str) -> Result<PluginAuth> {
     let nonce: [u8; 24] = rand::random();
     let nonce = XNonce::from_slice(&nonce); // MUST be unique

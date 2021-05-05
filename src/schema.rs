@@ -107,7 +107,7 @@ const POD_ITEM_MANDATORY_PROPERTIES: &[&str] = &[
     "target",
 ];
 
-// SQLite keywords taken from https://www.sqlite.org/lang_keywords.html
+/// SQLite keywords taken from https://www.sqlite.org/lang_keywords.html
 const SQLITE_RESERVED_KEYWORDS: &[&str] = &[
     "ABORT",
     "ACTION",
