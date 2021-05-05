@@ -144,7 +144,7 @@ fn update_key_and_nonce(
     }
 }
 
-// Find `key` and `nonce` in the database for an item with the desired `sha256`
+/// Find `key` and `nonce` in the database for an item with the desired `sha256`
 fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u8>, Vec<u8>)> {
     let key_nonce: Option<(String, String)> = tx
         .query_row(

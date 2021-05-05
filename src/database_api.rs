@@ -1,3 +1,4 @@
+use crate::api_model::SortOrder;
 use crate::error::Error;
 use crate::error::ErrorContext;
 use crate::error::Result;
@@ -68,15 +69,18 @@ pub fn get_item_rowid(tx: &Tx, id: &str) -> Result<Option<Rowid>> {
     }
 }
 
-pub fn search_items(
-    tx: &Tx,
-    rowid: Option<Rowid>,
-    id: Option<&str>,
-    _type: Option<&str>,
-    date_server_modified_gte: Option<DbTime>,
-    date_server_modified_lt: Option<DbTime>,
-    deleted: Option<bool>,
-) -> Result<Vec<ItemBase>> {
+pub struct DatabaseSearch<'a> {
+    pub rowid: Option<Rowid>,
+    pub id: Option<&'a str>,
+    pub _type: Option<&'a str>,
+    pub date_server_modified_gte: Option<DbTime>,
+    pub date_server_modified_lt: Option<DbTime>,
+    pub deleted: Option<bool>,
+    pub sort_order: SortOrder,
+    pub _limit: u64,
+}
+
+pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
     let mut sql_query = "\
         SELECT \
             rowid, \
@@ -91,19 +95,19 @@ pub fn search_items(
         WHERE "
         .to_string();
     let mut params_vec: Vec<ToSqlOutput> = Vec::new();
-    if let Some(r) = rowid {
+    if let Some(r) = query.rowid {
         add_sql_param(&mut sql_query, "rowid", &Comparison::Equals);
         params_vec.push(r.into());
     }
-    if let Some(id) = id {
+    if let Some(id) = &query.id {
         add_sql_param(&mut sql_query, "id", &Comparison::Equals);
-        params_vec.push(id.into());
+        params_vec.push((*id).into());
     }
-    if let Some(typ) = _type {
+    if let Some(typ) = &query._type {
         add_sql_param(&mut sql_query, "type", &Comparison::Equals);
-        params_vec.push(typ.into());
+        params_vec.push((*typ).into());
     }
-    if let Some(dt) = date_server_modified_gte {
+    if let Some(dt) = query.date_server_modified_gte {
         add_sql_param(
             &mut sql_query,
             "dateServerModified",
@@ -111,15 +115,17 @@ pub fn search_items(
         );
         params_vec.push(dt.into());
     }
-    if let Some(dt) = date_server_modified_lt {
+    if let Some(dt) = query.date_server_modified_lt {
         add_sql_param(&mut sql_query, "dateServerModified", &Comparison::LessThan);
         params_vec.push(dt.into());
     }
-    if let Some(deleted) = deleted {
+    if let Some(deleted) = query.deleted {
         add_sql_param(&mut sql_query, "deleted", &Comparison::Equals);
         params_vec.push(deleted.into());
     }
-    sql_query.push_str("1 ;"); // older sqlite versions do not support `true`
+    sql_query.push_str("1 "); // older sqlite versions do not support `true`
+    sql_query.push_str(&format!("ORDER BY dateServerModified {}", query.sort_order));
+    sql_query.push(';');
     debug!("Executing search SQL: {}", sql_query);
 
     let mut stmt = tx
@@ -127,7 +133,13 @@ pub fn search_items(
         .context(|| format!("SQL query: {}", sql_query))?;
     let mut rows = stmt.query(params_vec)?;
     let mut result = Vec::new();
+    let mut num_left = query._limit;
     while let Some(row) = rows.next()? {
+        if num_left == 0 {
+            break;
+        } else {
+            num_left -= 1;
+        }
         result.push(ItemBase {
             rowid: row.get(0)?,
             id: row.get(1)?,
@@ -422,16 +434,38 @@ mod tests {
         insert_string(&tx, item, "valueType", "integer")?;
 
         assert_eq!(
-            search_items(&tx, Some(item), None, None, None, None, None)?.len(),
+            search_items_params(&tx, Some(item), None, None, None, None, None)?.len(),
             1
         );
         dangerous_permament_remove_item(&tx, item)?;
         assert_eq!(
-            search_items(&tx, Some(item), None, None, None, None, None)?.len(),
+            search_items_params(&tx, Some(item), None, None, None, None, None)?.len(),
             0
         );
 
         Ok(())
+    }
+
+    fn search_items_params(
+        tx: &Tx,
+        rowid: Option<Rowid>,
+        id: Option<&str>,
+        _type: Option<&str>,
+        date_server_modified_gte: Option<DbTime>,
+        date_server_modified_lt: Option<DbTime>,
+        deleted: Option<bool>,
+    ) -> Result<Vec<ItemBase>> {
+        let database_search = DatabaseSearch {
+            rowid,
+            id,
+            _type,
+            date_server_modified_gte,
+            date_server_modified_lt,
+            deleted,
+            sort_order: SortOrder::Asc,
+            _limit: u64::MAX,
+        };
+        search_items(tx, &database_search)
     }
 
     #[test]
@@ -440,51 +474,83 @@ mod tests {
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
         let item1 = insert_item_base(&tx, "one", "Person", date, date, date, false)?;
-        let _item2 = insert_item_base(&tx, "two", "Book", date, date, date, false)?;
-        let _item3 = insert_item_base(&tx, "three", "Street", date, date, date, false)?;
+        let _item2 = insert_item_base(&tx, "two", "Book", date, date, date + 1, false)?;
+        let _item3 = insert_item_base(&tx, "three", "Street", date, date, date + 2, false)?;
         assert_eq!(
-            search_items(&tx, None, None, Some("Person"), None, None, None)?.len(),
+            search_items_params(&tx, None, None, Some("Person"), None, None, None)?.len(),
             1,
         );
         assert_eq!(
-            search_items(&tx, None, None, Some("Void"), None, None, None)?.len(),
+            search_items_params(&tx, None, None, Some("Void"), None, None, None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, Some(item1), None, None, None, None, None)?.len(),
+            search_items_params(&tx, Some(item1), None, None, None, None, None)?.len(),
             1,
         );
         assert_eq!(
-            search_items(&tx, None, Some("one"), None, None, None, None)?.len(),
+            search_items_params(&tx, None, Some("one"), None, None, None, None)?.len(),
             1,
         );
         assert_eq!(
-            search_items(&tx, None, Some("nothing"), None, None, None, None)?.len(),
+            search_items_params(&tx, None, Some("nothing"), None, None, None, None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, None, None, None, Some(date), None, None)?.len(),
+            search_items_params(&tx, None, None, None, Some(date), None, None)?.len(),
             3,
         );
         assert_eq!(
-            search_items(&tx, None, None, None, Some(date), Some(date + 1), None)?.len(),
+            search_items_params(&tx, None, None, None, Some(date), Some(date + 3), None)?.len(),
             3,
         );
         assert_eq!(
-            search_items(&tx, None, None, None, Some(date - 1), Some(date), None)?.len(),
+            search_items_params(&tx, None, None, None, Some(date - 1), Some(date), None)?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, None, None, None, None, None, Some(true))?.len(),
+            search_items_params(&tx, None, None, None, None, None, Some(true))?.len(),
             0,
         );
         assert_eq!(
-            search_items(&tx, None, None, None, Some(date - 1), None, Some(false))?.len(),
+            search_items_params(&tx, None, None, None, Some(date - 1), None, Some(false))?.len(),
             3,
         );
-        assert!(search_items(&tx, None, None, None, None, None, None)?.len() >= 3);
+        assert!(search_items_params(&tx, None, None, None, None, None, None)?.len() >= 3);
+        {
+            let mut query = DatabaseSearch {
+                rowid: None,
+                id: None,
+                _type: None,
+                date_server_modified_gte: Some(date),
+                date_server_modified_lt: None,
+                deleted: None,
+                sort_order: SortOrder::Asc,
+                _limit: 1,
+            };
+            assert_eq!(search_items(&tx, &query)?.len(), 1);
+
+            query._limit = 3;
+            let three_results = search_items(&tx, &query)?;
+            assert_eq!(three_results.len(), 3);
+
+            let first = &three_results[0];
+            let third = &three_results[2];
+            assert_ne!(first.rowid, third.rowid);
+            assert_ne!(first.date_server_modified, third.date_server_modified);
+
+            query.sort_order = SortOrder::Asc;
+            let search_asc = &search_items(&tx, &query)?;
+            query.sort_order = SortOrder::Desc;
+            let search_desc = &search_items(&tx, &query)?;
+            assert_eq!(search_asc[0].rowid, search_desc[2].rowid);
+            assert_eq!(search_asc[2].rowid, search_desc[0].rowid);
+
+            query._limit = 100;
+            assert!(search_items(&tx, &query)?.len() < 100); // there aren't 100 items there
+        }
         assert_eq!(
-            search_items(
+            search_items_params(
                 &tx,
                 Some(item1),
                 Some("one"),

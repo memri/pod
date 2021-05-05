@@ -84,12 +84,35 @@ pub struct Search {
     pub id: Option<String>,
     pub _type: Option<String>,
     #[serde(rename = "dateServerModified>=")]
-    pub _date_server_modified_gte: Option<i64>,
+    pub date_server_modified_gte: Option<i64>,
     #[serde(rename = "dateServerModified<")]
-    pub _date_server_modified_lt: Option<i64>,
+    pub date_server_modified_lt: Option<i64>,
     pub deleted: Option<bool>,
+    #[serde(default = "default_api_sort_order", rename = "_sortOrder")]
+    pub sort_order: SortOrder,
+    #[serde(default = "default_api_limit", rename = "_limit")]
+    pub limit: u64,
     #[serde(flatten)]
     pub other_properties: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum SortOrder {
+    /// Ascending
+    Asc,
+    /// Descending
+    Desc,
+}
+impl std::fmt::Display for SortOrder {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+fn default_api_sort_order() -> SortOrder {
+    SortOrder::Asc
+}
+fn default_api_limit() -> u64 {
+    u64::MAX
 }
 
 //

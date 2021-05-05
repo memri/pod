@@ -1,8 +1,10 @@
 use crate::api_model::Bulk;
 use crate::api_model::CreateItem;
 use crate::api_model::Search;
+use crate::api_model::SortOrder;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
+use crate::database_api::DatabaseSearch;
 use crate::database_api::ItemBase;
 use crate::database_api::Rowid;
 use crate::error::Error;
@@ -104,7 +106,17 @@ pub fn get_item_properties(
 }
 
 pub fn get_item_from_rowid(tx: &Transaction, schema: &Schema, rowid: Rowid) -> Result<Value> {
-    let item = database_api::search_items(tx, Some(rowid), None, None, None, None, None)?;
+    let database_search = DatabaseSearch {
+        rowid: Some(rowid),
+        id: None,
+        _type: None,
+        date_server_modified_gte: None,
+        date_server_modified_lt: None,
+        deleted: None,
+        sort_order: SortOrder::Asc,
+        _limit: 1,
+    };
+    let item = database_api::search_items(tx, &database_search)?;
     let item = if let Some(item) = item.into_iter().next() {
         item
     } else {
@@ -123,9 +135,11 @@ pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Va
     let search_query = Search {
         id: Some(id.to_string()),
         _type: None,
-        _date_server_modified_gte: None,
-        _date_server_modified_lt: None,
+        date_server_modified_gte: None,
+        date_server_modified_lt: None,
         deleted: None,
+        sort_order: SortOrder::Asc,
+        limit: 1,
         other_properties: Default::default(),
     };
     let result = search(tx, schema, search_query)?;
@@ -368,15 +382,17 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
             ),
         });
     }
-    let items = database_api::search_items(
-        tx,
-        None,
-        query.id.as_deref(),
-        query._type.as_deref(),
-        query._date_server_modified_gte,
-        query._date_server_modified_lt,
-        query.deleted,
-    )?;
+    let database_search = DatabaseSearch {
+        rowid: None,
+        id: query.id.as_deref(),
+        _type: query._type.as_deref(),
+        date_server_modified_gte: query.date_server_modified_gte,
+        date_server_modified_lt: query.date_server_modified_lt,
+        deleted: query.deleted,
+        sort_order: query.sort_order,
+        _limit: query.limit,
+    };
+    let items = database_api::search_items(tx, &database_search)?;
     let mut result = Vec::new();
     for item in items {
         let mut properties = get_item_properties(tx, item.rowid, schema)?;
