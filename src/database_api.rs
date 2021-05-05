@@ -300,14 +300,6 @@ pub fn insert_string(tx: &Tx, item: Rowid, name: &str, value: &str) -> Result<()
     Ok(())
 }
 
-/// Insert a "BLOB storage class" into the strings TEXT column
-/// See "Type Affinity": https://www.sqlite.org/datatype3.html
-pub fn insert_string_blob(tx: &Tx, item: Rowid, name: &str, value: &[u8]) -> Result<()> {
-    let mut stmt = tx.prepare_cached("INSERT INTO strings VALUES(?, ?, ?);")?;
-    stmt.execute(params![item, name, value])?;
-    Ok(())
-}
-
 pub fn delete_property(tx: &Tx, item: Rowid, name: &str) -> Result<()> {
     let mut stmt = tx.prepare_cached("DELETE FROM integers WHERE item = ? AND name = ?;")?;
     stmt.execute(params![item, name])?;

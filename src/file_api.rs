@@ -90,7 +90,7 @@ fn file_exists_on_disk(owner: &str, sha256: &str) -> Result<bool> {
 
 fn final_path(owner: &str, sha256: &str) -> Result<PathBuf> {
     let result = files_dir()?;
-    let final_dir = result.join(owner).join(FINAL_DIR);
+    let final_dir = result.join(owner).join(constants::FILES_FINAL_SUBDIR);
     create_dir_all(&final_dir).map_err(|err| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
         msg: format!(
@@ -166,10 +166,10 @@ fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u
         let nonce = hex::decode(nonce)?;
         Ok((key, nonce))
     } else {
-        return Err(Error {
+        Err(Error {
             code: StatusCode::NOT_FOUND,
             msg: format!("Item with sha256={} not found", sha256),
-        });
+        })
     }
 }
 
@@ -183,7 +183,3 @@ fn files_dir() -> Result<PathBuf> {
         }
     })
 }
-
-/// Directory where fully uploaded and hash-checked files are stored
-/// (in future, the files should also be s3-uploaded).
-const FINAL_DIR: &str = "final";
