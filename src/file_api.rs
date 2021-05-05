@@ -1,16 +1,14 @@
 use crate::constants;
+use crate::database_api;
 use crate::error::Error;
 use crate::error::Result;
 use chacha20poly1305::aead::Aead;
 use chacha20poly1305::aead::NewAead;
 use chacha20poly1305::Key;
 use chacha20poly1305::XChaCha20Poly1305;
-// use chacha20poly1305::Nonce;
 use chacha20poly1305::XNonce;
 use log::warn;
 use rand::random;
-use rusqlite::named_params;
-use rusqlite::OptionalExtension;
 use rusqlite::Transaction;
 use sha2::Digest;
 use sha2::Sha256;
@@ -128,43 +126,51 @@ fn update_key_and_nonce(
     nonce: &[u8],
     for_sha256: &str,
 ) -> Result<()> {
-    let mut stmt =
-        tx.prepare("UPDATE items SET key = :key , nonce = :nonce WHERE sha256 = :sha256")?;
-    let key = hex::encode(key);
-    let nonce = hex::encode(nonce);
-    let result = stmt
-        .execute_named(named_params! { ":key": &key, ":nonce": &nonce, ":sha256": for_sha256 })?;
-    if result == 0 {
+    let item_rowids = database_api::search_strings(tx, "sha256", for_sha256)?;
+    if item_rowids.is_empty() {
         Err(Error {
             code: StatusCode::NOT_FOUND,
             msg: format!("Item with sha256 {} not found in database", for_sha256),
         })
     } else {
+        let key = hex::encode(key);
+        let nonce = hex::encode(nonce);
+        for item in item_rowids {
+            database_api::insert_string(tx, item, "key", &key)?;
+            database_api::insert_string(tx, item, "nonce", &nonce)?;
+        }
         Ok(())
     }
 }
 
-/// Find `key` and `nonce` in the database for an item with the desired `sha256`
+/// Find first `key` and `nonce` pair in the database for an item with the desired `sha256`
 fn find_key_and_nonce_by_sha256(tx: &Transaction, sha256: &str) -> Result<(Vec<u8>, Vec<u8>)> {
-    let key_nonce: Option<(String, String)> = tx
-        .query_row(
-            "SELECT key, nonce FROM items WHERE sha256 = ?",
-            &[sha256],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()?;
-    let key_nonce = if let Some(key_nonce) = key_nonce {
-        key_nonce
+    let item_rowids = database_api::search_strings(tx, "sha256", sha256)?;
+    if let Some(rowid) = item_rowids.first() {
+        let mut other_props = database_api::get_strings_for_item(tx, *rowid)?;
+        let key = other_props.remove("key").ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!(
+                "Item with required hash {} found, but it does not have a 'key' property",
+                sha256
+            ),
+        })?;
+        let nonce = other_props.remove("nonce").ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!(
+                "Item with required hash {} found, but it does not have a 'nonce' property",
+                sha256
+            ),
+        })?;
+        let key = hex::decode(key)?;
+        let nonce = hex::decode(nonce)?;
+        Ok((key, nonce))
     } else {
         return Err(Error {
             code: StatusCode::NOT_FOUND,
             msg: format!("Item with sha256={} not found", sha256),
         });
-    };
-    let (key, nonce) = key_nonce;
-    let key = hex::decode(key)?;
-    let nonce = hex::decode(nonce)?;
-    Ok((key, nonce))
+    }
 }
 
 /// Directory where files (e.g. media) are stored

@@ -5,8 +5,11 @@ use crate::api_model::SortOrder;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::DatabaseSearch;
+use crate::database_api::IntegersNameValue;
 use crate::database_api::ItemBase;
+use crate::database_api::RealsNameValue;
 use crate::database_api::Rowid;
+use crate::database_api::StringsNameValue;
 use crate::error::Error;
 use crate::error::Result;
 use crate::plugin_auth_crypto::DatabaseKey;
@@ -18,7 +21,6 @@ use crate::triggers;
 use chrono::Utc;
 use log::info;
 use log::warn;
-use rusqlite::params;
 use rusqlite::Transaction;
 use serde_json::Map;
 use serde_json::Value;
@@ -39,11 +41,8 @@ pub fn get_item_properties(
 ) -> Result<Map<String, Value>> {
     let mut json = serde_json::Map::new();
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM integers WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: i64 = row.get(1)?;
+    for IntegersNameValue { name, value } in database_api::get_integers_records_for_item(tx, rowid)?
+    {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Bool) => {
                 json.insert(name, (value == 1).into());
@@ -62,11 +61,7 @@ pub fn get_item_properties(
         };
     }
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM strings WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: String = row.get(1)?;
+    for StringsNameValue { name, value } in database_api::get_strings_records_for_item(tx, rowid)? {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Text) => {
                 json.insert(name, value.into());
@@ -79,14 +74,10 @@ pub fn get_item_properties(
                     other
                 );
             }
-        };
+        }
     }
 
-    let mut stmt = tx.prepare_cached("SELECT name, value FROM reals WHERE item = ? ;")?;
-    let mut integers = stmt.query(params![rowid])?;
-    while let Some(row) = integers.next()? {
-        let name: String = row.get(0)?;
-        let value: f64 = row.get(1)?;
+    for RealsNameValue { name, value } in database_api::get_reals_records_for_item(tx, rowid)? {
         match schema.property_types.get(&name) {
             Some(SchemaPropertyType::Real) => {
                 json.insert(name, value.into());
