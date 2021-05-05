@@ -22,11 +22,11 @@ use warp::http::status::StatusCode;
 
 pub fn upload_file(
     tx: &Transaction,
-    owner: String,
-    expected_sha256: String,
+    owner: &str,
+    expected_sha256: &str,
     body: &[u8],
 ) -> Result<()> {
-    if file_exists_on_disk(&owner, &expected_sha256)? {
+    if file_exists_on_disk(owner, expected_sha256)? {
         // Note that checking once for file existence here is not enough.
         // To prevent TOCTOU attack, we also need to check file existence below.
         // We could avoid doing a check here at all, but we do it to avoid spending CPU power
@@ -37,7 +37,7 @@ pub fn upload_file(
             msg: "File already exists".to_string(),
         });
     };
-    validate_hash(&expected_sha256, body)?;
+    validate_hash(expected_sha256, body)?;
 
     let key: [u8; 32] = random();
     let key = Key::from_slice(&key);
@@ -46,9 +46,9 @@ pub fn upload_file(
     let nonce: [u8; 24] = rand::random();
     let nonce = XNonce::from_slice(&nonce); // unique per file
     let body = cipher.encrypt(nonce, body)?;
-    update_key_and_nonce(tx, key.deref(), nonce.deref(), &expected_sha256)?;
+    update_key_and_nonce(tx, key.deref(), nonce.deref(), expected_sha256)?;
 
-    let file = final_path(&owner, &expected_sha256)?;
+    let file = final_path(owner, expected_sha256)?;
     let file = OpenOptions::new().write(true).create_new(true).open(file);
     let mut file = file.map_err(|err| {
         if err.raw_os_error() == Some(libc::EEXIST) {
@@ -182,4 +182,54 @@ fn files_dir() -> Result<PathBuf> {
             msg: format!("Failed to create file upload path, {}", err),
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::files_dir;
+    use super::get_file;
+    use super::upload_file;
+    use crate::command_line_interface;
+    use crate::database_api;
+    use crate::database_migrate_refinery;
+    use crate::error::Result;
+    use crate::internal_api;
+    use crate::plugin_auth_crypto::DatabaseKey;
+    use rusqlite::Connection;
+    use serde_json::json;
+
+    #[test]
+    fn test_file_upload_get() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction().unwrap();
+        let schema = database_api::get_schema(&tx)?;
+        let cli = command_line_interface::tests::new_cli();
+        let database_key = DatabaseKey::from("".to_string()).unwrap();
+        let owner = "testOwner".to_string();
+        let owner_dir = files_dir()?.join(&owner);
+        std::fs::remove_dir_all(&owner_dir).ok();
+        let sha = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string();
+
+        let json = json!({
+            "type": "File",
+            "sha256": &sha,
+        });
+        let sha_item = serde_json::from_value(json)?;
+        internal_api::create_item_tx(&tx, &schema, sha_item, &owner, &cli, &database_key)?;
+
+        upload_file(&tx, &owner, &sha, &[])?;
+
+        let result = get_file(&tx, &owner, &sha)?;
+        assert_eq!(result.len(), 0, "{}:{}", file!(), line!());
+        std::fs::remove_dir_all(owner_dir).ok();
+        Ok(())
+    }
+
+    fn new_conn() -> Connection {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        database_migrate_refinery::embedded::migrations::runner()
+            .run(&mut conn)
+            .expect("Failed to run refinery migrations");
+        conn
+    }
 }

@@ -64,7 +64,7 @@ pub fn validate_create_item_id(item_id: &str) -> crate::error::Result<()> {
 pub fn validate_property_name(property: &str) -> crate::error::Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
-            Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{1,30}$").expect("Cannot create regex");
+            Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{0,30}[a-zA-Z0-9]$").expect("Cannot create regex");
     }
     if !REGEXP.is_match(property) {
         Err(crate::error::Error {

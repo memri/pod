@@ -125,3 +125,26 @@ lazy_static! {
 lazy_static! {
     pub static ref PARSED: CliOptions = CliOptions::from_args();
 }
+
+#[cfg(test)]
+pub mod tests {
+    use super::CliOptions;
+    use std::net::{IpAddr, Ipv4Addr};
+
+    pub fn new_cli() -> CliOptions {
+        CliOptions {
+            port: 0,
+            owners: "".to_string(),
+            plugins_callback_address: None,
+            plugins_docker_network: None,
+            tls_pub_crt: "".to_string(),
+            tls_priv_key: "".to_string(),
+            non_tls: true,
+            insecure_non_tls: Some(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
+            insecure_http_headers: false,
+            shared_server: false,
+            schema_file: Default::default(),
+            validate_schema: false,
+        }
+    }
+}

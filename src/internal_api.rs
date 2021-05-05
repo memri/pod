@@ -396,7 +396,7 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
 #[cfg(test)]
 mod tests {
     use crate::api_model::CreateItem;
-    use crate::command_line_interface::CliOptions;
+    use crate::command_line_interface;
     use crate::database_api;
     use crate::database_migrate_refinery;
     use crate::error::Result;
@@ -427,29 +427,12 @@ mod tests {
         }
     }
 
-    fn new_cli() -> CliOptions {
-        CliOptions {
-            port: 0,
-            owners: "".to_string(),
-            plugins_callback_address: None,
-            plugins_docker_network: None,
-            tls_pub_crt: "".to_string(),
-            tls_priv_key: "".to_string(),
-            non_tls: false,
-            insecure_non_tls: None,
-            insecure_http_headers: false,
-            shared_server: false,
-            schema_file: Default::default(),
-            validate_schema: false,
-        }
-    }
-
     #[test]
     fn test_schema_checking() -> Result<()> {
         let mut conn = new_conn();
         let tx = conn.transaction().unwrap();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
-        let cli = new_cli();
+        let cli = command_line_interface::tests::new_cli();
 
         // first try to insert the Person without Schema
         let item_json = json!({
@@ -502,7 +485,7 @@ mod tests {
     fn test_item_insert_schema() {
         let mut conn = new_conn();
         let minimal_schema = minimal_schema();
-        let cli = new_cli();
+        let cli = command_line_interface::tests::new_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();
