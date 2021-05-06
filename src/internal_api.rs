@@ -279,9 +279,6 @@ pub fn update_item_tx(
     mut fields: HashMap<String, Value>,
 ) -> Result<()> {
     log::debug!("Updating item {}", id);
-    for k in fields.keys() {
-        validate_property_name(k)?;
-    }
     fields.remove("type");
     fields.remove("dateCreated");
 
@@ -313,6 +310,9 @@ pub fn update_item_tx(
     } else {
         None
     };
+    for k in fields.keys() {
+        validate_property_name(k)?;
+    }
     let rowid = database_api::get_item_rowid(tx, id)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
         msg: format!("Item with id {} not found", id),
