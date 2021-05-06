@@ -22,6 +22,7 @@ use crate::triggers;
 use chrono::Utc;
 use log::info;
 use log::warn;
+use rand::Rng;
 use rusqlite::Transaction;
 use serde_json::Map;
 use serde_json::Value;
@@ -138,8 +139,17 @@ pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Va
     Ok(result)
 }
 
-fn new_uuid() -> String {
-    uuid::Uuid::new_v4().to_simple().to_string()
+const DEFAULT_ITEM_ID_CHARSET: &[u8] = b"0123456789abcdef";
+/// Generate a new random item id.
+/// This implementation chooses to generate 32 random hex characters.
+fn new_item_id() -> String {
+    let mut rng = rand::thread_rng();
+    (0..32)
+        .map(|_| {
+            let idx = rng.gen_range(0..DEFAULT_ITEM_ID_CHARSET.len());
+            DEFAULT_ITEM_ID_CHARSET[idx] as char
+        })
+        .collect()
 }
 
 fn insert_property(
@@ -226,22 +236,20 @@ pub fn create_item_tx(
     pod_owner: &str,
     cli: &CliOptions,
     database_key: &DatabaseKey,
-) -> Result<i64> {
-    let default_id: String;
-    let id = if let Some(id) = &item.id {
-        id
+) -> Result<String> {
+    let id: String = if let Some(id) = &item.id {
+        id.to_string()
     } else {
-        default_id = new_uuid();
-        &default_id
+        new_item_id()
     };
-    if let Err(err) = schema::validate_create_item_id(id) {
+    if let Err(err) = schema::validate_create_item_id(&id) {
         return Err(err);
     }
     let time_now = Utc::now().timestamp_millis();
     triggers::trigger_before_item_create(tx, &item)?;
     let rowid = database_api::insert_item_base(
         tx,
-        id,
+        &id,
         &item._type,
         item.date_created.unwrap_or(time_now),
         item.date_modified.unwrap_or(time_now),
@@ -255,13 +263,13 @@ pub fn create_item_tx(
         tx,
         schema,
         rowid,
-        id,
+        &id,
         &item,
         pod_owner,
         cli,
         database_key,
     )?;
-    Ok(rowid)
+    Ok(id)
 }
 
 pub fn update_item_tx(

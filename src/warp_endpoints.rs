@@ -55,7 +55,7 @@ pub fn create_item(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<CreateItem>,
     cli: &CliOptions,
-) -> Result<i64> {
+) -> Result<String> {
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
