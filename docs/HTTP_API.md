@@ -105,7 +105,7 @@ Get version of the Pod: the git commit and cargo version that it was built from.
 ```json
 {
   "auth": $auth_json,
-  "payload": $id
+  "payload": "$id"
 }
 ```
 Get a single item by its `id`.
@@ -145,7 +145,7 @@ Returns `id` of the created item if the operation is successful.
 ```json
 {
   "auth": $auth_json,
-  "payload": { "id": $id, ... }
+  "payload": { "id": "$id", ... }
 }
 ```
 Update a single item.
@@ -161,11 +161,60 @@ Update a single item.
 Returns an empty object if the operation is successful.
 
 
+### POST /v3/$owner_key/get_all_edges
+```json
+{
+  "auth": $auth_json,
+  "payload": "$id"
+}
+```
+Get all outgoing edges for a single item (by `id`).
+
+Returns an array empty array if either the element does not exist or if it has no outgoing edges.
+
+
+### POST /v3/$owner_key/get_all_backwards_edges
+```json
+{
+  "auth": $auth_json,
+  "payload": "$id"
+}
+```
+Get all incoming edges for a single item (by `id`).
+
+Returns an array empty array if either the element does not exist or if it has no incoming edges.
+
+
+### POST /v3/$owner_key/create_edge
+```json5
+{
+  "auth": $auth_json,
+  "payload": {
+    "_source": "$source_id", /* Source item id */
+    "_target": "$target_id", /* Target item id */
+    "_name": "$edge_name"  /* Text name. For example: "entry" (in a list), "friend" (for a Person), etc */
+    // Edge properties will be supported in the future
+  }
+}
+```
+Create a single edge from an already existing item to another already existing item.
+(Reminder: edges are always directed.)
+
+An error will be returned if the edge already exists.
+An error will be returned if source item or target item do not exist.
+Returns `id` of the created edge if the operation is successful
+(for now, nothing is possible to do with the id, but in the future there will be more options).
+
+Returns an error if such `id` already exist in the DB.
+Returns an error if the new item doesn't conform to the Schema.
+Returns `id` of the created item if the operation is successful.
+
+
 ### POST /v3/$owner_key/delete_item
 ```json
 {
   "auth": $auth_json,
-  "payload": $id
+  "payload": "$id"
 }
 ```
 Mark an item as deleted:
@@ -202,12 +251,21 @@ In the future, any item properties will be available.
   "auth": $auth_json,
   "payload": {
     "createItems": [
-      { "id": "something-12345", "type": "Person", ... }, ...
+      { "id": "something-12345", "type": "Person", ... },
+      {}, // same structure as create_item endpoint above
+      ...
     ],
     "updateItems": [
-      { "id": "something-67899", ... }, ...
+      { "id": "something-67899", ... },
+      {}, // same structure as update_item endpoint above
+      ...
     ],
-    "deleteItems": [ $id, $id, $id, ...],
+    "deleteItems": [ "$id", "$id", "$id", ...],
+    "createEdges": [ 
+      {}, // same structure as create_edge endpoint above
+      {},
+      ... 
+    ]
   }
 }
 ```
@@ -267,7 +325,7 @@ The properties `nonce` and `key` will be updated for this item.
 {
   "auth": $auth_json,
   "payload": {
-    "sha256": $sha256
+    "sha256": "$sha256"
   }
 }
 ```
