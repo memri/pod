@@ -5,20 +5,42 @@
 
 stages:
   - test
-  - docs
+  - release
 
 test:
   stage: test
   script:
     - cargo fmt --all -- --check
-    - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
     - if grep --recursive '::{' src/; then exit -1; fi
+    - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
     - cargo audit
     - cargo test
     - ./tools/test_curl.sh
 
+branch executable:
+  stage: release
+  script:
+    - cargo build --release
+  artifacts:
+    paths:
+      - target/release/pod
+    expire_in: 3 months
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "dev"'
+
+dev executable:
+  stage: release
+  script:
+    - cargo build --release
+  artifacts:
+    paths:
+      - target/release/pod
+    expire_in: 1 year
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+
 pages:
-  stage: docs
+  stage: release
   script:
     - rm -rf target/doc 2>/dev/null || true
     - cargo doc --no-deps
@@ -28,5 +50,5 @@ pages:
   artifacts:
     paths:
       - public
-  only:
-    - dev
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
