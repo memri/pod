@@ -1,6 +1,8 @@
 use crate::api_model::AuthKey;
 use crate::api_model::Bulk;
+use crate::api_model::CreateEdge;
 use crate::api_model::CreateItem;
+use crate::api_model::GetEdges;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::Search;
@@ -109,6 +111,33 @@ pub fn delete_item(
     in_transaction(&mut conn, |tx| {
         let schema = database_api::get_schema(&tx)?;
         internal_api::delete_item_tx(&tx, &schema, &payload)
+    })
+}
+
+pub fn create_edge(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<CreateEdge>,
+) -> Result<String> {
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    in_transaction(&mut conn, |tx| internal_api::create_edge(&tx, payload))
+}
+
+pub fn get_edges(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: PayloadWrapper<GetEdges>,
+) -> Result<Vec<Value>> {
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    in_transaction(&mut conn, |tx| {
+        let schema = database_api::get_schema(&tx)?;
+        internal_api::get_edges(&tx, payload, &schema)
     })
 }
 

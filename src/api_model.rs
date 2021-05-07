@@ -80,6 +80,30 @@ pub struct Bulk {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct CreateEdge {
+    #[serde(rename = "_source")]
+    pub source: String,
+    #[serde(rename = "_target")]
+    pub target: String,
+    #[serde(rename = "_name")]
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetEdges {
+    pub item: String,
+    pub direction: EdgeDirection,
+    pub expand_items: bool,
+}
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum EdgeDirection {
+    Outgoing,
+    Incoming,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Search {
     pub id: Option<String>,
     pub _type: Option<String>,

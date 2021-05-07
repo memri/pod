@@ -161,28 +161,42 @@ Update a single item.
 Returns an empty object if the operation is successful.
 
 
-### POST /v3/$owner_key/get_all_edges
-```json
+### POST /v3/$owner_key/get_edges
+```json5
 {
   "auth": $auth_json,
-  "payload": "$id"
+  "payload": {
+    "item": "$id",
+    "direction": "OUTGOING", // Either OUTGOING (default) or INCOMING edges
+    "expandItems": true // Whether to expand the target/source items for each edge
+  }
 }
 ```
-Get all outgoing edges for a single item (by `id`).
+Get all edges for a single item.
+
+Example output:
+```json5
+[
+  {
+    "name": "friend",
+    item: {
+      "id": "00000000",
+      // all other fields if "expandItems" is requested
+    }
+  },
+  {
+    "name": "friend",
+    item: {
+      "id": ".........."
+    }
+  },
+  ...
+]
+```
 
 Returns an array empty array if either the element does not exist or if it has no outgoing edges.
 
-
-### POST /v3/$owner_key/get_all_backwards_edges
-```json
-{
-  "auth": $auth_json,
-  "payload": "$id"
-}
-```
-Get all incoming edges for a single item (by `id`).
-
-Returns an array empty array if either the element does not exist or if it has no incoming edges.
+⚠ WARNING: this endpoint is unstable, and it might be deprecated and removed in next releases of Pod.️
 
 
 ### POST /v3/$owner_key/create_edge

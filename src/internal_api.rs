@@ -1,5 +1,8 @@
 use crate::api_model::Bulk;
+use crate::api_model::CreateEdge;
 use crate::api_model::CreateItem;
+use crate::api_model::EdgeDirection;
+use crate::api_model::GetEdges;
 use crate::api_model::Search;
 use crate::api_model::SortOrder;
 use crate::command_line_interface;
@@ -23,7 +26,7 @@ use chrono::Utc;
 use log::info;
 use log::warn;
 use rand::Rng;
-use rusqlite::Transaction;
+use rusqlite::Transaction as Tx;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -36,11 +39,7 @@ pub fn get_project_version() -> String {
 
 /// Get all properties that the item has, ignoring those
 /// that exist in the DB but are not defined in the Schema
-pub fn get_item_properties(
-    tx: &Transaction,
-    rowid: i64,
-    schema: &Schema,
-) -> Result<Map<String, Value>> {
+pub fn get_item_properties(tx: &Tx, rowid: i64, schema: &Schema) -> Result<Map<String, Value>> {
     let mut json = serde_json::Map::new();
 
     for IntegersNameValue { name, value } in database_api::get_integers_records_for_item(tx, rowid)?
@@ -98,32 +97,18 @@ pub fn get_item_properties(
     Ok(json)
 }
 
-pub fn get_item_from_rowid(tx: &Transaction, schema: &Schema, rowid: Rowid) -> Result<Value> {
-    let database_search = DatabaseSearch {
-        rowid: Some(rowid),
-        id: None,
-        _type: None,
-        date_server_modified_gte: None,
-        date_server_modified_lt: None,
-        deleted: None,
-        sort_order: SortOrder::Asc,
-        _limit: 1,
-    };
-    let item = database_api::search_items(tx, &database_search)?;
-    let item = if let Some(item) = item.into_iter().next() {
-        item
-    } else {
-        return Err(Error {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Item rowid {} not found right after inserting", rowid),
-        });
-    };
+pub fn get_item_from_rowid(tx: &Tx, schema: &Schema, rowid: Rowid) -> Result<Value> {
+    let item = database_api::get_item_base(tx, rowid)?;
+    let item = item.ok_or_else(|| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Item rowid {} not found right after inserting", rowid),
+    })?;
     let mut props = get_item_properties(tx, rowid, schema)?;
     add_item_base_properties(&mut props, item);
     Ok(Value::Object(props))
 }
 
-pub fn get_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<Vec<Value>> {
+pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
     info!("Getting item {}", id);
     let search_query = Search {
         id: Some(id.to_string()),
@@ -152,13 +137,7 @@ fn new_item_id() -> String {
         .collect()
 }
 
-fn insert_property(
-    tx: &Transaction,
-    schema: &Schema,
-    rowid: i64,
-    name: &str,
-    json: &Value,
-) -> Result<()> {
+fn insert_property(tx: &Tx, schema: &Schema, rowid: i64, name: &str, json: &Value) -> Result<()> {
     let dbtype = if let Some(t) = schema.property_types.get(name) {
         t
     } else {
@@ -230,7 +209,7 @@ fn insert_property(
 }
 
 pub fn create_item_tx(
-    tx: &Transaction,
+    tx: &Tx,
     schema: &Schema,
     item: CreateItem,
     pod_owner: &str,
@@ -273,7 +252,7 @@ pub fn create_item_tx(
 }
 
 pub fn update_item_tx(
-    tx: &Transaction,
+    tx: &Tx,
     schema: &Schema,
     id: &str,
     mut fields: HashMap<String, Value>,
@@ -324,7 +303,7 @@ pub fn update_item_tx(
     Ok(())
 }
 
-pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()> {
+pub fn delete_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<()> {
     log::debug!("Deleting item {}", id);
     let mut fields = HashMap::new();
     fields.insert("deleted".to_string(), true.into());
@@ -332,7 +311,7 @@ pub fn delete_item_tx(tx: &Transaction, schema: &Schema, id: &str) -> Result<()>
 }
 
 pub fn bulk_tx(
-    tx: &Transaction,
+    tx: &Tx,
     schema: &Schema,
     bulk: Bulk,
     pod_owner: &str,
@@ -357,6 +336,12 @@ pub fn bulk_tx(
     Ok(())
 }
 
+fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Value> {
+    let mut props = get_item_properties(tx, item.rowid, schema)?;
+    add_item_base_properties(&mut props, item);
+    Ok(Value::Object(props))
+}
+
 fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
     props.insert("id".to_string(), item.id.into());
     props.insert("type".to_string(), item._type.into());
@@ -369,7 +354,56 @@ fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
     props.insert("deleted".to_string(), item.deleted.into());
 }
 
-pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Value>> {
+pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
+    let date = Utc::now().timestamp_millis();
+    let self_id = new_item_id();
+    let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
+    let source = database_api::get_item_rowid(tx, &query.source)?.ok_or_else(|| Error {
+        code: StatusCode::NOT_FOUND,
+        msg: format!("Edge source not found: {}", query.source),
+    })?;
+    let target = database_api::get_item_rowid(tx, &query.target)?.ok_or_else(|| Error {
+        code: StatusCode::NOT_FOUND,
+        msg: format!("Edge target not found: {}", query.target),
+    })?;
+    database_api::insert_edge(tx, self_rowid, source, &query.name, target)?;
+    Ok(self_id)
+}
+
+pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>> {
+    let root_item = database_api::get_item_rowid(tx, &query.item)?.ok_or_else(|| Error {
+        code: StatusCode::NOT_FOUND,
+        msg: format!("Cannot find item id {}", query.item),
+    })?;
+    let edges = if query.direction == EdgeDirection::Outgoing {
+        database_api::get_outgoing_edges(tx, root_item)?
+    } else {
+        database_api::get_incoming_edges(tx, root_item)?
+    };
+    let mut result = Vec::new();
+    for edge in edges {
+        let base = database_api::get_item_base(tx, edge.item)?;
+        let base = base.ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
+        })?;
+        if query.expand_items {
+            let item_json = item_base_to_json(tx, base, schema)?;
+            result.push(serde_json::json!({
+                "name": edge.name,
+                "item": item_json,
+            }));
+        } else {
+            result.push(serde_json::json!({
+                "name": edge.name,
+                "item": { "id": base.id },
+            }));
+        }
+    }
+    Ok(result)
+}
+
+pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     info!("Searching by fields {:?}", query);
     if !query.other_properties.is_empty() {
         return Err(Error {
@@ -395,9 +429,7 @@ pub fn search(tx: &Transaction, schema: &Schema, query: Search) -> Result<Vec<Va
     let items = database_api::search_items(tx, &database_search)?;
     let mut result = Vec::new();
     for item in items {
-        let mut properties = get_item_properties(tx, item.rowid, schema)?;
-        add_item_base_properties(&mut properties, item);
-        result.push(Value::Object(properties))
+        result.push(item_base_to_json(tx, item, schema)?)
     }
     Ok(result)
 }

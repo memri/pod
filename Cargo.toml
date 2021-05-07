@@ -16,6 +16,8 @@ bytes = "1.0.1"
 chacha20poly1305 = "0.7.1"
 chrono = { version = "0.4.19", features = ["serde"] }
 env_logger = "0.8.3"
+field_count = "0.1.1"
+field_count_derive = "0.1.1"
 hex = "0.4.2"
 lazy_static = "1.4.0"
 libc = "0.2.87"
