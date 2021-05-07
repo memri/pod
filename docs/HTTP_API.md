@@ -167,7 +167,7 @@ Returns an empty object if the operation is successful.
   "auth": $auth_json,
   "payload": {
     "item": "$id",
-    "direction": "OUTGOING", // Either OUTGOING (default) or INCOMING edges
+    "direction": "Outgoing", // Either "Outgoing" (default) or "Incoming" edges
     "expandItems": true // Whether to expand the target/source items for each edge
   }
 }
