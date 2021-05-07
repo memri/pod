@@ -26,7 +26,7 @@ branch executable:
       - target/release/pod
     expire_in: 3 months
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "branches"'
+    - if: '$CI_PIPELINE_SOURCE != "push"'
       when: never
     - if: '$CI_COMMIT_BRANCH != "dev"'
 
@@ -39,7 +39,7 @@ dev executable:
       - target/release/pod
     expire_in: 1 year
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "branches"'
+    - if: '$CI_PIPELINE_SOURCE != "push"'
       when: never
     - if: '$CI_COMMIT_BRANCH == "dev"'
 
@@ -55,4 +55,6 @@ pages:
     paths:
       - public
   rules:
+    - if: '$CI_PIPELINE_SOURCE != "push"'
+      when: never
     - if: '$CI_COMMIT_BRANCH == "dev"'
