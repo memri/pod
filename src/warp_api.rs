@@ -1,5 +1,7 @@
 use crate::api_model::Bulk;
+use crate::api_model::CreateEdge;
 use crate::api_model::CreateItem;
+use crate::api_model::GetEdges;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::Search;
@@ -92,6 +94,28 @@ pub async fn run_server(cli_options: CliOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
+    let get_edges = items_api
+        .and(warp::path!(String / "get_edges"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<GetEdges>| {
+            let result = warp_endpoints::get_edges(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
+    let create_edge = items_api
+        .and(warp::path!(String / "create_edge"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .map(move |owner: String, body: PayloadWrapper<CreateEdge>| {
+            let result = warp_endpoints::create_edge(owner, init_db.deref(), body);
+            let result = result.map(|result| warp::reply::json(&result));
+            respond_with_result(result)
+        });
+
+    let init_db = initialized_databases_arc.clone();
     let cli_options_arc_clone = cli_options_arc.clone();
     let bulk_action = items_api
         .and(warp::path!(String / "bulk"))
@@ -116,7 +140,7 @@ pub async fn run_server(cli_options: CliOptions) {
         });
 
     let init_db = initialized_databases_arc.clone();
-    let search_by_fields = items_api
+    let search = items_api
         .and(warp::path!(String / "search"))
         .and(warp::path::end())
         .and(warp::body::json())
@@ -196,7 +220,9 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(bulk_action.with(&headers))
         .or(update_item.with(&headers))
         .or(delete_item.with(&headers))
-        .or(search_by_fields.with(&headers))
+        .or(search.with(&headers))
+        .or(get_edges.with(&headers))
+        .or(create_edge.with(&headers))
         .or(upload_file.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);

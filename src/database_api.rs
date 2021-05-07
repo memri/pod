@@ -4,6 +4,7 @@ use crate::error::ErrorContext;
 use crate::error::Result;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
+use field_count::FieldCount;
 use log::debug;
 use rusqlite::params;
 use rusqlite::types::ToSqlOutput;
@@ -16,6 +17,7 @@ use warp::http::StatusCode;
 pub type Rowid = i64;
 pub type DbTime = i64;
 
+#[derive(FieldCount)]
 pub struct ItemBase {
     pub rowid: Rowid,
     pub id: String,
@@ -57,6 +59,21 @@ pub fn insert_item_base(
         deleted,
     ])
     .context_str("Failed to execute insert_item with parameters")
+}
+
+pub fn get_item_base(tx: &Tx, rowid: Rowid) -> Result<Option<ItemBase>> {
+    let database_search = DatabaseSearch {
+        rowid: Some(rowid),
+        id: None,
+        _type: None,
+        date_server_modified_gte: None,
+        date_server_modified_lt: None,
+        deleted: None,
+        sort_order: SortOrder::Asc,
+        _limit: 1,
+    };
+    let item = search_items(tx, &database_search)?.into_iter().next();
+    Ok(item)
 }
 
 pub fn get_item_rowid(tx: &Tx, id: &str) -> Result<Option<Rowid>> {
@@ -310,22 +327,46 @@ pub fn delete_property(tx: &Tx, item: Rowid, name: &str) -> Result<()> {
     Ok(())
 }
 
-/// Low-level function to insert an edge.
-/// No Schema/type checks are done. Use other functions around instead.
-#[allow(dead_code)]
-fn insert_edge_unchecked(
+pub fn insert_edge(
     tx: &Tx,
+    self_rowid: Rowid,
     source: Rowid,
     name: &str,
     target: Rowid,
-    id: &str,
-    date: DbTime,
 ) -> Result<Rowid> {
-    let item = insert_item_base(tx, id, name, date, date, date, false)?;
     let mut stmt =
         tx.prepare_cached("INSERT INTO edges(self, source, name, target) VALUES(?, ?, ?, ?);")?;
-    stmt.execute(params![item, source, name, target])?;
-    Ok(item)
+    stmt.execute(params![self_rowid, source, name, target])?;
+    Ok(tx.last_insert_rowid())
+}
+
+pub struct HalfEdge {
+    pub name: String,
+    pub item: Rowid,
+}
+
+pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<HalfEdge>> {
+    let mut stmt = tx.prepare_cached("SELECT target, name FROM edges WHERE source = ?;")?;
+    let mut rows = stmt.query(params![source])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        let item = row.get(0)?;
+        let name = row.get(1)?;
+        result.push(HalfEdge { name, item })
+    }
+    Ok(result)
+}
+
+pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<HalfEdge>> {
+    let mut stmt = tx.prepare_cached("SELECT source, name FROM edges WHERE target = ?;")?;
+    let mut rows = stmt.query(params![target])?;
+    let mut result = Vec::new();
+    while let Some(row) = rows.next()? {
+        let item = row.get(0)?;
+        let name = row.get(1)?;
+        result.push(HalfEdge { name, item })
+    }
+    Ok(result)
 }
 
 pub fn get_schema(tx: &Tx) -> Result<Schema> {
@@ -452,7 +493,8 @@ mod tests {
         let source = insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
         let target = insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
         assert_eq!(target - source, 1);
-        let edge = insert_edge_unchecked(&tx, source, "friend", target, &random_id(), date)?;
+        let item = insert_item_base(&tx, &random_id(), "Edge", date, date, date, false)?;
+        let edge = insert_edge(&tx, item, source, "friend", target)?;
         assert_eq!(edge - target, 1);
         Ok(())
     }
