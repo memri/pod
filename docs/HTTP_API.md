@@ -179,14 +179,14 @@ Example output:
 [
   {
     "name": "friend",
-    item: {
+    "item": {
       "id": "00000000",
       // all other fields if "expandItems" is requested
     }
   },
   {
     "name": "friend",
-    item: {
+    "item": {
       "id": ".........."
     }
   },
