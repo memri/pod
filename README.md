@@ -7,6 +7,7 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 See documentation on:
 
 * Pod-s [HTTP API](./docs/HTTP_API.md)
+* Writing [Plugins](https://blog.memri.io/getting-started-building-a-plugin/)
 * Running [Plugins](./docs/Plugins.md)
 * [Security](./docs/Security.md)
 * What is a [Shared Server](./docs/SharedServer.md)
