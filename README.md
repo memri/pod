@@ -29,7 +29,7 @@ In order to build Pod locally, you need Rust and sqlcipher:
 * On ArchLinux: `pacman -S --needed rust sqlcipher base-devel`
 * On Ubuntu and Debian:
 ```
-apt-get install sqlcipher build-essential
+apt-get install sqlcipher libsqlcipher-dev build-essential
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 * Submit merge requests for your other OS :)
