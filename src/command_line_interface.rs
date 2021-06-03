@@ -113,13 +113,7 @@ pub struct CliOptions {
 }
 
 lazy_static! {
-    // Don't change to `&'static str` for now, it's a bit hard to get lifetimes straight with Clap.
-    pub static ref VERSION: String = {
-        // Ideas for future:
-        //   * print "which branch" does the commit belong to
-        //   * print "dirty" indicator (whether there are local uncommitted changes)
-        env!("GIT_DESCRIBE").to_string()
-    };
+    pub static ref VERSION: String = crate::internal_api::get_project_version();
 }
 
 lazy_static! {

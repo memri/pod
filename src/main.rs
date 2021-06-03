@@ -20,6 +20,7 @@ mod warp_endpoints;
 use chrono::Utc;
 use command_line_interface::CliOptions;
 use env_logger::Env;
+use internal_api::get_project_version;
 use log::error;
 use log::info;
 use std::fs::create_dir_all;
@@ -50,11 +51,7 @@ async fn main() {
             std::process::exit(0)
         }
     };
-    info!(
-        "Starting Pod version {} (Cargo version {})",
-        std::env!("GIT_DESCRIBE"),
-        std::env!("CARGO_PKG_VERSION")
-    );
+    info!("Starting Pod version {}", get_project_version());
     info!("Running Pod with configuration {:#?}", cli_options);
 
     create_config_directory(constants::DATABASE_DIR);

@@ -5,7 +5,6 @@ use crate::api_model::EdgeDirection;
 use crate::api_model::GetEdges;
 use crate::api_model::Search;
 use crate::api_model::SortOrder;
-use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
 use crate::database_api::DatabaseSearch;
@@ -34,7 +33,11 @@ use std::str;
 use warp::http::status::StatusCode;
 
 pub fn get_project_version() -> String {
-    command_line_interface::VERSION.to_string()
+    serde_json::json!({
+        "cargo": std::env!("CARGO_PKG_VERSION"),
+        "git_describe": std::option_env!("GIT_DESCRIBE")
+    })
+    .to_string()
 }
 
 /// Get all properties that the item has, ignoring those
