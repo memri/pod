@@ -7,6 +7,7 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 See documentation on:
 
 * Pod-s [HTTP API](./docs/HTTP_API.md)
+* Writing [Plugins](https://blog.memri.io/getting-started-building-a-plugin/)
 * Running [Plugins](./docs/Plugins.md)
 * [Security](./docs/Security.md)
 * What is a [Shared Server](./docs/SharedServer.md)
@@ -28,7 +29,7 @@ In order to build Pod locally, you need Rust and sqlcipher:
 * On ArchLinux: `pacman -S --needed rust sqlcipher base-devel`
 * On Ubuntu and Debian:
 ```
-apt-get install sqlcipher build-essential
+apt-get install sqlcipher libsqlcipher-dev build-essential
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 * Submit merge requests for your other OS :)
