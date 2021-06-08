@@ -336,6 +336,9 @@ pub fn bulk_tx(
     for item_id in bulk.delete_items {
         delete_item_tx(tx, schema, &item_id)?;
     }
+    for item_id in bulk.create_edges {
+        create_edge(tx, item_id)?;
+    }
     Ok(())
 }
 

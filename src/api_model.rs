@@ -76,6 +76,8 @@ pub struct Bulk {
     pub update_items: Vec<UpdateItem>,
     #[serde(default)]
     pub delete_items: Vec<String>,
+    #[serde(default)]
+    pub create_edges: Vec<CreateEdge>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
