@@ -242,18 +242,19 @@ Mark an item as deleted:
 {
   "auth": $auth_json,
   "payload": {
-    "type": "Label",
-    "dateServerModified>=": 1234567890,
+    "id": "1d22ba3458147f73b8aa3d68744e3f2f", // ID filter
+    "type": "Label", // type filter
+    "dateServerModified>=": 1234567890, // date filter
     "dateServerModified<": 1234567890,
-    "deleted": false,
-    "_sortOrder": "DESC", // either "ASC" (by default) or "DESC"
-    "_limit": 100, // exclude this field to have no limit
+    "deleted": false, // deleted filter
+    "_sortOrder": "DESC", // sort by server modification either "ASC" (by default) or "DESC"
+    "_limit": 100, // limit the result set
   }
 }
 ```
 Search items by their properties, all fields above are optional.
 
-The endpoint will return an array of all items with exactly the same properties.
+The endpoint will return an array of items which have all the properties above.
 
 As a first step of the 2021-03 Pod rewrite, only the above properties are supported.
 In the future, any item properties will be available.
