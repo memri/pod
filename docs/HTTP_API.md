@@ -134,7 +134,7 @@ Create a single item.
 * `dateCreated` if not present, will be set by the backend
 * `dateModified` if not present, will be set by the backend
 * `dateServerModified` will be created by the backend
-* any other properties will be added to the item's properties
+* `deleted` and all other properties will be added to the item's properties
 
 Returns an error if such `id` already exist in the DB.
 Returns an error if the new item doesn't conform to the Schema.
