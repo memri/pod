@@ -11,13 +11,13 @@ use warp::http::status::StatusCode;
 
 /// Run a plugin container in docker.
 ///
-/// For example:
+/// Example command that this function could run:
 ///     docker run \
 ///     --network=host \
 ///     --env=POD_FULL_ADDRESS="http://localhost:3030" \
-///     --env=POD_TARGET_ITEM="$target_item" \
-///     --env=POD_OWNER="$owner" \
-///     --env=POD_AUTH_JSON="$your_auth" \
+///     --env=POD_TARGET_ITEM="{...json...}" \
+///     --env=POD_OWNER="...64-hex-chars..." \
+///     --env=POD_AUTH_JSON="{...json...}" \
 ///     --rm \
 ///     --name="$container-$trigger_item_id" \
 ///     -- \
@@ -58,6 +58,7 @@ pub fn run_plugin_container(
     args.push(format!("--env=POD_AUTH_JSON={}", auth));
     args.push("--rm".to_string());
     args.push(format!("--name={}-{}", &container, triggered_by_item_id));
+    args.push("--".to_string());
     args.push(container);
     log::info!("Starting plugin docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
