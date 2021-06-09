@@ -54,7 +54,7 @@ For Plugins that means:
 
 * `ClientAuth` will never be *really* passed to the Plugin, but during tests,
   you can just use this auth because you have access to the (fake/test) `database_key` anyway.
-* `PluginAuth` will actually be passed to the Plugin at in a real system,
+* `PluginAuth` will actually be passed to the Plugin in a real system,
   but it is impossible to emulate it because the Pod keeps relevant encryption keys in-memory,
   generates then on startup and intentionally loses them on restart (for security reasons).
   In short, you cannot emulate `PluginAuth`, you can only call `Pod` to generate this Auth for you.
@@ -65,7 +65,7 @@ of the basic structure of the docker command:
 container="test"
 owner="357535074912050791323416133896"
 target_item='{"type":"Person","id":"38583224e56e6d2385d36e05af9caa5e","dateCreated":1623241923508,"dateModified":1623241923508",dateServerModified":1623241923508,"deleted":false}'
-your_auth_json='{???}'  # depends on what you use tests or real system
+your_auth_json='{???}'  # depends on whether you use test auth or real system auth
 network="localhost"  # "localhost" on linux, "host.docker.internal" on Mac and Windows
 
 docker run \
