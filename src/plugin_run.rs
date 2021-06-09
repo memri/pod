@@ -9,6 +9,19 @@ use rusqlite::Transaction;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
+/// Run a plugin container in docker.
+///
+/// For example:
+///     docker run \
+///     --network=host \
+///     --env=POD_FULL_ADDRESS="http://localhost:3030" \
+///     --env=POD_TARGET_ITEM="$target_item" \
+///     --env=POD_OWNER="$owner" \
+///     --env=POD_AUTH_JSON="$your_auth" \
+///     --rm \
+///     --name="$container-$trigger_item_id" \
+///     -- \
+///     "$container"
 #[allow(clippy::too_many_arguments)]
 pub fn run_plugin_container(
     tx: &Transaction,
