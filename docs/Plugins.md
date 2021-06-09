@@ -65,7 +65,7 @@ of the basic structure of the docker command:
 container="test"
 owner="357535074912050791323416133896"
 target_item='{"type":"Person","id":"38583224e56e6d2385d36e05af9caa5e","dateCreated":1623241923508,"dateModified":1623241923508",dateServerModified":1623241923508,"deleted":false}'
-trigger_item_id="05abe8e2ef2d0fb4992239944a71bde5"
+trigger_item_id="05abe8e2ef2d0fb4992239944a71bde5"  # the id of the item that started the Plugin (the StartPlugin item)
 your_auth_json='{???}'  # depends on whether you use test auth or real system auth
 network="localhost"  # "localhost" on linux, "host.docker.internal" on Mac and Windows
 
