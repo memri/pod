@@ -4,6 +4,7 @@ use crate::error::Result;
 use crate::internal_api;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema::Schema;
+use internal_api::new_random_item_id;
 use log::info;
 use rusqlite::Transaction;
 use std::process::Command;
@@ -102,7 +103,7 @@ fn run_docker_container(
 }
 
 /// Example:
-/// kubectl run plugin
+/// kubectl run $owner-$container-$targetItem-$randomHex
 ///     --image="$container" \
 ///     --env=POD_FULL_ADDRESS="http://localhost:3030" \
 ///     --env=POD_TARGET_ITEM="{...json...}" \
@@ -118,7 +119,13 @@ fn run_kubernetes_container(
 ) -> Result<()> {
     let mut args: Vec<String> = Vec::with_capacity(7);
     args.push("run".to_string());
-    args.push("plugin".to_string());
+    args.push(format!(
+        "{}-{}-{}-{}",
+        pod_owner,
+        container,
+        target_item,
+        new_random_item_id()
+    ));
     args.push(format!("--image={}", container));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
