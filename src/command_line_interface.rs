@@ -37,7 +37,7 @@ pub struct CliOptions {
 
     /// If specified, all Plugin containers will be started using kubernetes (`kubectl`).
     /// Otherwise and by default, docker containers are used.
-    #[structopt(long, env = "POD_USE_KUBERNETES")]
+    #[structopt(long)]
     pub use_kubernetes: bool,
 
     /// Set the callback address for plugins launched from within Pod.
@@ -148,6 +148,7 @@ pub mod tests {
         CliOptions {
             port: 3030,
             owners: "ANY".to_string(),
+            use_kubernetes: false,
             plugins_callback_address: None,
             plugins_docker_network: None,
             tls_pub_crt: "".to_string(),
