@@ -9,6 +9,19 @@ use rusqlite::Transaction;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
+/// Run a plugin container in docker.
+///
+/// Example command that this function could run:
+///     docker run \
+///     --network=host \
+///     --env=POD_FULL_ADDRESS="http://localhost:3030" \
+///     --env=POD_TARGET_ITEM="{...json...}" \
+///     --env=POD_OWNER="...64-hex-chars..." \
+///     --env=POD_AUTH_JSON="{...json...}" \
+///     --rm \
+///     --name="$container-$trigger_item_id" \
+///     -- \
+///     "$container"
 #[allow(clippy::too_many_arguments)]
 pub fn run_plugin_container(
     tx: &Transaction,
@@ -45,6 +58,7 @@ pub fn run_plugin_container(
     args.push(format!("--env=POD_AUTH_JSON={}", auth));
     args.push("--rm".to_string());
     args.push(format!("--name={}-{}", &container, triggered_by_item_id));
+    args.push("--".to_string());
     args.push(container);
     log::info!("Starting plugin docker command {:?}", args);
     let command = Command::new("docker").args(&args).spawn();
