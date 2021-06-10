@@ -16,7 +16,7 @@ You can also try it out locally, see section below
 # Manually trigger a plugin via Pod API
 During development, you can use the following script to make Pod start a new Plugin (container)
 ```sh
-owner="$SRANDOM$SRANDOM$SRANDOM"  # replace with desired owner, or leave as-is for tests
+owner="$RANDOM$RANDOM$RANDOM$RANDOM"  # replace with desired owner, or leave as-is for tests
 dbkey=  # note that the Plugin will not have access to this key, it'll only have `POD_AUTH_JSON`
 container="test"
 
@@ -41,6 +41,9 @@ END
 curl -X POST -H "Content-Type: application/json" --insecure "http://localhost:3030/v3/$owner/bulk" -d "$data"
 ```
 
+This will start a container with the environment variables set as described below,
+see [how are plugins started](#how-are-plugins-started).
+
 # Manually trigger a plugin from the command line
 TL&DR; please use other test methods for simplicity.
 However, if you need to know how it works, you can read below.
@@ -63,7 +66,7 @@ So regardless of which auth you use, the script below will give you an idea
 of the basic structure of the docker command:
 ```sh
 container="test"
-owner="357535074912050791323416133896"
+owner="e5c8f9a3d64f5394677fafb9cc1a63ea3f875dc391422e2f95e9f871d893b115"
 target_item='{"type":"Person","id":"38583224e56e6d2385d36e05af9caa5e","dateCreated":1623241923508,"dateModified":1623241923508",dateServerModified":1623241923508,"deleted":false}'
 trigger_item_id="05abe8e2ef2d0fb4992239944a71bde5"  # the id of the item that started the Plugin (the StartPlugin item)
 your_auth_json='{???}'  # depends on whether you use test auth or real system auth
@@ -88,9 +91,20 @@ Pod will set the following environment variables for plugins:
 * `POD_FULL_ADDRESS` = the address of Pod to call back,
   e.g. `https://x.x.x.x:80` or `http://localhost:3030`.
   You can call the endpoints via a URL like `$POD_FULL_ADDRESS/version`.
+
 * `POD_TARGET_ITEM` = the JSON of the item that the plugin needs to run against.
-* `POD_OWNER` = Pod owner information (to be used for auth).
-* `POD_AUTH_JSON` = Data used for plugin authorization, "secretbox" style 
-  (you're not expected and should not be able to see what's inside as contents are encrypted).
-  This JSON should be passed back to Pod the way it is, no parsing or change is required
-  (see HTTP_API for details).
+  For example:
+```json
+{"type":"Person","id":"a5ed6f95bfd82a7ff74ef7877f183cc0","deleted":false,"dateCreated":1623335672272,"dateModified":1623335672272,"dateServerModified":1623335672272}
+```
+Where the `id` of this item is the same as the `targetItemId` from the request.
+
+* `POD_OWNER` = Pod owner key, 64-character hex string.
+
+* `POD_AUTH_JSON` = Data used for plugin authorization, looking something like:
+```json
+{"data":{"nonce":"909382870d9df58935c9924f260fb38276ffe97fbaa76f09","encryptedPermissions":"74136e27e5537e0f594c394cd723eceb"}}
+```
+This JSON should be passed back to Pod the way it is, no parsing or change is required.
+(Make sure to pass this as JSON when you're making requests, not as a String,
+to avoid double-quoting.)
