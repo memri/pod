@@ -185,7 +185,9 @@ fn callback_address(cli_options: &CliOptions) -> String {
 /// > within the quotes. A single quote may not occur between single quotes,
 /// > even when preceded by a backslash.
 pub fn escape_bash_arg(str: &str) -> String {
-    let ok = str.chars().all(|c| c.is_ascii_alphanumeric() || "_-=%".contains(c));
+    let ok = str
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || "_-+=%".contains(c));
     if ok {
         str.to_string()
     } else {
