@@ -99,6 +99,8 @@ Pod will set the following environment variables for plugins:
 ```
 Where the `id` of this item is the same as the `targetItemId` from the request.
 
+* `POD_PLUGINRUN_ID` = The `id` of the StartPlugin item that made this Plugin start.
+
 * `POD_OWNER` = Pod owner key, 64-character hex string.
 
 * `POD_AUTH_JSON` = Data used for plugin authorization, looking something like:
