@@ -130,7 +130,7 @@ pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
 const DEFAULT_ITEM_ID_CHARSET: &[u8] = b"0123456789abcdef";
 /// Generate a new random item id.
 /// This implementation chooses to generate 32 random hex characters.
-fn new_item_id() -> String {
+pub fn new_random_item_id() -> String {
     let mut rng = rand::thread_rng();
     (0..32)
         .map(|_| {
@@ -222,7 +222,7 @@ pub fn create_item_tx(
     let id: String = if let Some(id) = &item.id {
         id.to_string()
     } else {
-        new_item_id()
+        new_random_item_id()
     };
     if let Err(err) = schema::validate_create_item_id(&id) {
         return Err(err);
@@ -362,7 +362,7 @@ fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
 
 pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     let date = Utc::now().timestamp_millis();
-    let self_id = new_item_id();
+    let self_id = new_random_item_id();
     let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
     let source = database_api::get_item_rowid(tx, &query.source)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
