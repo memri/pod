@@ -93,9 +93,14 @@ fn run_docker_container(
         callback_address(cli_options)
     ));
     args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
+    args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    args.push(format!("--name={}-{}", &container, triggered_by_item_id));
+    args.push(format!(
+        "--name={}-{}",
+        sanitize_docker_name(container),
+        sanitize_docker_name(triggered_by_item_id)
+    ));
     args.push("--rm".to_string());
     args.push("--".to_string());
     args.push(container.to_string());
@@ -132,6 +137,7 @@ fn run_kubernetes_container(
         callback_address(cli_options)
     ));
     args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
+    args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
     run_any_command("kubectl", &args, triggered_by_item_id)
@@ -182,6 +188,19 @@ fn callback_address(cli_options: &CliOptions) -> String {
     };
     let schema = if is_https { "https" } else { "http" };
     format!("{}://{}", schema, callback)
+}
+
+pub fn sanitize_docker_name(input: &str) -> String {
+    input
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || "-_".contains(c) {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
 }
 
 /// Debug-print a bash argument.
