@@ -12,6 +12,7 @@ See documentation on:
 * [Security](./docs/Security.md)
 * What is a [Shared Server](./docs/SharedServer.md)
 * How are data types defined in [Schema](./docs/Schema.md)
+* [Schema synchronization](./docs/Synchronization.md) between clients/plugins and the Pod
 * How to run Pod (this document)
 
 ## Run in docker
