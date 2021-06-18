@@ -41,6 +41,7 @@ pub fn run_plugin_container(
     let item = serde_json::to_string(&item)?;
     let auth = database_key.create_plugin_auth()?;
     let auth = serde_json::to_string(&auth)?;
+
     if cli_options.use_kubernetes {
         run_kubernetes_container(
             &container,
@@ -51,6 +52,22 @@ pub fn run_plugin_container(
             cli_options,
         )
     } else {
+        if let Some(plugin_script) = &cli_options.insecure_plugin_script {
+            let split: Vec<&str> = plugin_script.split("=").collect();
+            let plugin_name = split[0];
+            if split.len() > 1 && plugin_name == container {
+                let plugin_path = split[1];
+                return run_python_environment(
+                        &plugin_name,
+                        &plugin_path,
+                        &item,
+                        pod_owner,
+                        &auth,
+                        triggered_by_item_id,
+                        cli_options,
+                )
+            }
+        }
         run_docker_container(
             &container,
             &item,
@@ -60,6 +77,26 @@ pub fn run_plugin_container(
             cli_options,
         )
     }
+}
+
+fn run_python_environment(
+    _container: &str,
+    plugin_path: &str,
+    target_item: &str,
+    pod_owner: &str,
+    pod_auth: &str,
+    triggered_by_item_id: &str,
+    cli_options: &CliOptions,
+) -> Result<()> {
+    info!("Running in python");
+    let mut args: Vec<String> = Vec::with_capacity(10);
+    args.push(String::from("./tools/start_plugin.sh"));
+    std::env::set_var("POD_FULL_ADDRESS", callback_address(cli_options, false));
+    std::env::set_var("POD_TARGET_ITEM", target_item);
+    std::env::set_var("POD_PLUGINRUN_ID", triggered_by_item_id);
+    std::env::set_var("POD_OWNER", pod_owner);
+    std::env::set_var("POD_AUTH_JSON", pod_auth);
+    run_any_command("bash", &args, &plugin_path, triggered_by_item_id)
 }
 
 /// Example:
@@ -90,7 +127,7 @@ fn run_docker_container(
     args.push(format!("--network={}", docker_network));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
-        callback_address(cli_options)
+        callback_address(cli_options, true)
     ));
     args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
@@ -104,7 +141,7 @@ fn run_docker_container(
     args.push("--rm".to_string());
     args.push("--".to_string());
     args.push(container.to_string());
-    run_any_command("docker", &args, triggered_by_item_id)
+    run_any_command("docker", &args, ".", triggered_by_item_id)
 }
 
 /// Example:
@@ -134,23 +171,23 @@ fn run_kubernetes_container(
     args.push(format!("--image={}", container));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
-        callback_address(cli_options)
+        callback_address(cli_options, true)
     ));
     args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    run_any_command("kubectl", &args, triggered_by_item_id)
+    run_any_command("kubectl", &args, ".", triggered_by_item_id)
 }
 
-fn run_any_command(cmd: &str, args: &[String], container_id: &str) -> Result<()> {
+fn run_any_command(cmd: &str, args: &[String], current_dir: &str, container_id: &str) -> Result<()> {
     let debug_print = args
         .iter()
         .map(|p| escape_bash_arg(p))
         .collect::<Vec<_>>()
         .join(" ");
     log::info!("Starting command {} {}", cmd, debug_print);
-    let command = Command::new(cmd).args(args).spawn();
+    let command = Command::new(cmd).current_dir(current_dir).args(args).spawn();
     match command {
         Ok(_child) => {
             log::debug!(
@@ -170,7 +207,8 @@ fn run_any_command(cmd: &str, args: &[String], container_id: &str) -> Result<()>
     }
 }
 
-fn callback_address(cli_options: &CliOptions) -> String {
+
+fn callback_address(cli_options: &CliOptions, docker: bool) -> String {
     let is_https = cli_options.insecure_non_tls.is_none() && !cli_options.non_tls;
     let callback = match &cli_options.plugins_callback_address {
         Some(addr) => addr.to_string(),
@@ -178,7 +216,7 @@ fn callback_address(cli_options: &CliOptions) -> String {
             // The plugin container needs to have access to the host
             // This is currently done differently on MacOS and Linux
             // https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-            let pod_domain = if cfg!(target_os = "linux") {
+            let pod_domain = if cfg!(target_os = "linux") || !docker {
                 "localhost"
             } else {
                 "host.docker.internal"
