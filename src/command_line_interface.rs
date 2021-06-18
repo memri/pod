@@ -84,10 +84,7 @@ pub struct CliOptions {
     )]
     pub tls_priv_key: String,
 
-    #[structopt(
-        long,
-        name = "INSECURE_PLUGIN_SCRIPT"
-    )]
+    #[structopt(long, name = "INSECURE_PLUGIN_SCRIPT")]
     pub insecure_plugin_script: Option<String>,
 
     /// Do not use https when starting the server, instead run on http://127.0.0.1.

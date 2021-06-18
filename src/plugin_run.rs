@@ -58,14 +58,14 @@ pub fn run_plugin_container(
             if split.len() > 1 && plugin_name == container {
                 let plugin_path = split[1];
                 return run_python_environment(
-                        &plugin_name,
-                        &plugin_path,
-                        &item,
-                        pod_owner,
-                        &auth,
-                        triggered_by_item_id,
-                        cli_options,
-                )
+                    &plugin_name,
+                    &plugin_path,
+                    &item,
+                    pod_owner,
+                    &auth,
+                    triggered_by_item_id,
+                    cli_options,
+                );
             }
         }
         run_docker_container(
@@ -180,14 +180,22 @@ fn run_kubernetes_container(
     run_any_command("kubectl", &args, ".", triggered_by_item_id)
 }
 
-fn run_any_command(cmd: &str, args: &[String], current_dir: &str, container_id: &str) -> Result<()> {
+fn run_any_command(
+    cmd: &str,
+    args: &[String],
+    current_dir: &str,
+    container_id: &str,
+) -> Result<()> {
     let debug_print = args
         .iter()
         .map(|p| escape_bash_arg(p))
         .collect::<Vec<_>>()
         .join(" ");
     log::info!("Starting command {} {}", cmd, debug_print);
-    let command = Command::new(cmd).current_dir(current_dir).args(args).spawn();
+    let command = Command::new(cmd)
+        .current_dir(current_dir)
+        .args(args)
+        .spawn();
     match command {
         Ok(_child) => {
             log::debug!(
@@ -206,7 +214,6 @@ fn run_any_command(cmd: &str, args: &[String], current_dir: &str, container_id: 
         }),
     }
 }
-
 
 fn callback_address(cli_options: &CliOptions, docker: bool) -> String {
     let is_https = cli_options.insecure_non_tls.is_none() && !cli_options.non_tls;
