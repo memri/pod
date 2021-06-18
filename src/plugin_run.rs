@@ -53,7 +53,7 @@ pub fn run_plugin_container(
         )
     } else {
         if let Some(plugin_script) = &cli_options.insecure_plugin_script {
-            let split: Vec<&str> = plugin_script.split("=").collect();
+            let split: Vec<&str> = plugin_script.split('=').collect();
             let plugin_name = split[0];
             if split.len() > 1 && plugin_name == container {
                 let plugin_path = split[1];
