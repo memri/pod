@@ -89,7 +89,7 @@ fn run_python_environment(
     cli_options: &CliOptions,
 ) -> Result<()> {
     info!("Running in python");
-    let mut args: Vec<String> = Vec::with_capacity(10);
+    let mut args: Vec<String> = Vec::new();
     args.push(String::from("./tools/start_plugin.sh"));
     std::env::set_var("POD_FULL_ADDRESS", callback_address(cli_options, false));
     std::env::set_var("POD_TARGET_ITEM", target_item);
