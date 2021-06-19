@@ -42,7 +42,8 @@ pub fn trigger_before_item_create(tx: &Tx, item: &CreateItem) -> Result<()> {
         let json = serde_json::to_value(item)?;
         let parsed: SchemaItem = serde_json::from_value(json)
             .context(|| format!("Parsing of Schema item {:?}, {}:{}", item, file!(), line!()))?;
-        schema::validate_property_name(&parsed.property_name)?;
+        schema::validate_property_name(&parsed.property_name)
+            .context_str("Failed to add Schema property, name invalid")?;
         database_api::delete_schema_items_by_item_type_and_prop(
             tx,
             &parsed.item_type,
