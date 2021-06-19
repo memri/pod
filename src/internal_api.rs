@@ -228,7 +228,10 @@ pub fn create_item_tx(
         return Err(err);
     }
     let time_now = Utc::now().timestamp_millis();
-    triggers::trigger_before_item_create(tx, &item)?;
+    let ignore_insertion = triggers::trigger_before_item_create(schema, &item)?;
+    if ignore_insertion {
+        return Ok("___ignored___".to_string());
+    }
     let rowid = database_api::insert_item_base(
         tx,
         &id,
@@ -450,7 +453,6 @@ mod tests {
     use crate::internal_api;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
-    use crate::schema::SchemaPropertyType;
     use rusqlite::Connection;
     use serde_json::json;
     use std::collections::HashMap;
@@ -462,16 +464,6 @@ mod tests {
             .run(&mut conn)
             .expect("Failed to run refinery migrations");
         conn
-    }
-
-    fn minimal_schema() -> Schema {
-        let mut schema = HashMap::new();
-        schema.insert("itemType".to_string(), SchemaPropertyType::Text);
-        schema.insert("propertyName".to_string(), SchemaPropertyType::Text);
-        schema.insert("valueType".to_string(), SchemaPropertyType::Text);
-        Schema {
-            property_types: schema,
-        }
     }
 
     #[test]
@@ -531,20 +523,78 @@ mod tests {
     #[test]
     fn test_item_insert_schema() {
         let mut conn = new_conn();
-        let minimal_schema = minimal_schema();
         let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();
+        let minimal_schema = database_api::get_schema(&tx).unwrap();
+        eprintln!("{:?}", minimal_schema);
+
         let json = json!({
             "type": "ItemPropertySchema",
             "itemType": "Person",
             "propertyName": "age",
             "valueType": "Integer",
         });
-        let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
-        internal_api::create_item_tx(&tx, &minimal_schema, create_item, "", &cli, &database_key)
+
+        {
+            // insert "age" successfully
+            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            internal_api::create_item_tx(
+                &tx,
+                &minimal_schema,
+                create_item.clone(),
+                "",
+                &cli,
+                &database_key,
+            )
             .unwrap();
+        }
+
+        {
+            let json = json!({
+                "type": "ItemPropertySchema",
+                "itemType": "Person",
+                "propertyName": "dateCreated",
+                "valueType": "Bool",
+            });
+            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            let expected_error = "Schema for property dateCreated is already defined to type DateTime, cannot override to type Bool";
+            assert!(internal_api::create_item_tx(
+                &tx,
+                &minimal_schema,
+                create_item,
+                "",
+                &cli,
+                &database_key
+            )
+            .unwrap_err()
+            .msg
+            .contains(expected_error));
+        }
+
+        {
+            // ignore already defined Schemas
+            let json = json!({
+                "type": "ItemPropertySchema",
+                "itemType": "Person",
+                "propertyName": "dateCreated",
+                "valueType": "DateTime",
+            });
+            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            assert_eq!(
+                internal_api::create_item_tx(
+                    &tx,
+                    &minimal_schema,
+                    create_item,
+                    "",
+                    &cli,
+                    &database_key
+                )
+                .unwrap(),
+                "___ignored___"
+            );
+        }
 
         let bad_empty_schema = Schema {
             property_types: HashMap::new(),

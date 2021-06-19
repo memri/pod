@@ -91,6 +91,14 @@ in one `bulk` request, so if you want changes to the Schema to happen first,
 split updates to the Schema into a separate request.
 (This constraint might be lifted in the future.)
 
+If the new Schema item conflicts with already existing Schema, a failure will be returned.
+
+If the new Schema item duplicates already existing Schema, the new item will be silently ignored
+and not inserted into the database.
+
+If the new Schema item creates (valid) properties that have not yet been defined,
+the new Schema will be added permanently.
+
 ⚠️ UNSTABLE: We might require more properties to be defined here in the future,
 e.g. to what Plugin does the Schema addition belong to.
 
