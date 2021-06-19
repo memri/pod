@@ -257,6 +257,8 @@ Mark an item as deleted:
     "deleted": false, // deleted filter
     "_sortOrder": "DESC", // sort by server modification either "ASC" (by default) or "DESC"
     "_limit": 100, // limit the result set
+    "[[edges]]": {}, // include all forward edges in the response
+    "~[[edges]]": {}, // include all forward edges in the response
   }
 }
 ```
@@ -266,6 +268,13 @@ The endpoint will return an array of items which have all the properties above.
 
 As a first step of the 2021-03 Pod rewrite, only the above properties are supported.
 In the future, any item properties will be available.
+
+The properties of `"[[edges]]"` and `"~[[edges]]"` are
+["magic constants"](https://en.wikipedia.org/wiki/Magic_number_(programming)) for now.
+This will change in the future when we'll [continuously expand](./WIP_QueryRedesign.md) our API
+to make it more intuitive and easier to use, especially around edges and recursive data fetching.
+For now only literally those two properties are supported, and all edges are returned
+without filtering.
 
 
 ### POST /v3/$owner_key/bulk

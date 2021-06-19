@@ -7,7 +7,10 @@ use crate::api_model::Search;
 use crate::api_model::SortOrder;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
+use crate::database_api::get_incoming_edges;
+use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
+use crate::database_api::HalfEdge;
 use crate::database_api::IntegersNameValue;
 use crate::database_api::ItemBase;
 use crate::database_api::RealsNameValue;
@@ -121,6 +124,8 @@ pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
         deleted: None,
         sort_order: SortOrder::Asc,
         limit: 1,
+        forward_edges: None,
+        backward_edges: None,
         other_properties: Default::default(),
     };
     let result = search(tx, schema, search_query)?;
@@ -345,10 +350,10 @@ pub fn bulk_tx(
     Ok(())
 }
 
-fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Value> {
+fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Map<String, Value>> {
     let mut props = get_item_properties(tx, item.rowid, schema)?;
     add_item_base_properties(&mut props, item);
-    Ok(Value::Object(props))
+    Ok(props)
 }
 
 fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
@@ -379,6 +384,23 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     Ok(self_id)
 }
 
+pub fn half_edges_to_json(tx: &Tx, schema: &Schema, half_edges: &[HalfEdge]) -> Result<Vec<Value>> {
+    let mut result = Vec::new();
+    for edge in half_edges {
+        let base = database_api::get_item_base(tx, edge.item)?;
+        let base = base.ok_or_else(|| Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
+        })?;
+        let item_json = Value::Object(item_base_to_json(tx, base, schema)?);
+        result.push(serde_json::json!({
+            "_edge": edge.name,
+            "item": item_json,
+        }));
+    }
+    Ok(result)
+}
+
 pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>> {
     let root_item = database_api::get_item_rowid(tx, &query.item)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
@@ -397,7 +419,7 @@ pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>
             msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
         })?;
         if query.expand_items {
-            let item_json = item_base_to_json(tx, base, schema)?;
+            let item_json = Value::Object(item_base_to_json(tx, base, schema)?);
             result.push(serde_json::json!({
                 "name": edge.name,
                 "item": item_json,
@@ -438,7 +460,19 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     let items = database_api::search_items(tx, &database_search)?;
     let mut result = Vec::new();
     for item in items {
-        result.push(item_base_to_json(tx, item, schema)?)
+        let rowid = item.rowid;
+        let mut object_map = item_base_to_json(tx, item, schema)?;
+        if query.forward_edges.is_some() {
+            let edges = get_outgoing_edges(tx, rowid)?;
+            let edges = half_edges_to_json(tx, schema, &edges)?;
+            object_map.insert("[[edges]]".to_string(), Value::Array(edges));
+        }
+        if query.backward_edges.is_some() {
+            let edges = get_incoming_edges(tx, rowid)?;
+            let edges = half_edges_to_json(tx, schema, &edges)?;
+            object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
+        }
+        result.push(Value::Object(object_map));
     }
     Ok(result)
 }
@@ -451,6 +485,7 @@ mod tests {
     use crate::database_migrate_refinery;
     use crate::error::Result;
     use crate::internal_api;
+    use crate::internal_api::*;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
     use rusqlite::Connection;
@@ -520,6 +555,7 @@ mod tests {
 
         Ok(())
     }
+
     #[test]
     fn test_item_insert_schema() {
         let mut conn = new_conn();
@@ -612,5 +648,96 @@ mod tests {
         assert!(result.msg.contains("not defined in Schema"));
 
         tx.commit().unwrap();
+    }
+
+    #[test]
+    fn test_edge_search() {
+        let mut conn = new_conn();
+        let cli = command_line_interface::tests::test_cli();
+        let db_key = DatabaseKey::from("".to_string()).unwrap();
+        let tx = conn.transaction().unwrap();
+        let schema = database_api::get_schema(&tx).unwrap();
+
+        let person1 = {
+            let person = json!({
+                "type": "Person",
+            });
+            let person: CreateItem = serde_json::from_value(person).unwrap();
+            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+        };
+        let person2 = {
+            let person = json!({
+                "type": "Person",
+            });
+            let person: CreateItem = serde_json::from_value(person).unwrap();
+            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+        };
+        let _edge = {
+            let json = json!({
+                "_source": person1,
+                "_target": person2,
+                "_name": "friend",
+            });
+            let parsed = serde_json::from_value(json).unwrap();
+            create_edge(&tx, parsed).unwrap()
+        };
+
+        let result = {
+            let json = json!({
+                "id": person1,
+                "[[edges]]": {},
+            });
+            let parsed = serde_json::from_value(json).unwrap();
+            search(&tx, &schema, parsed).unwrap()
+        };
+        assert_eq!(result.len(), 1);
+        let result = result.into_iter().next().unwrap();
+        let result = match result {
+            Value::Object(r) => r,
+            _ => panic!("Result is not JSON Object"),
+        };
+
+        // {
+        //     "[[edges]]": [
+        //     {
+        //         "_edge": "friend",
+        //         "item": {
+        //         "dateCreated": 1624136669383,
+        //         "dateModified": 1624136669383,
+        //         "dateServerModified": 1624136669383,
+        //         "deleted": false,
+        //         "id": "c7400db9b575aaf9bfb540f02e4579eb",
+        //         "type": "Person"
+        //     }
+        //     }
+        //     ],
+        //     "dateCreated": 1624136669382,
+        //     "dateModified": 1624136669382,
+        //     "dateServerModified": 1624136669382,
+        //     "deleted": false,
+        //     "id": "4b12075489ea2e8a4b017ae8e33fa337",
+        //     "type": "Person"
+        // }
+
+        let result_id = result.get("id").unwrap().as_str().unwrap();
+        assert_eq!(result_id, person1);
+
+        let result_edge = result.get("[[edges]]").unwrap().as_array().unwrap();
+        let result_edge = result_edge.into_iter().next().unwrap();
+
+        assert_eq!(
+            result_edge.get("_edge").unwrap().as_str().unwrap(),
+            "friend"
+        );
+
+        let result_edge_item = result_edge.get("item").unwrap();
+        let result_edge_item = match result_edge_item {
+            Value::Object(i) => i,
+            _ => panic!("edge item is not an JSON Object"),
+        };
+        assert_eq!(
+            result_edge_item.get("id").unwrap().as_str().unwrap(),
+            person2
+        );
     }
 }
