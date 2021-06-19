@@ -174,7 +174,7 @@ The simplest request with edges, get all of them in a search request:
 </table>
 
 ### Future: filter edges
-In this example, get friends of age >= 18
+In this example, get friends that are know to you since a specific DateTime ("old friends").
 
 <table>
 <tr>
@@ -190,7 +190,7 @@ In this example, get friends of age >= 18
   "[[myOldFriends]]": {
     "_edge": "friend",
     "item": {
-      "age>=": 18,
+      "knownSince>=": 12345,
       // ...
     }
   }
@@ -206,7 +206,7 @@ In this example, get friends of age >= 18
   "age": 20,
   "name": "Bob",
   "[[myOldFriends]]": [
-    // ... all friends with age of at least 18
+    // ... all friends with knownSince property of at least 12345
   ]
   // ...
 }
@@ -238,7 +238,7 @@ It is thus important to make the simple use case -- simple. Solution proposal:
 {
   "id": "abcde",
   "[friend]": {
-    "age>=": 18
+    "knownSince>=": 12345
   }
 }
 ```
@@ -252,8 +252,8 @@ It is thus important to make the simple use case -- simple. Solution proposal:
   "age": 20,
   "name": "Bob",
   "[friend]": [
-    { "id": "friend1", "age":  23, /* ... */ },
-    { "id": "friend2", "age":  47, /* ... */ },
+    { "id": "friend1", "knownSince": 12388, /* ... */ },
+    { "id": "friend2", "knownSince":  12399, /* ... */ },
     // ... Note that the intermediate edge
     // and its properties are missing in both
     // the request and the response.
