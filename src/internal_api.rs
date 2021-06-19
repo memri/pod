@@ -528,7 +528,6 @@ mod tests {
 
         let tx = conn.transaction().unwrap();
         let minimal_schema = database_api::get_schema(&tx).unwrap();
-        eprintln!("{:?}", minimal_schema);
 
         let json = json!({
             "type": "ItemPropertySchema",
@@ -543,7 +542,7 @@ mod tests {
             internal_api::create_item_tx(
                 &tx,
                 &minimal_schema,
-                create_item.clone(),
+                create_item,
                 "",
                 &cli,
                 &database_key,
@@ -558,7 +557,7 @@ mod tests {
                 "propertyName": "dateCreated",
                 "valueType": "Bool",
             });
-            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            let create_item: CreateItem = serde_json::from_value(json).unwrap();
             let expected_error = "Schema for property dateCreated is already defined to type DateTime, cannot override to type Bool";
             assert!(internal_api::create_item_tx(
                 &tx,
@@ -581,7 +580,7 @@ mod tests {
                 "propertyName": "dateCreated",
                 "valueType": "DateTime",
             });
-            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            let create_item: CreateItem = serde_json::from_value(json).unwrap();
             assert_eq!(
                 internal_api::create_item_tx(
                     &tx,
