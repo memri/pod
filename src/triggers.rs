@@ -4,19 +4,19 @@
 
 use crate::api_model::CreateItem;
 use crate::command_line_interface::CliOptions;
-use crate::database_api;
 use crate::database_api::Rowid;
+use crate::error::Error;
 use crate::error::ErrorContext;
 use crate::error::Result;
 use crate::internal_api;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::plugin_run;
-use crate::schema;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
 use rusqlite::Transaction as Tx;
 use serde::Deserialize;
 use serde::Serialize;
+use warp::http::StatusCode;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +33,8 @@ pub struct StartPluginItem {
     pub target_item_id: String,
 }
 
-pub fn trigger_before_item_create(tx: &Tx, item: &CreateItem) -> Result<()> {
+/// Returns whether the item insertion should be ignored
+pub fn trigger_before_item_create(schema: &Schema, item: &CreateItem) -> Result<bool> {
     // We'll do something ugly here.
     // We'll convert the item into JSON and back into the desired type for type check and parsing.
     // This is easier code-wise than to do manual conversions.
@@ -42,15 +43,21 @@ pub fn trigger_before_item_create(tx: &Tx, item: &CreateItem) -> Result<()> {
         let json = serde_json::to_value(item)?;
         let parsed: SchemaItem = serde_json::from_value(json)
             .context(|| format!("Parsing of Schema item {:?}, {}:{}", item, file!(), line!()))?;
-        schema::validate_property_name(&parsed.property_name)
-            .context_str("Failed to add Schema property, name invalid")?;
-        database_api::delete_schema_items_by_item_type_and_prop(
-            tx,
-            &parsed.item_type,
-            &parsed.property_name,
-        )?;
+        if let Some(old) = schema.property_types.get(&parsed.property_name) {
+            if old == &parsed.value_type {
+                Ok(true)
+            } else {
+                Err(Error {
+                    code: StatusCode::BAD_REQUEST,
+                    msg: format!("Schema for property {} is already defined to type {}, cannot override to type {}", parsed.property_name, old, parsed.value_type)
+                })
+            }
+        } else {
+            Ok(false)
+        }
+    } else {
+        Ok(false)
     }
-    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
