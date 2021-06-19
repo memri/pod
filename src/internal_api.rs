@@ -723,7 +723,7 @@ mod tests {
         assert_eq!(result_id, person1);
 
         let result_edge = result.get("[[edges]]").unwrap().as_array().unwrap();
-        let result_edge = result_edge.into_iter().next().unwrap();
+        let result_edge = result_edge.iter().next().unwrap();
 
         assert_eq!(
             result_edge.get("_edge").unwrap().as_str().unwrap(),
