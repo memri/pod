@@ -278,25 +278,28 @@ without filtering.
 
 
 ### POST /v3/$owner_key/bulk
-```json
+```json5
 {
   "auth": $auth_json,
   "payload": {
     "createItems": [
-      { "id": "something-12345", "type": "Person", ... },
+      { "id": "something-12345", "type": "Person", /* ... */ },
       {}, // same structure as create_item endpoint above
-      ...
+      // ...
     ],
     "updateItems": [
-      { "id": "something-67899", ... },
+      { "id": "something-67899", /* ... */ },
       {}, // same structure as update_item endpoint above
-      ...
+      // ...
     ],
-    "deleteItems": [ "$id", "$id", "$id", ...],
+    "deleteItems": [ "$id", "$id", "$id", /* ... */ ],
     "createEdges": [ 
       {}, // same structure as create_edge endpoint above
       {},
-      ... 
+      // ...
+    ],
+    "search": [
+      { /* same structure as in /search API */ }
     ]
   }
 }

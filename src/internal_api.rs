@@ -328,15 +328,17 @@ pub fn bulk_tx(
     pod_owner: &str,
     cli: &CliOptions,
     database_key: &DatabaseKey,
-) -> Result<()> {
+) -> Result<Value> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items",
         bulk.create_items.len(),
         bulk.update_items.len(),
         bulk.delete_items.len(),
     );
+    let mut created_items = Vec::new();
     for item in bulk.create_items {
-        create_item_tx(tx, schema, item, pod_owner, cli, database_key)?;
+        let id = create_item_tx(tx, schema, item, pod_owner, cli, database_key)?;
+        created_items.push(id);
     }
     for item in bulk.update_items {
         update_item_tx(tx, schema, &item.id, item.fields)?;
@@ -344,10 +346,22 @@ pub fn bulk_tx(
     for item_id in bulk.delete_items {
         delete_item_tx(tx, schema, &item_id)?;
     }
+    let mut created_edges = Vec::new();
     for item_id in bulk.create_edges {
-        create_edge(tx, item_id)?;
+        let id = create_edge(tx, item_id)?;
+        created_edges.push(id);
     }
-    Ok(())
+    let mut search_results = Vec::new();
+    for query in bulk.search {
+        let result = search(tx, schema, query)?;
+        search_results.push(result);
+    }
+    let result = serde_json::json!({
+        "createItems": created_items,
+        "createEdges": created_edges,
+        "search": search_results,
+    });
+    Ok(result)
 }
 
 fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Map<String, Value>> {
