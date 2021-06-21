@@ -88,8 +88,6 @@ pub struct CliOptions {
     #[structopt(long, parse(try_from_str = parse_key_val), number_of_values=1, name="INSECURE_PLUGIN_SCRIPT")]
     pub insecure_plugin_script: Vec<(String, String)>,
 
-    // #[structopt(long, name = "INSECURE_PLUGIN_SCRIPT")]
-    // pub insecure_plugin_script: Option<String>,
     /// Do not use https when starting the server, instead run on http://127.0.0.1.
     /// Running on loopback interface (127.0.0.1) means that only apps
     /// from within the same computer will be able to access Pod.
