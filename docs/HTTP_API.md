@@ -258,7 +258,7 @@ Mark an item as deleted:
     "_sortOrder": "DESC", // sort by server modification either "ASC" (by default) or "DESC"
     "_limit": 100, // limit the result set
     "[[edges]]": {}, // include all forward edges in the response
-    "~[[edges]]": {}, // include all forward edges in the response
+    "~[[edges]]": {}, // include all backward edges in the response
   }
 }
 ```
