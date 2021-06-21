@@ -28,8 +28,8 @@ pub struct SchemaItem {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct StartPluginItem {
-    pub container: String,
+pub struct PluginRunItem {
+    pub container_image: String,
     pub target_item_id: String,
 }
 
@@ -71,14 +71,14 @@ pub fn trigger_after_item_create(
     cli: &CliOptions,
     database_key: &DatabaseKey,
 ) -> Result<()> {
-    if item._type == "StartPlugin" {
+    if item._type == "PluginRun" {
         let json = internal_api::get_item_from_rowid(tx, schema, source_rowid)?;
-        let parsed: StartPluginItem = serde_json::from_value(json)
+        let parsed: PluginRunItem = serde_json::from_value(json)
             .context(|| format!("Parsing of item {:?}, {}:{}", item, file!(), line!()))?;
         plugin_run::run_plugin_container(
             tx,
             schema,
-            parsed.container,
+            parsed.container_image,
             &parsed.target_item_id,
             source_id,
             pod_owner,

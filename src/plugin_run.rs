@@ -19,7 +19,7 @@ use warp::http::status::StatusCode;
 pub fn run_plugin_container(
     tx: &Transaction,
     schema: &Schema,
-    container: String,
+    container_image: String,
     target_item_id: &str,
     triggered_by_item_id: &str,
     pod_owner: &str,
@@ -41,9 +41,17 @@ pub fn run_plugin_container(
     let item = serde_json::to_string(&item)?;
     let auth = database_key.create_plugin_auth()?;
     let auth = serde_json::to_string(&auth)?;
+    let container_id = format!(
+        "{}-{}-{}-{}",
+        pod_owner,
+        container_image,
+        item,
+        new_random_item_id()
+    );
     if cli_options.use_kubernetes {
         run_kubernetes_container(
-            &container,
+            &container_image,
+            container_id,
             &item,
             pod_owner,
             &auth,
@@ -52,7 +60,8 @@ pub fn run_plugin_container(
         )
     } else {
         run_docker_container(
-            &container,
+            &container_image,
+            container_id,
             &item,
             pod_owner,
             &auth,
@@ -69,12 +78,13 @@ pub fn run_plugin_container(
 ///     --env=POD_TARGET_ITEM="{...json...}" \
 ///     --env=POD_OWNER="...64-hex-chars..." \
 ///     --env=POD_AUTH_JSON="{...json...}" \
-///     --name="$container-$trigger_item_id" \
+///     --name="$containerImage-$trigger_item_id" \
 ///     --rm \
 ///     -- \
-///     "$container"
+///     "$containerImage"
 fn run_docker_container(
-    container: &str,
+    container_image: &str,
+    container_id: String,
     target_item: &str,
     pod_owner: &str,
     pod_auth: &str,
@@ -96,26 +106,23 @@ fn run_docker_container(
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    args.push(format!(
-        "--name={}-{}",
-        sanitize_docker_name(container),
-        sanitize_docker_name(triggered_by_item_id)
-    ));
+    args.push(format!("--name={}", sanitize_docker_name(&container_id)));
     args.push("--rm".to_string());
     args.push("--".to_string());
-    args.push(container.to_string());
+    args.push(container_image.to_string());
     run_any_command("docker", &args, triggered_by_item_id)
 }
 
 /// Example:
-/// kubectl run $owner-$container-$targetItem-$randomHex
-///     --image="$container" \
+/// kubectl run $owner-$containerImage-$targetItem-$randomHex
+///     --image="$containerImage" \
 ///     --env=POD_FULL_ADDRESS="http://localhost:3030" \
 ///     --env=POD_TARGET_ITEM="{...json...}" \
 ///     --env=POD_OWNER="...64-hex-chars..." \
 ///     --env=POD_AUTH_JSON="{...json...}" \
 fn run_kubernetes_container(
-    container: &str,
+    container_image: &str,
+    container_id: String,
     target_item: &str,
     pod_owner: &str,
     pod_auth: &str,
@@ -124,14 +131,8 @@ fn run_kubernetes_container(
 ) -> Result<()> {
     let mut args: Vec<String> = Vec::with_capacity(7);
     args.push("run".to_string());
-    args.push(format!(
-        "{}-{}-{}-{}",
-        pod_owner,
-        container,
-        target_item,
-        new_random_item_id()
-    ));
-    args.push(format!("--image={}", container));
+    args.push(container_id);
+    args.push(format!("--image={}", container_image));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
         callback_address(cli_options)

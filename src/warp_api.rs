@@ -43,10 +43,10 @@ pub async fn run_server(cli_options: CliOptions) {
     }
     let headers = warp::reply::with::headers(headers);
 
-    let items_api = warp::path("v3")
+    let items_api = warp::path("v4")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
-    let file_api = warp::path("v3")
+    let file_api = warp::path("v4")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 

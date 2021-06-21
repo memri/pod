@@ -18,7 +18,7 @@ During development, you can use the following script to make Pod start a new Plu
 ```sh
 owner="$RANDOM$RANDOM$RANDOM$RANDOM"  # replace with desired owner, or leave as-is for tests
 dbkey=  # note that the Plugin will not have access to this key, it'll only have `POD_AUTH_JSON`
-container="test"
+containerImage="test"
 
 data=$(cat <<-END
 {
@@ -29,7 +29,7 @@ data=$(cat <<-END
     "payload": {
         "createItems": [
             {"type": "Person", "id": "38583224e56e6d2385d36e05af9caa5e"},
-            {"type": "StartPlugin", "container": "$container", "targetItemId": "38583224e56e6d2385d36e05af9caa5e"}
+            {"type": "PluginRun", "containerImage": "$containerImage", "targetItemId": "38583224e56e6d2385d36e05af9caa5e"}
         ],
         "updateItems": [],
         "deleteItems": []
@@ -38,7 +38,7 @@ data=$(cat <<-END
 END
 )
 
-curl -X POST -H "Content-Type: application/json" --insecure "http://localhost:3030/v3/$owner/bulk" -d "$data"
+curl -X POST -H "Content-Type: application/json" --insecure "http://localhost:3030/v4/$owner/bulk" -d "$data"
 ```
 
 This will start a container with the environment variables set as described below,
@@ -65,10 +65,10 @@ For Plugins that means:
 So regardless of which auth you use, the script below will give you an idea
 of the basic structure of the docker command:
 ```sh
-container="test"
+containerImage="test"
 owner="e5c8f9a3d64f5394677fafb9cc1a63ea3f875dc391422e2f95e9f871d893b115"
 target_item='{"type":"Person","id":"38583224e56e6d2385d36e05af9caa5e","dateCreated":1623241923508,"dateModified":1623241923508",dateServerModified":1623241923508,"deleted":false}'
-trigger_item_id="05abe8e2ef2d0fb4992239944a71bde5"  # the id of the item that started the Plugin (the StartPlugin item)
+trigger_item_id="05abe8e2ef2d0fb4992239944a71bde5"  # the id of the item that started the Plugin (the PluginRun item)
 your_auth_json='{???}'  # depends on whether you use test auth or real system auth
 network="localhost"  # "localhost" on linux, "host.docker.internal" on Mac and Windows
 
@@ -78,10 +78,10 @@ docker run \
   --env=POD_TARGET_ITEM="$target_item" \
   --env=POD_OWNER="$owner" \
   --env=POD_AUTH_JSON="$your_auth" \
-  --rm \
-  --name="$container-$trigger_item_id" \
+  --rm \container
+  --name="$containerImage-$trigger_item_id" \
   -- \
-  "$container"
+  "$containerImage"
 ```
 
 # How are plugins started
@@ -99,7 +99,7 @@ Pod will set the following environment variables for plugins:
 ```
 Where the `id` of this item is the same as the `targetItemId` from the request.
 
-* `POD_PLUGINRUN_ID` = The `id` of the StartPlugin item that made this Plugin start.
+* `POD_PLUGINRUN_ID` = The `id` of the PluginRun item that made this Plugin start.
 
 * `POD_OWNER` = Pod owner key, 64-character hex string.
 

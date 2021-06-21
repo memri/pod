@@ -109,7 +109,7 @@ e.g. to what Plugin does the Schema addition belong to.
 Get version of the Pod: the git commit and cargo version that it was built from.
 
 
-### POST /v3/$owner_key/get_item
+### POST /v4/$owner_key/get_item
 ```json
 {
   "auth": $auth_json,
@@ -122,7 +122,7 @@ Returns an empty array if an item is not found,
 or an array with 1 item if item exists.
 
 
-### POST /v3/$owner_key/create_item
+### POST /v4/$owner_key/create_item
 ```json
 {
   "auth": $auth_json,
@@ -149,7 +149,7 @@ Returns an error if the new item doesn't conform to the Schema.
 Returns `id` of the created item if the operation is successful. 
 
 
-### POST /v3/$owner_key/update_item
+### POST /v4/$owner_key/update_item
 ```json
 {
   "auth": $auth_json,
@@ -169,7 +169,7 @@ Update a single item.
 Returns an empty object if the operation is successful.
 
 
-### POST /v3/$owner_key/get_edges
+### POST /v4/$owner_key/get_edges
 ```json5
 {
   "auth": $auth_json,
@@ -207,7 +207,7 @@ Returns an array empty array if either the element does not exist or if it has n
 ⚠ WARNING: this endpoint is unstable, and it might be deprecated and removed in next releases of Pod.️
 
 
-### POST /v3/$owner_key/create_edge
+### POST /v4/$owner_key/create_edge
 ```json5
 {
   "auth": $auth_json,
@@ -232,7 +232,7 @@ Returns an error if the new item doesn't conform to the Schema.
 Returns `id` of the created item if the operation is successful.
 
 
-### POST /v3/$owner_key/delete_item
+### POST /v4/$owner_key/delete_item
 ```json
 {
   "auth": $auth_json,
@@ -245,7 +245,7 @@ Mark an item as deleted:
 * Update `dateServerModified`
 
 
-### POST /v3/$owner_key/search
+### POST /v4/$owner_key/search
 ```json5
 {
   "auth": $auth_json,
@@ -277,7 +277,7 @@ For now only literally those two properties are supported, and all edges are ret
 without filtering.
 
 
-### POST /v3/$owner_key/bulk
+### POST /v4/$owner_key/bulk
 ```json5
 {
   "auth": $auth_json,
@@ -323,8 +323,8 @@ For now, plugins are started when items of a particular types are inserted into 
 Items of the following structure need to be inserted to Pod to start a plugin:
 ```json5
 {
-  "type": "StartPlugin", /* exactly this, and nothing else */
-  "container": "your_docker_container:optional_version", /* any locally available docker container if you run Pod locally */
+  "type": "PluginRun", /* exactly this, and nothing else */
+  "containerImage": "your_docker_image:optional_version", /* any locally available docker container if you run Pod locally */
   "targetItemId": "the item id this plugin needs to run against, NOT this item's id",
   /* Any other optional fields that your plugin might need... */
 }
@@ -338,7 +338,7 @@ e.g. permission limitation.
 
 # File API
 
-### POST /v3/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
+### POST /v4/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
 ```text
 RAW-FILE-BINARY
 ```
@@ -355,7 +355,7 @@ with such `sha256` already exists in DB, Pod will accept the file and store it.
 The properties `nonce` and `key` will be updated for this item.
 
 
-### POST /v3/$owner_key/get_file
+### POST /v4/$owner_key/get_file
 ```json
 {
   "auth": $auth_json,
