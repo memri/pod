@@ -5,10 +5,10 @@
 use crate::api_model::CreateItem;
 use crate::command_line_interface::CliOptions;
 use crate::database_api::Rowid;
+use crate::database_utils::get_item_from_rowid;
 use crate::error::Error;
 use crate::error::ErrorContext;
 use crate::error::Result;
-use crate::internal_api;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::plugin_run;
 use crate::schema::Schema;
@@ -72,7 +72,7 @@ pub fn trigger_after_item_create(
     database_key: &DatabaseKey,
 ) -> Result<()> {
     if item._type == "PluginRun" {
-        let json = internal_api::get_item_from_rowid(tx, schema, source_rowid)?;
+        let json = get_item_from_rowid(tx, schema, source_rowid)?;
         let parsed: PluginRunItem = serde_json::from_value(json)
             .context(|| format!("Parsing of item {:?}, {}:{}", item, file!(), line!()))?;
         plugin_run::run_plugin_container(

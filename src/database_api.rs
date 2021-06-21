@@ -265,6 +265,27 @@ pub fn get_reals_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<Real
     Ok(result)
 }
 
+pub fn check_integer_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: i64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM integers WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
+pub fn check_string_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: &str) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM strings WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
+pub fn check_real_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: f64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM reals WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
 pub fn update_item_base(
     tx: &Tx,
     rowid: Rowid,

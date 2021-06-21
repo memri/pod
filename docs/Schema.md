@@ -57,7 +57,6 @@ Valid types for properties are, at the moment:
 * `Bool` Boolean. Internally, booleans are stored as Integers 0 and 1. This is never exposed
 to the clients, however, and clients should only ever receive/send `true` and `false`.
 * `DateTime` The number of non-leap-milliseconds since 00:00 UTC on January 1, 1970.
-Use this database type to denote DateTime.
 Internally stored as Integer and should be passed as Integer.
 
 All properties of the same case-insensitive name MUST have the same type and indexing.
