@@ -53,30 +53,50 @@ pub fn run_plugin_container(
             cli_options,
         )
     } else {
-        if let Some(plugin_script) = &cli_options.insecure_plugin_script {
-            let split: Vec<&str> = plugin_script.split('=').collect();
-            let plugin_name = split[0];
-            if split.len() > 1 && plugin_name == container {
-                let plugin_path = split[1];
-                return run_python_environment(
-                    &plugin_name,
-                    &plugin_path,
-                    &item,
-                    pod_owner,
-                    &auth,
-                    triggered_by_item_id,
-                    cli_options,
-                );
-            }
+        let insecure_plugin_path = cli_options
+            .insecure_plugin_script
+            .iter()
+            .filter(|(c, _)| c == &container)
+            .map(|(_, path)| path)
+            .next();
+
+        if let Some(insecure_plugin_path) = insecure_plugin_path {
+            run_python_environment(
+                &container,
+                &insecure_plugin_path,
+                &item,
+                pod_owner,
+                &auth,
+                triggered_by_item_id,
+                cli_options,
+            )
+        } else {
+            run_docker_container(
+                &container,
+                &item,
+                pod_owner,
+                &auth,
+                triggered_by_item_id,
+                cli_options,
+            )
         }
-        run_docker_container(
-            &container,
-            &item,
-            pod_owner,
-            &auth,
-            triggered_by_item_id,
-            cli_options,
-        )
+
+        // if let Some(plugin_script) = &cli_options.insecure_plugin_script {
+        //     let split: Vec<&str> = plugin_script.split('=').collect();
+        //     let plugin_name = split[0];
+        //     if split.len() > 1 && plugin_name == container {
+        //         let plugin_path = split[1];
+        //         return run_python_environment(
+        //             &plugin_name,
+        //             &plugin_path,
+        //             &item,
+        //             pod_owner,
+        //             &auth,
+        //             triggered_by_item_id,
+        //             cli_options,
+        //         );
+        //     }
+        // }
     }
 }
 

@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use std::error::Error;
 use std::net::IpAddr;
 use std::path::PathBuf;
 use structopt::clap::AppSettings;
@@ -84,9 +85,11 @@ pub struct CliOptions {
     )]
     pub tls_priv_key: String,
 
-    #[structopt(long, name = "INSECURE_PLUGIN_SCRIPT")]
-    pub insecure_plugin_script: Option<String>,
+    #[structopt(long, parse(try_from_str = parse_key_val), number_of_values=1, name="INSECURE_PLUGIN_SCRIPT")]
+    pub insecure_plugin_script: Vec<(String, String)>,
 
+    // #[structopt(long, name = "INSECURE_PLUGIN_SCRIPT")]
+    // pub insecure_plugin_script: Option<String>,
     /// Do not use https when starting the server, instead run on http://127.0.0.1.
     /// Running on loopback interface (127.0.0.1) means that only apps
     /// from within the same computer will be able to access Pod.
@@ -131,6 +134,19 @@ pub struct CliOptions {
     pub validate_schema: bool,
 }
 
+fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error>>
+where
+    T: std::str::FromStr,
+    T::Err: Error + 'static,
+    U: std::str::FromStr,
+    U::Err: Error + 'static,
+{
+    let pos = s
+        .find('=')
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
+    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
 lazy_static! {
     pub static ref VERSION: String = crate::internal_api::get_project_version();
 }
@@ -154,7 +170,7 @@ pub mod tests {
             use_kubernetes: false,
             plugins_callback_address: None,
             plugins_docker_network: None,
-            insecure_plugin_script: None,
+            insecure_plugin_script: Vec::new(),
             tls_pub_crt: "".to_string(),
             tls_priv_key: "".to_string(),
             non_tls: true,
