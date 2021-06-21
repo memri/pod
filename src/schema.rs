@@ -122,6 +122,11 @@ const POD_ITEM_MANDATORY_PROPERTIES: &[&str] = &[
     "deleted",
     "source",
     "target",
+    "edges",
+    "allEdges",
+    "forwardEdges",
+    "reverseEdges",
+    "backwardEdges",
 ];
 
 /// SQLite keywords taken from https://www.sqlite.org/lang_keywords.html

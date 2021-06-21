@@ -105,6 +105,9 @@ pub enum EdgeDirection {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct EdgeSearch {}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Search {
     pub id: Option<String>,
@@ -118,6 +121,10 @@ pub struct Search {
     pub sort_order: SortOrder,
     #[serde(default = "default_api_limit", rename = "_limit")]
     pub limit: u64,
+    #[serde(rename = "[[edges]]")]
+    pub forward_edges: Option<EdgeSearch>,
+    #[serde(rename = "~[[edges]]")]
+    pub backward_edges: Option<EdgeSearch>,
     #[serde(flatten)]
     pub other_properties: HashMap<String, Value>,
 }
