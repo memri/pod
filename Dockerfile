@@ -38,9 +38,9 @@ COPY --from=cargo-build /usr/src/pod/pod pod
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y libsqlcipher-dev curl && rm -rf /var/lib/apt/lists/*
 ARG use_kubernetes=false
 RUN if [ "$use_kubernetes" = "true" ] ; then \
-      curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
-      && chmod +x ./kubectl  \
-      &&  mv ./kubectl /usr/local/bin/kubectl ; fi
+      curl -LO https://storage.googleapis.com/kubernetes-release/release/"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"/bin/linux/amd64/kubectl \
+      && chmod +x ./kubectl \
+      && mv ./kubectl /usr/local/bin/kubectl ; fi
 
 # Check that library versions match (sqlcipher, libc, etc)
 RUN ./pod --version 1>/dev/null 2>&1
