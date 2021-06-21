@@ -88,7 +88,7 @@ pub fn bulk(
     init_db: &RwLock<HashSet<String>>,
     body: PayloadWrapper<Bulk>,
     cli: &CliOptions,
-) -> Result<()> {
+) -> Result<Value> {
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
