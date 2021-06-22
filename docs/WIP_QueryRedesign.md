@@ -148,7 +148,7 @@ The simplest request with edges, get all of them in a search request:
     {
       "_edge": "friend", // edge name
       "order": 1000,
-      "item": {
+      "_item": {
         "id": "this_friend",
         "age": 15,
         // ...
@@ -157,7 +157,7 @@ The simplest request with edges, get all of them in a search request:
     {
       "_edge": "friend",
       "order": 1001,
-      "item": {
+      "_item": {
         "id": "another_friend",
         "age": 30,
         // ...
@@ -189,7 +189,7 @@ In this example, get friends that are know to you since a specific DateTime ("ol
   "id": "abcde",
   "[[myOldFriends]]": {
     "_edge": "friend",
-    "item": {
+    "_item": {
       "knownSince>=": 12345,
       // ...
     }
@@ -291,12 +291,12 @@ It is thus important to make the simple use case -- simple. Solution proposal:
   "id": "abcde",
   "name": "Bob",
   "[[edges]]": [
-    { "_edge": "father", "item": { /* ... */ } },
-    { "_edge": "friend", "item": { /* ... */ } },
-    { "_edge": "friend", "item": { /* ... */ } },
+    { "_edge": "father", "_item": { /* ... */ } },
+    { "_edge": "friend", "_item": { /* ... */ } },
+    { "_edge": "friend", "_item": { /* ... */ } },
   ],
   "~[[edges]]": [
-    { "_edge": "child", "item": { /* ... */ } },
+    { "_edge": "child", "_item": { /* ... */ } },
   ],
   // ...
 }

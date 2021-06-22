@@ -10,7 +10,7 @@ use crate::database_api;
 use crate::database_api::get_incoming_edges;
 use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
-use crate::database_api::HalfEdge;
+use crate::database_api::EdgeBase;
 use crate::database_utils::check_item_has_all_properties;
 use crate::database_utils::insert_property;
 use crate::database_utils::item_base_to_json;
@@ -233,19 +233,26 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     Ok(self_id)
 }
 
-pub fn half_edges_to_json(tx: &Tx, schema: &Schema, half_edges: &[HalfEdge]) -> Result<Vec<Value>> {
+pub fn edge_base_to_json(tx: &Tx, schema: &Schema, edge: &EdgeBase) -> Result<Value> {
+    let target = database_api::get_item_base(tx, edge.item)?;
+    let target = target.ok_or_else(|| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
+    })?;
+    let target_json = Value::Object(item_base_to_json(tx, target, schema)?);
+    let edge_item = database_api::get_item_base(tx, edge.rowid)?.ok_or_else(|| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Edge does not have an item base, rowid: {}", edge.item),
+    })?;
+    let mut edge_item = item_base_to_json(tx, edge_item, schema)?;
+    edge_item.insert("_edge".to_string(), serde_json::json!(edge.name));
+    edge_item.insert("_item".to_string(), serde_json::json!(target_json));
+    Ok(serde_json::json!(edge_item))
+}
+pub fn edge_bases_to_json(tx: &Tx, schema: &Schema, half_edges: &[EdgeBase]) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for edge in half_edges {
-        let base = database_api::get_item_base(tx, edge.item)?;
-        let base = base.ok_or_else(|| Error {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
-        })?;
-        let item_json = Value::Object(item_base_to_json(tx, base, schema)?);
-        result.push(serde_json::json!({
-            "_edge": edge.name,
-            "item": item_json,
-        }));
+        result.push(edge_base_to_json(tx, schema, edge)?);
     }
     Ok(result)
 }
@@ -309,12 +316,12 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
             let mut object_map = item_base_to_json(tx, item, schema)?;
             if query.forward_edges.is_some() {
                 let edges = get_outgoing_edges(tx, rowid)?;
-                let edges = half_edges_to_json(tx, schema, &edges)?;
+                let edges = edge_bases_to_json(tx, schema, &edges)?;
                 object_map.insert("[[edges]]".to_string(), Value::Array(edges));
             }
             if query.backward_edges.is_some() {
                 let edges = get_incoming_edges(tx, rowid)?;
-                let edges = half_edges_to_json(tx, schema, &edges)?;
+                let edges = edge_bases_to_json(tx, schema, &edges)?;
                 object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
             }
             result.push(Value::Object(object_map));
@@ -535,25 +542,31 @@ mod tests {
         };
 
         // {
-        //     "[[edges]]": [
+        //   "[[edges]]": [
         //     {
-        //         "_edge": "friend",
-        //         "item": {
-        //         "dateCreated": 1624136669383,
-        //         "dateModified": 1624136669383,
-        //         "dateServerModified": 1624136669383,
+        //       "_edge": "friend",
+        //       "_item": {
+        //         "dateCreated": 1624363823546,
+        //         "dateModified": 1624363823546,
+        //         "dateServerModified": 1624363823546,
         //         "deleted": false,
-        //         "id": "c7400db9b575aaf9bfb540f02e4579eb",
+        //         "id": "1539da9dfc14a0467694e79730135df6",
         //         "type": "Person"
+        //       },
+        //       "dateCreated": 1624363823546,
+        //       "dateModified": 1624363823546,
+        //       "dateServerModified": 1624363823546,
+        //       "deleted": false,
+        //       "id": "4ea088d17a670cbb26f4154bce809950",
+        //       "type": "Edge"
         //     }
-        //     }
-        //     ],
-        //     "dateCreated": 1624136669382,
-        //     "dateModified": 1624136669382,
-        //     "dateServerModified": 1624136669382,
-        //     "deleted": false,
-        //     "id": "4b12075489ea2e8a4b017ae8e33fa337",
-        //     "type": "Person"
+        //   ],
+        //   "dateCreated": 1624363823545,
+        //   "dateModified": 1624363823545,
+        //   "dateServerModified": 1624363823545,
+        //   "deleted": false,
+        //   "id": "59dd635884bff1de1c8447ac3763543b",
+        //   "type": "Person"
         // }
 
         let result_id = result.get("id").unwrap().as_str().unwrap();
@@ -567,7 +580,7 @@ mod tests {
             "friend"
         );
 
-        let result_edge_item = result_edge.get("item").unwrap();
+        let result_edge_item = result_edge.get("_item").unwrap();
         let result_edge_item = match result_edge_item {
             Value::Object(i) => i,
             _ => panic!("edge item is not an JSON Object"),
