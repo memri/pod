@@ -268,22 +268,19 @@ pub fn get_reals_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<Real
 pub fn check_integer_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: i64) -> Result<bool> {
     let mut stmt =
         tx.prepare_cached("SELECT 1 FROM integers WHERE item = ? AND name = ? AND value = ? ;")?;
-    let mut rows = stmt.query(params![item_rowid, name, value])?;
-    Ok(rows.next()?.is_some())
+    Ok(stmt.exists(params![item_rowid, name, value])?)
 }
 
 pub fn check_string_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: &str) -> Result<bool> {
     let mut stmt =
         tx.prepare_cached("SELECT 1 FROM strings WHERE item = ? AND name = ? AND value = ? ;")?;
-    let mut rows = stmt.query(params![item_rowid, name, value])?;
-    Ok(rows.next()?.is_some())
+    Ok(stmt.exists(params![item_rowid, name, value])?)
 }
 
 pub fn check_real_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: f64) -> Result<bool> {
     let mut stmt =
         tx.prepare_cached("SELECT 1 FROM reals WHERE item = ? AND name = ? AND value = ? ;")?;
-    let mut rows = stmt.query(params![item_rowid, name, value])?;
-    Ok(rows.next()?.is_some())
+    Ok(stmt.exists(params![item_rowid, name, value])?)
 }
 
 pub fn update_item_base(
@@ -361,31 +358,34 @@ pub fn insert_edge(
     Ok(tx.last_insert_rowid())
 }
 
-pub struct HalfEdge {
+pub struct EdgeBase {
+    pub rowid: i64,
     pub name: String,
     pub item: Rowid,
 }
 
-pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<HalfEdge>> {
-    let mut stmt = tx.prepare_cached("SELECT target, name FROM edges WHERE source = ?;")?;
+pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<EdgeBase>> {
+    let mut stmt = tx.prepare_cached("SELECT self, target, name FROM edges WHERE source = ?;")?;
     let mut rows = stmt.query(params![source])?;
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let item = row.get(0)?;
-        let name = row.get(1)?;
-        result.push(HalfEdge { name, item })
+        let rowid = row.get(0)?;
+        let item = row.get(1)?;
+        let name = row.get(2)?;
+        result.push(EdgeBase { rowid, name, item })
     }
     Ok(result)
 }
 
-pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<HalfEdge>> {
-    let mut stmt = tx.prepare_cached("SELECT source, name FROM edges WHERE target = ?;")?;
+pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<EdgeBase>> {
+    let mut stmt = tx.prepare_cached("SELECT self, source, name FROM edges WHERE target = ?;")?;
     let mut rows = stmt.query(params![target])?;
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let item = row.get(0)?;
-        let name = row.get(1)?;
-        result.push(HalfEdge { name, item })
+        let rowid = row.get(0)?;
+        let item = row.get(1)?;
+        let name = row.get(2)?;
+        result.push(EdgeBase { rowid, name, item })
     }
     Ok(result)
 }
