@@ -276,3 +276,95 @@ fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
     );
     props.insert("deleted".to_string(), item.deleted.into());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::database_api::tests::new_conn;
+    use crate::database_api::tests::random_id;
+    use serde_json::json;
+    use chrono::Utc;
+    use std::ops::Not;
+
+    #[test]
+    fn test_one_property() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let mut schema = database_api::get_schema(&tx).unwrap();
+        schema.property_types.insert("age".to_string(), SchemaPropertyType::Integer);
+        schema.property_types.insert("strength".to_string(), SchemaPropertyType::Real);
+        schema.property_types.insert("myDescription".to_string(), SchemaPropertyType::Text);
+
+        let date = Utc::now().timestamp_millis();
+        let item: Rowid = database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
+
+        assert!(check_item_has_property(&tx, &schema, item, "age", &json!(20))?.not());
+
+        insert_property(&tx, &schema, item, "age", &json!(20))?;
+        assert!(check_item_has_property(&tx, &schema, item, "age", &json!(20))?);
+        assert!(check_item_has_property(&tx, &schema, item, "age", &json!(99))?.not());
+
+        // Checking non-existing property should yield an error, not a successful "no" response
+        assert!(check_item_has_property(&tx, &schema, item, "antiAge", &json!(99)).is_err());
+
+        insert_property(&tx, &schema, item, "strength", &json!(13.5))?;
+        assert!(check_item_has_property(&tx, &schema, item, "strength", &json!(13.5))?);
+
+        insert_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?;
+        assert!(check_item_has_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_all_properties() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let mut schema = database_api::get_schema(&tx).unwrap();
+        schema.property_types.insert("age".to_string(), SchemaPropertyType::Integer);
+        schema.property_types.insert("strength".to_string(), SchemaPropertyType::Real);
+        schema.property_types.insert("myDescription".to_string(), SchemaPropertyType::Text);
+
+        let date = Utc::now().timestamp_millis();
+        let item: Rowid = database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
+
+        insert_property(&tx, &schema, item, "age", &json!(20))?;
+        insert_property(&tx, &schema, item, "strength", &json!(13.5))?;
+        insert_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?;
+
+        {
+            let mut props = HashMap::new();
+            props.insert("age".to_string(), json!(20));
+            props.insert("strength".to_string(), json!(13.5));
+            props.insert("myDescription".to_string(), json!("Wow such person"));
+            assert!(check_item_has_all_properties(&tx, &schema, item, &props)?);
+        }
+
+        {
+            let mut props = HashMap::new();
+            props.insert("age".to_string(), json!(20));
+            assert!(check_item_has_all_properties(&tx, &schema, item, &props)?);
+        }
+
+        {
+            let mut props = HashMap::new();
+            props.insert("age".to_string(), json!(99999999));
+            props.insert("strength".to_string(), json!(13.5));
+            assert!(check_item_has_all_properties(&tx, &schema, item, &props)?.not());
+        }
+
+        {
+            let mut props = HashMap::new();
+            props.insert("antiAge".to_string(), json!(-200000000));
+            assert!(check_item_has_all_properties(&tx, &schema, item, &props).is_err());
+        }
+
+        {
+            let props = HashMap::new();
+            assert!(check_item_has_all_properties(&tx, &schema, item, &props)?);
+        }
+
+        Ok(())
+    }
+
+}

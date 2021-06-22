@@ -328,24 +328,15 @@ mod tests {
     use crate::api_model::CreateItem;
     use crate::command_line_interface;
     use crate::database_api;
-    use crate::database_migrate_refinery;
     use crate::error::Result;
     use crate::internal_api;
     use crate::internal_api::*;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
-    use rusqlite::Connection;
+    use crate::database_api::tests::new_conn;
     use serde_json::json;
     use std::collections::HashMap;
     use warp::hyper::StatusCode;
-
-    fn new_conn() -> Connection {
-        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
-        database_migrate_refinery::embedded::migrations::runner()
-            .run(&mut conn)
-            .expect("Failed to run refinery migrations");
-        conn
-    }
 
     #[test]
     fn test_schema_checking() -> Result<()> {

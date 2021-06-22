@@ -191,11 +191,10 @@ mod tests {
     use super::upload_file;
     use crate::command_line_interface;
     use crate::database_api;
-    use crate::database_migrate_refinery;
+    use crate::database_api::tests::new_conn;
     use crate::error::Result;
     use crate::internal_api;
     use crate::plugin_auth_crypto::DatabaseKey;
-    use rusqlite::Connection;
     use serde_json::json;
 
     #[test]
@@ -223,13 +222,5 @@ mod tests {
         assert_eq!(result.len(), 0, "{}:{}", file!(), line!());
         std::fs::remove_dir_all(owner_dir).ok();
         Ok(())
-    }
-
-    fn new_conn() -> Connection {
-        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
-        database_migrate_refinery::embedded::migrations::runner()
-            .run(&mut conn)
-            .expect("Failed to run refinery migrations");
-        conn
     }
 }
