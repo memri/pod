@@ -135,20 +135,20 @@ pub fn check_item_has_property(
             if let Some(value) = n.as_i64() {
                 database_api::check_integer_exists(tx, rowid, name, value)
             } else {
-                return Err(Error {
+                Err(Error {
                     code: StatusCode::BAD_REQUEST,
                     msg: format!("Failed to parse JSON number {} to i64 ({})", n, name),
-                });
+                })
             }
         }
         Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
             if let Some(value) = n.as_f64() {
                 database_api::check_real_exists(tx, rowid, name, value)
             } else {
-                return Err(Error {
+                Err(Error {
                     code: StatusCode::BAD_REQUEST,
                     msg: format!("Failed to parse JSON number {} to f64 ({})", n, name),
-                });
+                })
             }
         }
         Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
@@ -161,17 +161,17 @@ pub fn check_item_has_property(
                 warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
                 database_api::check_integer_exists(tx, rowid, name, float.round() as i64)
             } else {
-                return Err(Error {
+                Err(Error {
                     code: StatusCode::BAD_REQUEST,
                     msg: format!(
                         "Failed to parse JSON number {} to DateTime ({}), use i64 number instead",
                         n, name
                     ),
-                });
+                })
             }
         }
         _ => {
-            return Err(Error {
+            Err(Error {
                 code: StatusCode::BAD_REQUEST,
                 msg: format!(
                     "Failed to parse json value {} to {:?} ({})",
