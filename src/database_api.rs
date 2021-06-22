@@ -729,7 +729,6 @@ pub mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let date = Utc::now().timestamp_millis();
-        // let item = insert_item_base(&tx, "one", "Person", date, date, date, false)?;
 
         let item: Rowid = insert_item_base(
             &tx,
@@ -749,7 +748,7 @@ pub mod tests {
 
         // The property should have a String value,
         // so normally this would be a schema check error.
-        // However, database_api is is the lowest layer and it's unaware of schemas.
+        // However, database_api is the lowest layer and it's unaware of schemas.
         // The result is a successful check with the result "no, such integer value is not found")
         assert!(check_integer_exists(&tx, item, "itemType", 1)?.not());
         assert!(check_real_exists(&tx, item, "itemType", 1.)?.not());
