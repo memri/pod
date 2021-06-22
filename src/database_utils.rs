@@ -282,8 +282,8 @@ mod tests {
     use super::*;
     use crate::database_api::tests::new_conn;
     use crate::database_api::tests::random_id;
-    use serde_json::json;
     use chrono::Utc;
+    use serde_json::json;
     use std::ops::Not;
 
     #[test]
@@ -291,27 +291,58 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let mut schema = database_api::get_schema(&tx).unwrap();
-        schema.property_types.insert("age".to_string(), SchemaPropertyType::Integer);
-        schema.property_types.insert("strength".to_string(), SchemaPropertyType::Real);
-        schema.property_types.insert("myDescription".to_string(), SchemaPropertyType::Text);
+        schema
+            .property_types
+            .insert("age".to_string(), SchemaPropertyType::Integer);
+        schema
+            .property_types
+            .insert("strength".to_string(), SchemaPropertyType::Real);
+        schema
+            .property_types
+            .insert("myDescription".to_string(), SchemaPropertyType::Text);
 
         let date = Utc::now().timestamp_millis();
-        let item: Rowid = database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
+        let item: Rowid =
+            database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
 
         assert!(check_item_has_property(&tx, &schema, item, "age", &json!(20))?.not());
 
         insert_property(&tx, &schema, item, "age", &json!(20))?;
-        assert!(check_item_has_property(&tx, &schema, item, "age", &json!(20))?);
+        assert!(check_item_has_property(
+            &tx,
+            &schema,
+            item,
+            "age",
+            &json!(20)
+        )?);
         assert!(check_item_has_property(&tx, &schema, item, "age", &json!(99))?.not());
 
         // Checking non-existing property should yield an error, not a successful "no" response
         assert!(check_item_has_property(&tx, &schema, item, "antiAge", &json!(99)).is_err());
 
         insert_property(&tx, &schema, item, "strength", &json!(13.5))?;
-        assert!(check_item_has_property(&tx, &schema, item, "strength", &json!(13.5))?);
+        assert!(check_item_has_property(
+            &tx,
+            &schema,
+            item,
+            "strength",
+            &json!(13.5)
+        )?);
 
-        insert_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?;
-        assert!(check_item_has_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?);
+        insert_property(
+            &tx,
+            &schema,
+            item,
+            "myDescription",
+            &json!("Wow such person"),
+        )?;
+        assert!(check_item_has_property(
+            &tx,
+            &schema,
+            item,
+            "myDescription",
+            &json!("Wow such person")
+        )?);
 
         Ok(())
     }
@@ -321,16 +352,29 @@ mod tests {
         let mut conn = new_conn();
         let tx = conn.transaction()?;
         let mut schema = database_api::get_schema(&tx).unwrap();
-        schema.property_types.insert("age".to_string(), SchemaPropertyType::Integer);
-        schema.property_types.insert("strength".to_string(), SchemaPropertyType::Real);
-        schema.property_types.insert("myDescription".to_string(), SchemaPropertyType::Text);
+        schema
+            .property_types
+            .insert("age".to_string(), SchemaPropertyType::Integer);
+        schema
+            .property_types
+            .insert("strength".to_string(), SchemaPropertyType::Real);
+        schema
+            .property_types
+            .insert("myDescription".to_string(), SchemaPropertyType::Text);
 
         let date = Utc::now().timestamp_millis();
-        let item: Rowid = database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
+        let item: Rowid =
+            database_api::insert_item_base(&tx, &random_id(), "Person", date, date, date, false)?;
 
         insert_property(&tx, &schema, item, "age", &json!(20))?;
         insert_property(&tx, &schema, item, "strength", &json!(13.5))?;
-        insert_property(&tx, &schema, item, "myDescription", &json!("Wow such person"))?;
+        insert_property(
+            &tx,
+            &schema,
+            item,
+            "myDescription",
+            &json!("Wow such person"),
+        )?;
 
         {
             let mut props = HashMap::new();
@@ -366,5 +410,4 @@ mod tests {
 
         Ok(())
     }
-
 }

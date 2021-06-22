@@ -328,12 +328,12 @@ mod tests {
     use crate::api_model::CreateItem;
     use crate::command_line_interface;
     use crate::database_api;
+    use crate::database_api::tests::new_conn;
     use crate::error::Result;
     use crate::internal_api;
     use crate::internal_api::*;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
-    use crate::database_api::tests::new_conn;
     use serde_json::json;
     use std::collections::HashMap;
     use warp::hyper::StatusCode;
