@@ -265,6 +265,27 @@ pub fn get_reals_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<Real
     Ok(result)
 }
 
+pub fn check_integer_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: i64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM integers WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
+pub fn check_string_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: &str) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM strings WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
+pub fn check_real_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: f64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM reals WHERE item = ? AND name = ? AND value = ? ;")?;
+    let mut rows = stmt.query(params![item_rowid, name, value])?;
+    Ok(rows.next()?.is_some())
+}
+
 pub fn update_item_base(
     tx: &Tx,
     rowid: Rowid,
@@ -443,14 +464,15 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::super::database_migrate_refinery;
     use super::super::error::Result;
     use super::*;
     use chrono::Utc;
     use rusqlite::Connection;
+    use std::ops::Not;
 
-    fn new_conn() -> Connection {
+    pub fn new_conn() -> Connection {
         let mut conn = rusqlite::Connection::open_in_memory().unwrap();
         database_migrate_refinery::embedded::migrations::runner()
             .run(&mut conn)
@@ -458,7 +480,7 @@ mod tests {
         conn
     }
 
-    fn random_id() -> String {
+    pub fn random_id() -> String {
         rand::random::<i64>().to_string()
     }
 
@@ -699,6 +721,38 @@ mod tests {
             .len(),
             1,
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_property_checks() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
+
+        let item: Rowid = insert_item_base(
+            &tx,
+            &random_id(),
+            "ItemPropertySchema",
+            date,
+            date,
+            date,
+            false,
+        )?;
+        insert_string(&tx, item, "itemType", "Person")?;
+        insert_string(&tx, item, "propertyName", "age")?;
+        insert_string(&tx, item, "valueType", "integer")?;
+
+        assert!(check_string_exists(&tx, item, "itemType", "Person")?);
+        assert!(check_string_exists(&tx, item, "itemType", "Person2")?.not());
+
+        // The property should have a String value,
+        // so normally this would be a schema check error.
+        // However, database_api is the lowest layer and it's unaware of schemas.
+        // The result is a successful check with the result "no, such integer value is not found")
+        assert!(check_integer_exists(&tx, item, "itemType", 1)?.not());
+        assert!(check_real_exists(&tx, item, "itemType", 1.)?.not());
+
         Ok(())
     }
 }

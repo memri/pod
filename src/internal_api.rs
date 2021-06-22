@@ -11,25 +11,20 @@ use crate::database_api::get_incoming_edges;
 use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
 use crate::database_api::HalfEdge;
-use crate::database_api::IntegersNameValue;
-use crate::database_api::ItemBase;
-use crate::database_api::RealsNameValue;
-use crate::database_api::Rowid;
-use crate::database_api::StringsNameValue;
+use crate::database_utils::check_item_has_all_properties;
+use crate::database_utils::insert_property;
+use crate::database_utils::item_base_to_json;
 use crate::error::Error;
 use crate::error::Result;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
-use crate::schema::SchemaPropertyType;
 use crate::triggers;
 use chrono::Utc;
 use log::info;
-use log::warn;
 use rand::Rng;
 use rusqlite::Transaction as Tx;
-use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
@@ -41,77 +36,6 @@ pub fn get_project_version() -> String {
         "git_describe": std::option_env!("GIT_DESCRIBE")
     })
     .to_string()
-}
-
-/// Get all properties that the item has, ignoring those
-/// that exist in the DB but are not defined in the Schema
-pub fn get_item_properties(tx: &Tx, rowid: i64, schema: &Schema) -> Result<Map<String, Value>> {
-    let mut json = serde_json::Map::new();
-
-    for IntegersNameValue { name, value } in database_api::get_integers_records_for_item(tx, rowid)?
-    {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Bool) => {
-                json.insert(name, (value == 1).into());
-            }
-            Some(SchemaPropertyType::DateTime) | Some(SchemaPropertyType::Integer) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        };
-    }
-
-    for StringsNameValue { name, value } in database_api::get_strings_records_for_item(tx, rowid)? {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Text) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        }
-    }
-
-    for RealsNameValue { name, value } in database_api::get_reals_records_for_item(tx, rowid)? {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Real) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        };
-    }
-
-    Ok(json)
-}
-
-pub fn get_item_from_rowid(tx: &Tx, schema: &Schema, rowid: Rowid) -> Result<Value> {
-    let item = database_api::get_item_base(tx, rowid)?;
-    let item = item.ok_or_else(|| Error {
-        code: StatusCode::INTERNAL_SERVER_ERROR,
-        msg: format!("Item rowid {} not found right after inserting", rowid),
-    })?;
-    let mut props = get_item_properties(tx, rowid, schema)?;
-    add_item_base_properties(&mut props, item);
-    Ok(Value::Object(props))
 }
 
 pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
@@ -143,77 +67,6 @@ pub fn new_random_item_id() -> String {
             DEFAULT_ITEM_ID_CHARSET[idx] as char
         })
         .collect()
-}
-
-fn insert_property(tx: &Tx, schema: &Schema, rowid: i64, name: &str, json: &Value) -> Result<()> {
-    let dbtype = if let Some(t) = schema.property_types.get(name) {
-        t
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Property {} not defined in Schema (attempted to use it for json value {})",
-                name, json,
-            ),
-        });
-    };
-    database_api::delete_property(tx, rowid, name)?;
-
-    match json {
-        Value::Null => (),
-        Value::String(value) if dbtype == &SchemaPropertyType::Text => {
-            database_api::insert_string(tx, rowid, name, value)?
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
-            if let Some(value) = n.as_i64() {
-                database_api::insert_integer(tx, rowid, name, value)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, name),
-                });
-            }
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
-            if let Some(value) = n.as_f64() {
-                database_api::insert_real(tx, rowid, name, value)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, name),
-                });
-            }
-        }
-        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
-            database_api::insert_integer(tx, rowid, name, if *b { 1 } else { 0 })?
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
-            if let Some(value) = n.as_i64() {
-                database_api::insert_integer(tx, rowid, name, value)?
-            } else if let Some(float) = n.as_f64() {
-                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
-                database_api::insert_integer(tx, rowid, name, float.round() as i64)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!(
-                        "Failed to parse JSON number {} to DateTime ({}), use i64 number instead",
-                        n, name
-                    ),
-                });
-            }
-        }
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!(
-                    "Failed to parse json value {} to {:?} ({})",
-                    json, dbtype, name
-                ),
-            })
-        }
-    };
-    Ok(())
 }
 
 pub fn create_item_tx(
@@ -364,24 +217,6 @@ pub fn bulk_tx(
     Ok(result)
 }
 
-fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Map<String, Value>> {
-    let mut props = get_item_properties(tx, item.rowid, schema)?;
-    add_item_base_properties(&mut props, item);
-    Ok(props)
-}
-
-fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
-    props.insert("id".to_string(), item.id.into());
-    props.insert("type".to_string(), item._type.into());
-    props.insert("dateCreated".to_string(), item.date_created.into());
-    props.insert("dateModified".to_string(), item.date_modified.into());
-    props.insert(
-        "dateServerModified".to_string(),
-        item.date_server_modified.into(),
-    );
-    props.insert("deleted".to_string(), item.deleted.into());
-}
-
 pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     let date = Utc::now().timestamp_millis();
     let self_id = new_random_item_id();
@@ -451,15 +286,10 @@ pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>
 pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     info!("Searching by fields {:?}", query);
     if !query.other_properties.is_empty() {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Cannot search by non-base properties: {:?}. \
-                    In the future we will allow searching for other properties. \
-                    See HTTP_API.md for details.",
-                query.other_properties.keys()
-            ),
-        });
+        log::trace!(
+            "Doing a slow search request using non-base properties {:?}",
+            query.other_properties.keys()
+        );
     }
     let database_search = DatabaseSearch {
         rowid: None,
@@ -475,18 +305,20 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for item in items {
         let rowid = item.rowid;
-        let mut object_map = item_base_to_json(tx, item, schema)?;
-        if query.forward_edges.is_some() {
-            let edges = get_outgoing_edges(tx, rowid)?;
-            let edges = half_edges_to_json(tx, schema, &edges)?;
-            object_map.insert("[[edges]]".to_string(), Value::Array(edges));
+        if check_item_has_all_properties(tx, schema, rowid, &query.other_properties)? {
+            let mut object_map = item_base_to_json(tx, item, schema)?;
+            if query.forward_edges.is_some() {
+                let edges = get_outgoing_edges(tx, rowid)?;
+                let edges = half_edges_to_json(tx, schema, &edges)?;
+                object_map.insert("[[edges]]".to_string(), Value::Array(edges));
+            }
+            if query.backward_edges.is_some() {
+                let edges = get_incoming_edges(tx, rowid)?;
+                let edges = half_edges_to_json(tx, schema, &edges)?;
+                object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
+            }
+            result.push(Value::Object(object_map));
         }
-        if query.backward_edges.is_some() {
-            let edges = get_incoming_edges(tx, rowid)?;
-            let edges = half_edges_to_json(tx, schema, &edges)?;
-            object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
-        }
-        result.push(Value::Object(object_map));
     }
     Ok(result)
 }
@@ -496,24 +328,15 @@ mod tests {
     use crate::api_model::CreateItem;
     use crate::command_line_interface;
     use crate::database_api;
-    use crate::database_migrate_refinery;
+    use crate::database_api::tests::new_conn;
     use crate::error::Result;
     use crate::internal_api;
     use crate::internal_api::*;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
-    use rusqlite::Connection;
     use serde_json::json;
     use std::collections::HashMap;
     use warp::hyper::StatusCode;
-
-    fn new_conn() -> Connection {
-        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
-        database_migrate_refinery::embedded::migrations::runner()
-            .run(&mut conn)
-            .expect("Failed to run refinery migrations");
-        conn
-    }
 
     #[test]
     fn test_schema_checking() -> Result<()> {
