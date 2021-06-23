@@ -218,7 +218,12 @@ pub fn bulk_tx(
 }
 
 pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
-    let CreateEdge { source, target, name, self_id } = query;
+    let CreateEdge {
+        source,
+        target,
+        name,
+        self_id,
+    } = query;
     let (self_rowid, self_id) = if let Some(id) = self_id {
         let self_rowid = database_api::get_item_rowid(tx, &id)?.ok_or_else(|| Error {
             code: StatusCode::BAD_REQUEST,
@@ -228,7 +233,8 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     } else {
         let date = Utc::now().timestamp_millis();
         let self_id = new_random_item_id();
-        let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
+        let self_rowid =
+            database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
         (self_rowid, self_id)
     };
 
