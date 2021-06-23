@@ -10,8 +10,9 @@ use crate::database_api;
 use crate::database_api::get_incoming_edges;
 use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
-use crate::database_api::EdgeBase;
+use crate::database_api::EdgePointer;
 use crate::database_api::Rowid;
+use crate::database_utils::add_item_edge_properties;
 use crate::database_utils::check_item_has_all_properties;
 use crate::database_utils::insert_property;
 use crate::database_utils::item_base_to_json;
@@ -253,7 +254,7 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
     Ok(self_id)
 }
 
-pub fn edge_base_to_json(tx: &Tx, schema: &Schema, edge: &EdgeBase) -> Result<Value> {
+pub fn edge_pointer_to_json(tx: &Tx, schema: &Schema, edge: &EdgePointer) -> Result<Value> {
     let target = database_api::get_item_base(tx, edge.item)?;
     let target = target.ok_or_else(|| Error {
         code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -269,10 +270,14 @@ pub fn edge_base_to_json(tx: &Tx, schema: &Schema, edge: &EdgeBase) -> Result<Va
     edge_item.insert("_item".to_string(), serde_json::json!(target_json));
     Ok(serde_json::json!(edge_item))
 }
-pub fn edge_bases_to_json(tx: &Tx, schema: &Schema, half_edges: &[EdgeBase]) -> Result<Vec<Value>> {
+pub fn edge_pointers_to_json(
+    tx: &Tx,
+    schema: &Schema,
+    half_edges: &[EdgePointer],
+) -> Result<Vec<Value>> {
     let mut result = Vec::new();
     for edge in half_edges {
-        result.push(edge_base_to_json(tx, schema, edge)?);
+        result.push(edge_pointer_to_json(tx, schema, edge)?);
     }
     Ok(result)
 }
@@ -334,14 +339,15 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
         let rowid = item.rowid;
         if check_item_has_all_properties(tx, schema, rowid, &query.other_properties)? {
             let mut object_map = item_base_to_json(tx, item, schema)?;
+            add_item_edge_properties(tx, &mut object_map, rowid)?;
             if query.forward_edges.is_some() {
                 let edges = get_outgoing_edges(tx, rowid)?;
-                let edges = edge_bases_to_json(tx, schema, &edges)?;
+                let edges = edge_pointers_to_json(tx, schema, &edges)?;
                 object_map.insert("[[edges]]".to_string(), Value::Array(edges));
             }
             if query.backward_edges.is_some() {
                 let edges = get_incoming_edges(tx, rowid)?;
-                let edges = edge_bases_to_json(tx, schema, &edges)?;
+                let edges = edge_pointers_to_json(tx, schema, &edges)?;
                 object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
             }
             result.push(Value::Object(object_map));
