@@ -11,6 +11,7 @@ use crate::database_api::get_incoming_edges;
 use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
 use crate::database_api::EdgeBase;
+use crate::database_api::Rowid;
 use crate::database_utils::check_item_has_all_properties;
 use crate::database_utils::insert_property;
 use crate::database_utils::item_base_to_json;
@@ -224,6 +225,8 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
         name,
         self_id,
     } = query;
+    let date = Utc::now().timestamp_millis();
+
     let (self_rowid, self_id) = if let Some(id) = self_id {
         let self_rowid = database_api::get_item_rowid(tx, &id)?.ok_or_else(|| Error {
             code: StatusCode::BAD_REQUEST,
@@ -231,22 +234,22 @@ pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
         })?;
         (self_rowid, id)
     } else {
-        let date = Utc::now().timestamp_millis();
         let self_id = new_random_item_id();
         let self_rowid =
             database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
         (self_rowid, self_id)
     };
 
-    let source = database_api::get_item_rowid(tx, &source)?.ok_or_else(|| Error {
+    let source: Rowid = database_api::get_item_rowid(tx, &source)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
         msg: format!("Edge source not found: {}", source),
     })?;
-    let target = database_api::get_item_rowid(tx, &target)?.ok_or_else(|| Error {
+    let target: Rowid = database_api::get_item_rowid(tx, &target)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
         msg: format!("Edge target not found: {}", target),
     })?;
     database_api::insert_edge(tx, self_rowid, source, &name, target)?;
+    database_api::update_item_date_server_modified(tx, source, date)?;
     Ok(self_id)
 }
 
