@@ -218,18 +218,29 @@ pub fn bulk_tx(
 }
 
 pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
-    let date = Utc::now().timestamp_millis();
-    let self_id = new_random_item_id();
-    let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
-    let source = database_api::get_item_rowid(tx, &query.source)?.ok_or_else(|| Error {
+    let CreateEdge { source, target, name, self_id } = query;
+    let (self_rowid, self_id) = if let Some(id) = self_id {
+        let self_rowid = database_api::get_item_rowid(tx, &id)?.ok_or_else(|| Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to create edge with _self: {}", id),
+        })?;
+        (self_rowid, id)
+    } else {
+        let date = Utc::now().timestamp_millis();
+        let self_id = new_random_item_id();
+        let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
+        (self_rowid, self_id)
+    };
+
+    let source = database_api::get_item_rowid(tx, &source)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
-        msg: format!("Edge source not found: {}", query.source),
+        msg: format!("Edge source not found: {}", source),
     })?;
-    let target = database_api::get_item_rowid(tx, &query.target)?.ok_or_else(|| Error {
+    let target = database_api::get_item_rowid(tx, &target)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
-        msg: format!("Edge target not found: {}", query.target),
+        msg: format!("Edge target not found: {}", target),
     })?;
-    database_api::insert_edge(tx, self_rowid, source, &query.name, target)?;
+    database_api::insert_edge(tx, self_rowid, source, &name, target)?;
     Ok(self_id)
 }
 

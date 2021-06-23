@@ -91,6 +91,8 @@ pub struct CreateEdge {
     pub target: String,
     #[serde(rename = "_name")]
     pub name: String,
+    #[serde(default, rename = "_self")]
+    pub self_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
