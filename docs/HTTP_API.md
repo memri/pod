@@ -214,13 +214,18 @@ Returns an array empty array if either the element does not exist or if it has n
   "payload": {
     "_source": "$source_id", /* Source item id */
     "_target": "$target_id", /* Target item id */
-    "_name": "$edge_name"  /* Text name. For example: "entry" (in a list), "friend" (for a Person), etc */
+    "_name": "$edge_name",  /* Text name. For example: "entry" (in a list), "friend" (for a Person), etc */
+    "_self": "$self_id", /* Optional field to specify the "self" id to link to, see below */
     // Edge properties will be supported in the future
   }
 }
 ```
 Create a single edge from an already existing item to another already existing item.
 (Reminder: edges are always directed.)
+
+If the `_self` field is specified in the request, the edge will be wired to an already
+existing item. For Plugins this functionality is currently undocumented and advised not to be used.
+For Clients, see "edges" table definition.
 
 An error will be returned if the edge already exists.
 An error will be returned if source item or target item do not exist.
