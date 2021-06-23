@@ -283,6 +283,13 @@ pub fn check_real_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: f64) -> 
     Ok(stmt.exists(params![item_rowid, name, value])?)
 }
 
+pub fn update_item_date_server_modified(tx: &Tx, rowid: Rowid, date: DbTime) -> Result<()> {
+    let sql = "UPDATE items SET dateServerModified = ? WHERE rowid = ?;";
+    let mut stmt = tx.prepare_cached(sql)?;
+    stmt.execute(params![date, rowid])?;
+    Ok(())
+}
+
 pub fn update_item_base(
     tx: &Tx,
     rowid: Rowid,
