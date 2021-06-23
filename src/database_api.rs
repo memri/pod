@@ -366,12 +366,36 @@ pub fn insert_edge(
 }
 
 pub struct EdgeBase {
-    pub rowid: i64,
+    pub rowid: Rowid,
+    pub name: String,
+    pub source: Rowid,
+    pub target: Rowid,
+}
+
+/// Edge pointer, either for outgoing edge or for incoming edge.
+/// `item` is essentially either `source` or `target`, depending on the direction.
+pub struct EdgePointer {
+    pub rowid: Rowid,
     pub name: String,
     pub item: Rowid,
 }
 
-pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<EdgeBase>> {
+pub fn get_self_edge(tx: &Tx, self_rowid: Rowid) -> Result<Option<EdgeBase>> {
+    let mut stmt = tx.prepare_cached("SELECT source, name, target FROM edges WHERE self = ?;")?;
+    let mut rows = stmt.query(params![self_rowid])?;
+    if let Some(row) = rows.next()? {
+        Ok(Some(EdgeBase {
+            rowid: self_rowid,
+            source: row.get(0)?,
+            name: row.get(1)?,
+            target: row.get(2)?,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<EdgePointer>> {
     let mut stmt = tx.prepare_cached("SELECT self, target, name FROM edges WHERE source = ?;")?;
     let mut rows = stmt.query(params![source])?;
     let mut result = Vec::new();
@@ -379,12 +403,12 @@ pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<EdgeBase>> {
         let rowid = row.get(0)?;
         let item = row.get(1)?;
         let name = row.get(2)?;
-        result.push(EdgeBase { rowid, name, item })
+        result.push(EdgePointer { rowid, name, item })
     }
     Ok(result)
 }
 
-pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<EdgeBase>> {
+pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<EdgePointer>> {
     let mut stmt = tx.prepare_cached("SELECT self, source, name FROM edges WHERE target = ?;")?;
     let mut rows = stmt.query(params![target])?;
     let mut result = Vec::new();
@@ -392,7 +416,7 @@ pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<EdgeBase>> {
         let rowid = row.get(0)?;
         let item = row.get(1)?;
         let name = row.get(2)?;
-        result.push(EdgeBase { rowid, name, item })
+        result.push(EdgePointer { rowid, name, item })
     }
     Ok(result)
 }

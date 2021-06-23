@@ -265,6 +265,35 @@ pub fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Map
     Ok(props)
 }
 
+pub fn add_item_edge_properties(
+    tx: &Tx,
+    props: &mut Map<String, Value>,
+    rowid: Rowid,
+) -> Result<()> {
+    if let Some(edge_self) = database_api::get_self_edge(tx, rowid)? {
+        let source_base =
+            database_api::get_item_base(tx, edge_self.source)?.ok_or_else(|| Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR,
+                msg: format!(
+                    "Edge {} connects to non-existing source {}",
+                    rowid, edge_self.source
+                ),
+            })?;
+        let target_base =
+            database_api::get_item_base(tx, edge_self.target)?.ok_or_else(|| Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR,
+                msg: format!(
+                    "Edge {} connects to non-existing target {}",
+                    rowid, edge_self.target
+                ),
+            })?;
+        props.insert("_source".to_string(), Value::String(source_base.id));
+        props.insert("_target".to_string(), Value::String(target_base.id));
+        props.insert("_edge".to_string(), Value::String(edge_self.name));
+    }
+    Ok(())
+}
+
 fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
     props.insert("id".to_string(), item.id.into());
     props.insert("type".to_string(), item._type.into());
