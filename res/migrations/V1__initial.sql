@@ -62,16 +62,16 @@ CREATE        INDEX idx_reals_name_item on reals(name, item);
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(1, "ad61e2770eb64d81a3ddfa03fa5f887f", "ItemPropertySchema", 0, 0, 0, 0);
 INSERT INTO strings(item, name, value) VALUES(1, "itemType", "ItemPropertySchema");
 INSERT INTO strings(item, name, value) VALUES(1, "propertyName", "itemType");
-INSERT INTO strings(item, name, value) VALUES(1, "valueType", "text");
+INSERT INTO strings(item, name, value) VALUES(1, "valueType", "Text");
 
 -- Items of type "ItemPropertySchema" have property "propertyName" (text)
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(2, "7bce841921beb3295634b224bc75a990", "ItemPropertySchema", 0, 0, 0, 0);
 INSERT INTO strings(item, name, value) VALUES(2, "itemType", "ItemPropertySchema");
 INSERT INTO strings(item, name, value) VALUES(2, "propertyName", "propertyName");
-INSERT INTO strings(item, name, value) VALUES(2, "valueType", "text");
+INSERT INTO strings(item, name, value) VALUES(2, "valueType", "Text");
 
 -- Items of type "ItemPropertySchema" have property "valueType" (text)
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(3, "791427a0571e394d1f29cb63ee77e5", "ItemPropertySchema", 0, 0, 0, 0);
 INSERT INTO strings(item, name, value) VALUES(3, "itemType", "ItemPropertySchema");
 INSERT INTO strings(item, name, value) VALUES(3, "propertyName", "valueType");
-INSERT INTO strings(item, name, value) VALUES(3, "valueType", "text");
+INSERT INTO strings(item, name, value) VALUES(3, "valueType", "Text");

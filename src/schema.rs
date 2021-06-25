@@ -27,13 +27,12 @@ impl std::fmt::Display for SchemaPropertyType {
 
 impl SchemaPropertyType {
     pub fn from_string(str: &str) -> std::result::Result<SchemaPropertyType, String> {
-        let str = str.to_lowercase();
-        match str.as_ref() {
-            "text" => Ok(SchemaPropertyType::Text),
-            "integer" => Ok(SchemaPropertyType::Integer),
-            "real" => Ok(SchemaPropertyType::Real),
-            "bool" => Ok(SchemaPropertyType::Bool),
-            "datetime" => Ok(SchemaPropertyType::DateTime),
+        match str {
+            "Text" => Ok(SchemaPropertyType::Text),
+            "Integer" => Ok(SchemaPropertyType::Integer),
+            "Real" => Ok(SchemaPropertyType::Real),
+            "Bool" => Ok(SchemaPropertyType::Bool),
+            "DateTime" => Ok(SchemaPropertyType::DateTime),
             _ => Err(format!(
                 "Failed to parse {} into {}",
                 str,
