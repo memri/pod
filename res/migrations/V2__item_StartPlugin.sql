@@ -13,7 +13,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "8c914705a392432381561db94da76ad9"),
-    "valueType", "text"
+    "valueType", "Text"
 );
 
 -- Items of type "PluginRun" have property "targetItemId" (text)
@@ -31,5 +31,5 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "5f43d3c0120c4f0cac3c98b8129c9cb7"),
-    "valueType", "text"
+    "valueType", "Text"
 );

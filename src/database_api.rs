@@ -577,7 +577,7 @@ pub mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "age")?;
-        insert_string(&tx, item, "valueType", "integer")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
 
         let item = insert_item_base(
             &tx,
@@ -590,7 +590,7 @@ pub mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "name")?;
-        insert_string(&tx, item, "valueType", "text")?;
+        insert_string(&tx, item, "valueType", "Text")?;
 
         let schema = get_schema(&tx)?;
         assert_eq!(
@@ -621,7 +621,7 @@ pub mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "age")?;
-        insert_string(&tx, item, "valueType", "integer")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
 
         assert_eq!(
             search_items_params(&tx, Some(item), None, None, None, None, None)?.len(),
@@ -772,7 +772,7 @@ pub mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "age")?;
-        insert_string(&tx, item, "valueType", "integer")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
 
         assert!(check_string_exists(&tx, item, "itemType", "Person")?);
         assert!(check_string_exists(&tx, item, "itemType", "Person2")?.not());
