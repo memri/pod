@@ -43,10 +43,10 @@ pub async fn run_server(cli_options: CliOptions) {
     }
     let headers = warp::reply::with::headers(headers);
 
-    let items_api = warp::path("v3")
+    let items_api = warp::path("v4")
         .and(warp::body::content_length_limit(5 * 1024 * 1024))
         .and(warp::post());
-    let file_api = warp::path("v3")
+    let file_api = warp::path("v4")
         .and(warp::body::content_length_limit(500 * 1024 * 1024))
         .and(warp::post());
 
@@ -124,7 +124,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .map(move |owner: String, body: PayloadWrapper<Bulk>| {
             let cli = cli_options_arc_clone.deref();
             let result = warp_endpoints::bulk(owner, init_db.deref(), body, cli);
-            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            let result = result.map(|value| warp::reply::json(&value));
             respond_with_result(result)
         });
 

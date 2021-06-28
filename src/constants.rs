@@ -1,7 +1,7 @@
 // Constants used in the project. These are "convention over configuration" for now.
 
 pub const DATABASE_DIR: &str = "./data/db";
-pub const DATABASE_SUFFIX: &str = ".db3";
+pub const DATABASE_SUFFIX: &str = ".v4.1.sqlite";
 
 pub const FILES_DIR: &str = "./data/files";
 /// Directory where fully uploaded and hash-checked files are stored

@@ -6,12 +6,12 @@
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(19000, "id-person-age", "ItemPropertySchema", 0, 0, 0, 0);
 INSERT INTO strings(item, name, value) VALUES(19000, "itemType", "Person");
 INSERT INTO strings(item, name, value) VALUES(19000, "propertyName", "age");
-INSERT INTO strings(item, name, value) VALUES(19000, "valueType", "integer");
+INSERT INTO strings(item, name, value) VALUES(19000, "valueType", "Integer");
 
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(19001, "id-person-name", "ItemPropertySchema", 0, 0, 0, 0);
 INSERT INTO strings(item, name, value) VALUES(19001, "itemType", "Person");
 INSERT INTO strings(item, name, value) VALUES(19001, "propertyName", "name");
-INSERT INTO strings(item, name, value) VALUES(19001, "valueType", "text");
+INSERT INTO strings(item, name, value) VALUES(19001, "valueType", "Text");
 
 INSERT INTO items(rowid, id, type, dateCreated, dateModified, dateServerModified, deleted) VALUES(19002, "first-id", "Person", 0, 0, 0, 0);
 INSERT INTO integers(item, name, value) VALUES(19002, "age", 20);

@@ -7,26 +7,26 @@ use crate::api_model::Search;
 use crate::api_model::SortOrder;
 use crate::command_line_interface::CliOptions;
 use crate::database_api;
+use crate::database_api::get_incoming_edges;
+use crate::database_api::get_outgoing_edges;
 use crate::database_api::DatabaseSearch;
-use crate::database_api::IntegersNameValue;
-use crate::database_api::ItemBase;
-use crate::database_api::RealsNameValue;
+use crate::database_api::EdgePointer;
 use crate::database_api::Rowid;
-use crate::database_api::StringsNameValue;
+use crate::database_utils::add_item_edge_properties;
+use crate::database_utils::check_item_has_all_properties;
+use crate::database_utils::insert_property;
+use crate::database_utils::item_base_to_json;
 use crate::error::Error;
 use crate::error::Result;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema;
 use crate::schema::validate_property_name;
 use crate::schema::Schema;
-use crate::schema::SchemaPropertyType;
 use crate::triggers;
 use chrono::Utc;
 use log::info;
-use log::warn;
 use rand::Rng;
 use rusqlite::Transaction as Tx;
-use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
@@ -40,77 +40,6 @@ pub fn get_project_version() -> String {
     .to_string()
 }
 
-/// Get all properties that the item has, ignoring those
-/// that exist in the DB but are not defined in the Schema
-pub fn get_item_properties(tx: &Tx, rowid: i64, schema: &Schema) -> Result<Map<String, Value>> {
-    let mut json = serde_json::Map::new();
-
-    for IntegersNameValue { name, value } in database_api::get_integers_records_for_item(tx, rowid)?
-    {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Bool) => {
-                json.insert(name, (value == 1).into());
-            }
-            Some(SchemaPropertyType::DateTime) | Some(SchemaPropertyType::Integer) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        };
-    }
-
-    for StringsNameValue { name, value } in database_api::get_strings_records_for_item(tx, rowid)? {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Text) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        }
-    }
-
-    for RealsNameValue { name, value } in database_api::get_reals_records_for_item(tx, rowid)? {
-        match schema.property_types.get(&name) {
-            Some(SchemaPropertyType::Real) => {
-                json.insert(name, value.into());
-            }
-            other => {
-                log::warn!(
-                    "Ignoring item property {}: {} which according to Schema should be a {:?}",
-                    name,
-                    value,
-                    other
-                );
-            }
-        };
-    }
-
-    Ok(json)
-}
-
-pub fn get_item_from_rowid(tx: &Tx, schema: &Schema, rowid: Rowid) -> Result<Value> {
-    let item = database_api::get_item_base(tx, rowid)?;
-    let item = item.ok_or_else(|| Error {
-        code: StatusCode::INTERNAL_SERVER_ERROR,
-        msg: format!("Item rowid {} not found right after inserting", rowid),
-    })?;
-    let mut props = get_item_properties(tx, rowid, schema)?;
-    add_item_base_properties(&mut props, item);
-    Ok(Value::Object(props))
-}
-
 pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
     info!("Getting item {}", id);
     let search_query = Search {
@@ -121,6 +50,8 @@ pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
         deleted: None,
         sort_order: SortOrder::Asc,
         limit: 1,
+        forward_edges: None,
+        backward_edges: None,
         other_properties: Default::default(),
     };
     let result = search(tx, schema, search_query)?;
@@ -140,77 +71,6 @@ pub fn new_random_item_id() -> String {
         .collect()
 }
 
-fn insert_property(tx: &Tx, schema: &Schema, rowid: i64, name: &str, json: &Value) -> Result<()> {
-    let dbtype = if let Some(t) = schema.property_types.get(name) {
-        t
-    } else {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Property {} not defined in Schema (attempted to use it for json value {})",
-                name, json,
-            ),
-        });
-    };
-    database_api::delete_property(tx, rowid, name)?;
-
-    match json {
-        Value::Null => (),
-        Value::String(value) if dbtype == &SchemaPropertyType::Text => {
-            database_api::insert_string(tx, rowid, name, value)?
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Integer => {
-            if let Some(value) = n.as_i64() {
-                database_api::insert_integer(tx, rowid, name, value)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to i64 ({})", n, name),
-                });
-            }
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::Real => {
-            if let Some(value) = n.as_f64() {
-                database_api::insert_real(tx, rowid, name, value)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!("Failed to parse JSON number {} to f64 ({})", n, name),
-                });
-            }
-        }
-        Value::Bool(b) if dbtype == &SchemaPropertyType::Bool => {
-            database_api::insert_integer(tx, rowid, name, if *b { 1 } else { 0 })?
-        }
-        Value::Number(n) if dbtype == &SchemaPropertyType::DateTime => {
-            if let Some(value) = n.as_i64() {
-                database_api::insert_integer(tx, rowid, name, value)?
-            } else if let Some(float) = n.as_f64() {
-                warn!("Using float-to-integer conversion property {}, value {}. This might not be supported in the future, please use a compatible DateTime format https://gitlab.memri.io/memri/pod#understanding-the-schema", float, name);
-                database_api::insert_integer(tx, rowid, name, float.round() as i64)?
-            } else {
-                return Err(Error {
-                    code: StatusCode::BAD_REQUEST,
-                    msg: format!(
-                        "Failed to parse JSON number {} to DateTime ({}), use i64 number instead",
-                        n, name
-                    ),
-                });
-            }
-        }
-        _ => {
-            return Err(Error {
-                code: StatusCode::BAD_REQUEST,
-                msg: format!(
-                    "Failed to parse json value {} to {:?} ({})",
-                    json, dbtype, name
-                ),
-            })
-        }
-    };
-    Ok(())
-}
-
 pub fn create_item_tx(
     tx: &Tx,
     schema: &Schema,
@@ -228,7 +88,10 @@ pub fn create_item_tx(
         return Err(err);
     }
     let time_now = Utc::now().timestamp_millis();
-    triggers::trigger_before_item_create(tx, &item)?;
+    let ignore_insertion = triggers::trigger_before_item_create(schema, &item)?;
+    if ignore_insertion {
+        return Ok("___ignored___".to_string());
+    }
     let rowid = database_api::insert_item_base(
         tx,
         &id,
@@ -320,15 +183,17 @@ pub fn bulk_tx(
     pod_owner: &str,
     cli: &CliOptions,
     database_key: &DatabaseKey,
-) -> Result<()> {
+) -> Result<Value> {
     info!(
         "Performing bulk action with {} new items, {} updated items, {} deleted items",
         bulk.create_items.len(),
         bulk.update_items.len(),
         bulk.delete_items.len(),
     );
+    let mut created_items = Vec::new();
     for item in bulk.create_items {
-        create_item_tx(tx, schema, item, pod_owner, cli, database_key)?;
+        let id = create_item_tx(tx, schema, item, pod_owner, cli, database_key)?;
+        created_items.push(id);
     }
     for item in bulk.update_items {
         update_item_tx(tx, schema, &item.id, item.fields)?;
@@ -336,44 +201,85 @@ pub fn bulk_tx(
     for item_id in bulk.delete_items {
         delete_item_tx(tx, schema, &item_id)?;
     }
+    let mut created_edges = Vec::new();
     for item_id in bulk.create_edges {
-        create_edge(tx, item_id)?;
+        let id = create_edge(tx, item_id)?;
+        created_edges.push(id);
     }
-    Ok(())
-}
-
-fn item_base_to_json(tx: &Tx, item: ItemBase, schema: &Schema) -> Result<Value> {
-    let mut props = get_item_properties(tx, item.rowid, schema)?;
-    add_item_base_properties(&mut props, item);
-    Ok(Value::Object(props))
-}
-
-fn add_item_base_properties(props: &mut Map<String, Value>, item: ItemBase) {
-    props.insert("id".to_string(), item.id.into());
-    props.insert("type".to_string(), item._type.into());
-    props.insert("dateCreated".to_string(), item.date_created.into());
-    props.insert("dateModified".to_string(), item.date_modified.into());
-    props.insert(
-        "dateServerModified".to_string(),
-        item.date_server_modified.into(),
-    );
-    props.insert("deleted".to_string(), item.deleted.into());
+    let mut search_results = Vec::new();
+    for query in bulk.search {
+        let result = search(tx, schema, query)?;
+        search_results.push(result);
+    }
+    let result = serde_json::json!({
+        "createItems": created_items,
+        "createEdges": created_edges,
+        "search": search_results,
+    });
+    Ok(result)
 }
 
 pub fn create_edge(tx: &Tx, query: CreateEdge) -> Result<String> {
+    let CreateEdge {
+        source,
+        target,
+        name,
+        self_id,
+    } = query;
     let date = Utc::now().timestamp_millis();
-    let self_id = new_random_item_id();
-    let self_rowid = database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
-    let source = database_api::get_item_rowid(tx, &query.source)?.ok_or_else(|| Error {
+
+    let (self_rowid, self_id) = if let Some(id) = self_id {
+        let self_rowid = database_api::get_item_rowid(tx, &id)?.ok_or_else(|| Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to create edge with _self: {}", id),
+        })?;
+        (self_rowid, id)
+    } else {
+        let self_id = new_random_item_id();
+        let self_rowid =
+            database_api::insert_item_base(tx, &self_id, "Edge", date, date, date, false)?;
+        (self_rowid, self_id)
+    };
+
+    let source: Rowid = database_api::get_item_rowid(tx, &source)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
-        msg: format!("Edge source not found: {}", query.source),
+        msg: format!("Edge source not found: {}", source),
     })?;
-    let target = database_api::get_item_rowid(tx, &query.target)?.ok_or_else(|| Error {
+    let target: Rowid = database_api::get_item_rowid(tx, &target)?.ok_or_else(|| Error {
         code: StatusCode::NOT_FOUND,
-        msg: format!("Edge target not found: {}", query.target),
+        msg: format!("Edge target not found: {}", target),
     })?;
-    database_api::insert_edge(tx, self_rowid, source, &query.name, target)?;
+    database_api::insert_edge(tx, self_rowid, source, &name, target)?;
+    database_api::update_item_date_server_modified(tx, source, date)?;
     Ok(self_id)
+}
+
+pub fn edge_pointer_to_json(tx: &Tx, schema: &Schema, edge: &EdgePointer) -> Result<Value> {
+    let target = database_api::get_item_base(tx, edge.item)?;
+    let target = target.ok_or_else(|| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
+    })?;
+    let target_json = Value::Object(item_base_to_json(tx, target, schema)?);
+    let edge_item = database_api::get_item_base(tx, edge.rowid)?.ok_or_else(|| Error {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        msg: format!("Edge does not have an item base, rowid: {}", edge.item),
+    })?;
+    let mut edge_item = item_base_to_json(tx, edge_item, schema)?;
+    edge_item.insert("_edge".to_string(), serde_json::json!(edge.name));
+    edge_item.insert("_item".to_string(), serde_json::json!(target_json));
+    Ok(serde_json::json!(edge_item))
+}
+pub fn edge_pointers_to_json(
+    tx: &Tx,
+    schema: &Schema,
+    half_edges: &[EdgePointer],
+) -> Result<Vec<Value>> {
+    let mut result = Vec::new();
+    for edge in half_edges {
+        result.push(edge_pointer_to_json(tx, schema, edge)?);
+    }
+    Ok(result)
 }
 
 pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>> {
@@ -394,7 +300,7 @@ pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>
             msg: format!("Edge connects to an nonexisting item.rowid {}", edge.item),
         })?;
         if query.expand_items {
-            let item_json = item_base_to_json(tx, base, schema)?;
+            let item_json = Value::Object(item_base_to_json(tx, base, schema)?);
             result.push(serde_json::json!({
                 "name": edge.name,
                 "item": item_json,
@@ -412,15 +318,10 @@ pub fn get_edges(tx: &Tx, query: GetEdges, schema: &Schema) -> Result<Vec<Value>
 pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     info!("Searching by fields {:?}", query);
     if !query.other_properties.is_empty() {
-        return Err(Error {
-            code: StatusCode::BAD_REQUEST,
-            msg: format!(
-                "Cannot search by non-base properties: {:?}. \
-                    In the future we will allow searching for other properties. \
-                    See HTTP_API.md for details.",
-                query.other_properties.keys()
-            ),
-        });
+        log::trace!(
+            "Doing a slow search request using non-base properties {:?}",
+            query.other_properties.keys()
+        );
     }
     let database_search = DatabaseSearch {
         rowid: None,
@@ -435,7 +336,22 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
     let items = database_api::search_items(tx, &database_search)?;
     let mut result = Vec::new();
     for item in items {
-        result.push(item_base_to_json(tx, item, schema)?)
+        let rowid = item.rowid;
+        if check_item_has_all_properties(tx, schema, rowid, &query.other_properties)? {
+            let mut object_map = item_base_to_json(tx, item, schema)?;
+            add_item_edge_properties(tx, &mut object_map, rowid)?;
+            if query.forward_edges.is_some() {
+                let edges = get_outgoing_edges(tx, rowid)?;
+                let edges = edge_pointers_to_json(tx, schema, &edges)?;
+                object_map.insert("[[edges]]".to_string(), Value::Array(edges));
+            }
+            if query.backward_edges.is_some() {
+                let edges = get_incoming_edges(tx, rowid)?;
+                let edges = edge_pointers_to_json(tx, schema, &edges)?;
+                object_map.insert("~[[edges]]".to_string(), Value::Array(edges));
+            }
+            result.push(Value::Object(object_map));
+        }
     }
     Ok(result)
 }
@@ -445,34 +361,15 @@ mod tests {
     use crate::api_model::CreateItem;
     use crate::command_line_interface;
     use crate::database_api;
-    use crate::database_migrate_refinery;
+    use crate::database_api::tests::new_conn;
     use crate::error::Result;
     use crate::internal_api;
+    use crate::internal_api::*;
     use crate::plugin_auth_crypto::DatabaseKey;
     use crate::schema::Schema;
-    use crate::schema::SchemaPropertyType;
-    use rusqlite::Connection;
     use serde_json::json;
     use std::collections::HashMap;
     use warp::hyper::StatusCode;
-
-    fn new_conn() -> Connection {
-        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
-        database_migrate_refinery::embedded::migrations::runner()
-            .run(&mut conn)
-            .expect("Failed to run refinery migrations");
-        conn
-    }
-
-    fn minimal_schema() -> Schema {
-        let mut schema = HashMap::new();
-        schema.insert("itemType".to_string(), SchemaPropertyType::Text);
-        schema.insert("propertyName".to_string(), SchemaPropertyType::Text);
-        schema.insert("valueType".to_string(), SchemaPropertyType::Text);
-        Schema {
-            property_types: schema,
-        }
-    }
 
     #[test]
     fn test_schema_checking() -> Result<()> {
@@ -528,23 +425,81 @@ mod tests {
 
         Ok(())
     }
+
     #[test]
     fn test_item_insert_schema() {
         let mut conn = new_conn();
-        let minimal_schema = minimal_schema();
         let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();
+        let minimal_schema = database_api::get_schema(&tx).unwrap();
+
         let json = json!({
             "type": "ItemPropertySchema",
             "itemType": "Person",
             "propertyName": "age",
             "valueType": "Integer",
         });
-        let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
-        internal_api::create_item_tx(&tx, &minimal_schema, create_item, "", &cli, &database_key)
+
+        {
+            // insert "age" successfully
+            let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
+            internal_api::create_item_tx(
+                &tx,
+                &minimal_schema,
+                create_item,
+                "",
+                &cli,
+                &database_key,
+            )
             .unwrap();
+        }
+
+        {
+            let json = json!({
+                "type": "ItemPropertySchema",
+                "itemType": "Person",
+                "propertyName": "dateCreated",
+                "valueType": "Bool",
+            });
+            let create_item: CreateItem = serde_json::from_value(json).unwrap();
+            let expected_error = "Schema for property dateCreated is already defined to type DateTime, cannot override to type Bool";
+            assert!(internal_api::create_item_tx(
+                &tx,
+                &minimal_schema,
+                create_item,
+                "",
+                &cli,
+                &database_key
+            )
+            .unwrap_err()
+            .msg
+            .contains(expected_error));
+        }
+
+        {
+            // ignore already defined Schemas
+            let json = json!({
+                "type": "ItemPropertySchema",
+                "itemType": "Person",
+                "propertyName": "dateCreated",
+                "valueType": "DateTime",
+            });
+            let create_item: CreateItem = serde_json::from_value(json).unwrap();
+            assert_eq!(
+                internal_api::create_item_tx(
+                    &tx,
+                    &minimal_schema,
+                    create_item,
+                    "",
+                    &cli,
+                    &database_key
+                )
+                .unwrap(),
+                "___ignored___"
+            );
+        }
 
         let bad_empty_schema = Schema {
             property_types: HashMap::new(),
@@ -563,5 +518,102 @@ mod tests {
         assert!(result.msg.contains("not defined in Schema"));
 
         tx.commit().unwrap();
+    }
+
+    #[test]
+    fn test_edge_search() {
+        let mut conn = new_conn();
+        let cli = command_line_interface::tests::test_cli();
+        let db_key = DatabaseKey::from("".to_string()).unwrap();
+        let tx = conn.transaction().unwrap();
+        let schema = database_api::get_schema(&tx).unwrap();
+
+        let person1 = {
+            let person = json!({
+                "type": "Person",
+            });
+            let person: CreateItem = serde_json::from_value(person).unwrap();
+            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+        };
+        let person2 = {
+            let person = json!({
+                "type": "Person",
+            });
+            let person: CreateItem = serde_json::from_value(person).unwrap();
+            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+        };
+        let _edge = {
+            let json = json!({
+                "_source": person1,
+                "_target": person2,
+                "_name": "friend",
+            });
+            let parsed = serde_json::from_value(json).unwrap();
+            create_edge(&tx, parsed).unwrap()
+        };
+
+        let result = {
+            let json = json!({
+                "id": person1,
+                "[[edges]]": {},
+            });
+            let parsed = serde_json::from_value(json).unwrap();
+            search(&tx, &schema, parsed).unwrap()
+        };
+        assert_eq!(result.len(), 1);
+        let result = result.into_iter().next().unwrap();
+        let result = match result {
+            Value::Object(r) => r,
+            _ => panic!("Result is not JSON Object"),
+        };
+
+        // {
+        //   "[[edges]]": [
+        //     {
+        //       "_edge": "friend",
+        //       "_item": {
+        //         "dateCreated": 1624363823546,
+        //         "dateModified": 1624363823546,
+        //         "dateServerModified": 1624363823546,
+        //         "deleted": false,
+        //         "id": "1539da9dfc14a0467694e79730135df6",
+        //         "type": "Person"
+        //       },
+        //       "dateCreated": 1624363823546,
+        //       "dateModified": 1624363823546,
+        //       "dateServerModified": 1624363823546,
+        //       "deleted": false,
+        //       "id": "4ea088d17a670cbb26f4154bce809950",
+        //       "type": "Edge"
+        //     }
+        //   ],
+        //   "dateCreated": 1624363823545,
+        //   "dateModified": 1624363823545,
+        //   "dateServerModified": 1624363823545,
+        //   "deleted": false,
+        //   "id": "59dd635884bff1de1c8447ac3763543b",
+        //   "type": "Person"
+        // }
+
+        let result_id = result.get("id").unwrap().as_str().unwrap();
+        assert_eq!(result_id, person1);
+
+        let result_edge = result.get("[[edges]]").unwrap().as_array().unwrap();
+        let result_edge = result_edge.iter().next().unwrap();
+
+        assert_eq!(
+            result_edge.get("_edge").unwrap().as_str().unwrap(),
+            "friend"
+        );
+
+        let result_edge_item = result_edge.get("_item").unwrap();
+        let result_edge_item = match result_edge_item {
+            Value::Object(i) => i,
+            _ => panic!("edge item is not an JSON Object"),
+        };
+        assert_eq!(
+            result_edge_item.get("id").unwrap().as_str().unwrap(),
+            person2
+        );
     }
 }

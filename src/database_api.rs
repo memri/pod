@@ -265,6 +265,31 @@ pub fn get_reals_records_for_item(tx: &Tx, item_rowid: Rowid) -> Result<Vec<Real
     Ok(result)
 }
 
+pub fn check_integer_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: i64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM integers WHERE item = ? AND name = ? AND value = ? ;")?;
+    Ok(stmt.exists(params![item_rowid, name, value])?)
+}
+
+pub fn check_string_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: &str) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM strings WHERE item = ? AND name = ? AND value = ? ;")?;
+    Ok(stmt.exists(params![item_rowid, name, value])?)
+}
+
+pub fn check_real_exists(tx: &Tx, item_rowid: Rowid, name: &str, value: f64) -> Result<bool> {
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM reals WHERE item = ? AND name = ? AND value = ? ;")?;
+    Ok(stmt.exists(params![item_rowid, name, value])?)
+}
+
+pub fn update_item_date_server_modified(tx: &Tx, rowid: Rowid, date: DbTime) -> Result<()> {
+    let sql = "UPDATE items SET dateServerModified = ? WHERE rowid = ?;";
+    let mut stmt = tx.prepare_cached(sql)?;
+    stmt.execute(params![date, rowid])?;
+    Ok(())
+}
+
 pub fn update_item_base(
     tx: &Tx,
     rowid: Rowid,
@@ -340,31 +365,58 @@ pub fn insert_edge(
     Ok(tx.last_insert_rowid())
 }
 
-pub struct HalfEdge {
+pub struct EdgeBase {
+    pub rowid: Rowid,
+    pub name: String,
+    pub source: Rowid,
+    pub target: Rowid,
+}
+
+/// Edge pointer, either for outgoing edge or for incoming edge.
+/// `item` is essentially either `source` or `target`, depending on the direction.
+pub struct EdgePointer {
+    pub rowid: Rowid,
     pub name: String,
     pub item: Rowid,
 }
 
-pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<HalfEdge>> {
-    let mut stmt = tx.prepare_cached("SELECT target, name FROM edges WHERE source = ?;")?;
+pub fn get_self_edge(tx: &Tx, self_rowid: Rowid) -> Result<Option<EdgeBase>> {
+    let mut stmt = tx.prepare_cached("SELECT source, name, target FROM edges WHERE self = ?;")?;
+    let mut rows = stmt.query(params![self_rowid])?;
+    if let Some(row) = rows.next()? {
+        Ok(Some(EdgeBase {
+            rowid: self_rowid,
+            source: row.get(0)?,
+            name: row.get(1)?,
+            target: row.get(2)?,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_outgoing_edges(tx: &Tx, source: Rowid) -> Result<Vec<EdgePointer>> {
+    let mut stmt = tx.prepare_cached("SELECT self, target, name FROM edges WHERE source = ?;")?;
     let mut rows = stmt.query(params![source])?;
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let item = row.get(0)?;
-        let name = row.get(1)?;
-        result.push(HalfEdge { name, item })
+        let rowid = row.get(0)?;
+        let item = row.get(1)?;
+        let name = row.get(2)?;
+        result.push(EdgePointer { rowid, name, item })
     }
     Ok(result)
 }
 
-pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<HalfEdge>> {
-    let mut stmt = tx.prepare_cached("SELECT source, name FROM edges WHERE target = ?;")?;
+pub fn get_incoming_edges(tx: &Tx, target: Rowid) -> Result<Vec<EdgePointer>> {
+    let mut stmt = tx.prepare_cached("SELECT self, source, name FROM edges WHERE target = ?;")?;
     let mut rows = stmt.query(params![target])?;
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let item = row.get(0)?;
-        let name = row.get(1)?;
-        result.push(HalfEdge { name, item })
+        let rowid = row.get(0)?;
+        let item = row.get(1)?;
+        let name = row.get(2)?;
+        result.push(EdgePointer { rowid, name, item })
     }
     Ok(result)
 }
@@ -443,14 +495,15 @@ fn add_sql_param(query: &mut String, column: &str, operation: &Comparison) {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::super::database_migrate_refinery;
     use super::super::error::Result;
     use super::*;
     use chrono::Utc;
     use rusqlite::Connection;
+    use std::ops::Not;
 
-    fn new_conn() -> Connection {
+    pub fn new_conn() -> Connection {
         let mut conn = rusqlite::Connection::open_in_memory().unwrap();
         database_migrate_refinery::embedded::migrations::runner()
             .run(&mut conn)
@@ -458,7 +511,7 @@ mod tests {
         conn
     }
 
-    fn random_id() -> String {
+    pub fn random_id() -> String {
         rand::random::<i64>().to_string()
     }
 
@@ -524,7 +577,7 @@ mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "age")?;
-        insert_string(&tx, item, "valueType", "integer")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
 
         let item = insert_item_base(
             &tx,
@@ -537,7 +590,7 @@ mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "name")?;
-        insert_string(&tx, item, "valueType", "text")?;
+        insert_string(&tx, item, "valueType", "Text")?;
 
         let schema = get_schema(&tx)?;
         assert_eq!(
@@ -568,7 +621,7 @@ mod tests {
         )?;
         insert_string(&tx, item, "itemType", "Person")?;
         insert_string(&tx, item, "propertyName", "age")?;
-        insert_string(&tx, item, "valueType", "integer")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
 
         assert_eq!(
             search_items_params(&tx, Some(item), None, None, None, None, None)?.len(),
@@ -699,6 +752,38 @@ mod tests {
             .len(),
             1,
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_property_checks() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
+
+        let item: Rowid = insert_item_base(
+            &tx,
+            &random_id(),
+            "ItemPropertySchema",
+            date,
+            date,
+            date,
+            false,
+        )?;
+        insert_string(&tx, item, "itemType", "Person")?;
+        insert_string(&tx, item, "propertyName", "age")?;
+        insert_string(&tx, item, "valueType", "Integer")?;
+
+        assert!(check_string_exists(&tx, item, "itemType", "Person")?);
+        assert!(check_string_exists(&tx, item, "itemType", "Person2")?.not());
+
+        // The property should have a String value,
+        // so normally this would be a schema check error.
+        // However, database_api is the lowest layer and it's unaware of schemas.
+        // The result is a successful check with the result "no, such integer value is not found")
+        assert!(check_integer_exists(&tx, item, "itemType", 1)?.not());
+        assert!(check_real_exists(&tx, item, "itemType", 1.)?.not());
+
         Ok(())
     }
 }

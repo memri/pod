@@ -95,7 +95,7 @@ This flow can be illustrated by the following diagram:
 mermaid
 sequenceDiagram
     participant MCoP as Memri Client <br/> or Plugin
-    MCoP->>Pod: 🔑 <br/>Create item <br/>{"type": "StartPlugin", ...}
+    MCoP->>Pod: 🔑 <br/>Create item <br/>{"type": "PluginRun", ...}
     Pod->>Pod: Encrypt key 🔑 -> 📦 <br/>
     Pod->>Plugin: 📦 <br/> start plugin
     Note over Pod: Immediately after starting the plugin,<br/>both keys are DROPPED/removed 🔑/📦 <br/> - <br/> Database is inaccessible to Pod.

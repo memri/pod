@@ -91,6 +91,14 @@ in one `bulk` request, so if you want changes to the Schema to happen first,
 split updates to the Schema into a separate request.
 (This constraint might be lifted in the future.)
 
+If the new Schema item conflicts with already existing Schema, a failure will be returned.
+
+If the new Schema item duplicates already existing Schema, the new item will be silently ignored
+and not inserted into the database.
+
+If the new Schema item creates (valid) properties that have not yet been defined,
+the new Schema will be added permanently.
+
 ⚠️ UNSTABLE: We might require more properties to be defined here in the future,
 e.g. to what Plugin does the Schema addition belong to.
 
@@ -101,7 +109,7 @@ e.g. to what Plugin does the Schema addition belong to.
 Get version of the Pod: the git commit and cargo version that it was built from.
 
 
-### POST /v3/$owner_key/get_item
+### POST /v4/$owner_key/get_item
 ```json
 {
   "auth": $auth_json,
@@ -114,7 +122,7 @@ Returns an empty array if an item is not found,
 or an array with 1 item if item exists.
 
 
-### POST /v3/$owner_key/create_item
+### POST /v4/$owner_key/create_item
 ```json
 {
   "auth": $auth_json,
@@ -141,7 +149,7 @@ Returns an error if the new item doesn't conform to the Schema.
 Returns `id` of the created item if the operation is successful. 
 
 
-### POST /v3/$owner_key/update_item
+### POST /v4/$owner_key/update_item
 ```json
 {
   "auth": $auth_json,
@@ -161,7 +169,7 @@ Update a single item.
 Returns an empty object if the operation is successful.
 
 
-### POST /v3/$owner_key/get_edges
+### POST /v4/$owner_key/get_edges
 ```json5
 {
   "auth": $auth_json,
@@ -199,20 +207,25 @@ Returns an array empty array if either the element does not exist or if it has n
 ⚠ WARNING: this endpoint is unstable, and it might be deprecated and removed in next releases of Pod.️
 
 
-### POST /v3/$owner_key/create_edge
+### POST /v4/$owner_key/create_edge
 ```json5
 {
   "auth": $auth_json,
   "payload": {
     "_source": "$source_id", /* Source item id */
     "_target": "$target_id", /* Target item id */
-    "_name": "$edge_name"  /* Text name. For example: "entry" (in a list), "friend" (for a Person), etc */
+    "_name": "$edge_name",  /* Text name. For example: "entry" (in a list), "friend" (for a Person), etc */
+    "_self": "$self_id", /* Optional field to specify the "self" id to link to, see below */
     // Edge properties will be supported in the future
   }
 }
 ```
 Create a single edge from an already existing item to another already existing item.
 (Reminder: edges are always directed.)
+
+If the `_self` field is specified in the request, the edge will be wired to an already
+existing item. For Plugins this functionality is currently undocumented and advised not to be used.
+For Clients, see "edges" table definition.
 
 An error will be returned if the edge already exists.
 An error will be returned if source item or target item do not exist.
@@ -224,7 +237,7 @@ Returns an error if the new item doesn't conform to the Schema.
 Returns `id` of the created item if the operation is successful.
 
 
-### POST /v3/$owner_key/delete_item
+### POST /v4/$owner_key/delete_item
 ```json
 {
   "auth": $auth_json,
@@ -237,7 +250,7 @@ Mark an item as deleted:
 * Update `dateServerModified`
 
 
-### POST /v3/$owner_key/search
+### POST /v4/$owner_key/search
 ```json5
 {
   "auth": $auth_json,
@@ -249,6 +262,8 @@ Mark an item as deleted:
     "deleted": false, // deleted filter
     "_sortOrder": "DESC", // sort by server modification either "ASC" (by default) or "DESC"
     "_limit": 100, // limit the result set
+    "[[edges]]": {}, // include all forward edges in the response
+    "~[[edges]]": {}, // include all backward edges in the response
   }
 }
 ```
@@ -259,27 +274,37 @@ The endpoint will return an array of items which have all the properties above.
 As a first step of the 2021-03 Pod rewrite, only the above properties are supported.
 In the future, any item properties will be available.
 
+The properties of `"[[edges]]"` and `"~[[edges]]"` are
+["magic constants"](https://en.wikipedia.org/wiki/Magic_number_(programming)) for now.
+This will change in the future when we'll [continuously expand](./WIP_QueryRedesign.md) our API
+to make it more intuitive and easier to use, especially around edges and recursive data fetching.
+For now only literally those two properties are supported, and all edges are returned
+without filtering.
 
-### POST /v3/$owner_key/bulk
-```json
+
+### POST /v4/$owner_key/bulk
+```json5
 {
   "auth": $auth_json,
   "payload": {
     "createItems": [
-      { "id": "something-12345", "type": "Person", ... },
+      { "id": "something-12345", "type": "Person", /* ... */ },
       {}, // same structure as create_item endpoint above
-      ...
+      // ...
     ],
     "updateItems": [
-      { "id": "something-67899", ... },
+      { "id": "something-67899", /* ... */ },
       {}, // same structure as update_item endpoint above
-      ...
+      // ...
     ],
-    "deleteItems": [ "$id", "$id", "$id", ...],
+    "deleteItems": [ "$id", "$id", "$id", /* ... */ ],
     "createEdges": [ 
       {}, // same structure as create_edge endpoint above
       {},
-      ... 
+      // ...
+    ],
+    "search": [
+      { /* same structure as in /search API */ }
     ]
   }
 }
@@ -303,8 +328,8 @@ For now, plugins are started when items of a particular types are inserted into 
 Items of the following structure need to be inserted to Pod to start a plugin:
 ```json5
 {
-  "type": "StartPlugin", /* exactly this, and nothing else */
-  "container": "your_docker_container:optional_version", /* any locally available docker container if you run Pod locally */
+  "type": "PluginRun", /* exactly this, and nothing else */
+  "containerImage": "your_docker_image:optional_version", /* any locally available docker container if you run Pod locally */
   "targetItemId": "the item id this plugin needs to run against, NOT this item's id",
   /* Any other optional fields that your plugin might need... */
 }
@@ -318,7 +343,7 @@ e.g. permission limitation.
 
 # File API
 
-### POST /v3/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
+### POST /v4/$owner_key/upload_file/$databaseKey/$sha256hashOfTheFile
 ```text
 RAW-FILE-BINARY
 ```
@@ -335,7 +360,7 @@ with such `sha256` already exists in DB, Pod will accept the file and store it.
 The properties `nonce` and `key` will be updated for this item.
 
 
-### POST /v3/$owner_key/get_file
+### POST /v4/$owner_key/get_file
 ```json
 {
   "auth": $auth_json,

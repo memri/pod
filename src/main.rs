@@ -5,7 +5,7 @@ mod command_line_interface;
 mod constants;
 pub mod database_api;
 mod database_migrate_refinery;
-mod database_migrate_schema;
+mod database_utils;
 mod error;
 mod file_api;
 mod global_static;
@@ -42,15 +42,6 @@ async fn main() {
         })
         .init();
     let cli_options: CliOptions = command_line_interface::PARSED.clone();
-    if cli_options.validate_schema {
-        if let Err(err) = database_migrate_schema::validate_schema_file(&cli_options.schema_file) {
-            log::error!("Schema validation failed: {}", err);
-            std::process::exit(1)
-        } else {
-            log::info!("Schema is valid!");
-            std::process::exit(0)
-        }
-    };
     info!("Starting Pod version {}", get_project_version());
     info!("Running Pod with configuration {:#?}", cli_options);
 

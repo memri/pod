@@ -19,15 +19,20 @@ pub enum SchemaPropertyType {
     DateTime,
 }
 
+impl std::fmt::Display for SchemaPropertyType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl SchemaPropertyType {
     pub fn from_string(str: &str) -> std::result::Result<SchemaPropertyType, String> {
-        let str = str.to_lowercase();
-        match str.as_ref() {
-            "text" => Ok(SchemaPropertyType::Text),
-            "integer" => Ok(SchemaPropertyType::Integer),
-            "real" => Ok(SchemaPropertyType::Real),
-            "bool" => Ok(SchemaPropertyType::Bool),
-            "datetime" => Ok(SchemaPropertyType::DateTime),
+        match str {
+            "Text" => Ok(SchemaPropertyType::Text),
+            "Integer" => Ok(SchemaPropertyType::Integer),
+            "Real" => Ok(SchemaPropertyType::Real),
+            "Bool" => Ok(SchemaPropertyType::Bool),
+            "DateTime" => Ok(SchemaPropertyType::DateTime),
             _ => Err(format!(
                 "Failed to parse {} into {}",
                 str,
@@ -37,6 +42,7 @@ impl SchemaPropertyType {
     }
 }
 
+#[derive(Debug)]
 pub struct Schema {
     pub property_types: HashMap<String, SchemaPropertyType>,
 }
@@ -62,8 +68,7 @@ pub fn validate_create_item_id(item_id: &str) -> Result<()> {
     }
 }
 
-/// All item properties should be of this format
-pub fn validate_property_name(property: &str) -> Result<()> {
+fn validate_property_name_syntax(property: &str) -> Result<()> {
     lazy_static! {
         static ref REGEXP: Regex =
             Regex::new(r"^[a-zA-Z][_a-zA-Z0-9]{0,30}[a-zA-Z0-9]$").expect("Cannot create regex");
@@ -77,6 +82,15 @@ pub fn validate_property_name(property: &str) -> Result<()> {
                 REGEXP.as_str()
             ),
         })
+    } else {
+        Ok(())
+    }
+}
+
+/// All item properties should be of this format
+pub fn validate_property_name(property: &str) -> Result<()> {
+    if let Err(err) = validate_property_name_syntax(property) {
+        Err(err)
     } else if BLOCKLIST_COLUMN_NAMES.contains(&property.to_lowercase()) {
         Err(Error {
             code: StatusCode::BAD_REQUEST,
@@ -107,6 +121,11 @@ const POD_ITEM_MANDATORY_PROPERTIES: &[&str] = &[
     "deleted",
     "source",
     "target",
+    "edges",
+    "allEdges",
+    "forwardEdges",
+    "reverseEdges",
+    "backwardEdges",
 ];
 
 /// SQLite keywords taken from https://www.sqlite.org/lang_keywords.html
