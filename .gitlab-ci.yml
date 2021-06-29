@@ -27,9 +27,9 @@ build_push_DO:
       docker build
       --pull
       --build-arg use_kubernetes=true
-      --tag $Docker_Repo/polis/pod-dev:$CI_COMMIT_SHORT_SHA
+      --tag $Docker_Repo/polis/pod-dev:$CI_COMMIT_REF_SLUG
       .
-    - docker push $Docker_Repo/polis/pod-dev:$CI_COMMIT_SHORT_SHA
+    - docker push $Docker_Repo/polis/pod-dev:$CI_COMMIT_REF_SLUG
 
 build_push_Gitlab:
   stage: build_push_Gitlab
@@ -39,9 +39,9 @@ build_push_Gitlab:
       docker build
       --pull
       --build-arg use_kubernetes=false
-      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
       .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 pages:
   stage: docs
