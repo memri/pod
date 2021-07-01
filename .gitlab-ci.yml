@@ -11,6 +11,8 @@ stages:
 
 test:
   stage: test
+  tags:
+    - internal-memri
   image: realcundo/docker-rust-aio
   script:
     - cargo fmt --all -- --check
