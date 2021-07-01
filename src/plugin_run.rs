@@ -52,7 +52,7 @@ pub fn run_plugin_container(
         run_kubernetes_container(
             &container_image,
             container_id,
-            &item,
+            &target_item_id,
             pod_owner,
             &auth,
             triggered_by_item_id,
@@ -62,7 +62,7 @@ pub fn run_plugin_container(
         run_docker_container(
             &container_image,
             container_id,
-            &item,
+            &target_item_id,
             pod_owner,
             &auth,
             triggered_by_item_id,
