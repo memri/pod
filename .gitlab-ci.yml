@@ -1,7 +1,8 @@
-# WARNING:
-# Project currently uses GitLab shell runner instead of proper containers.
-#
-# Merge requests to improve this are welcomed!
+image: rust:latest
+
+before_script:
+  - apt-get install -y libsqlcipher-dev
+  - cargo install cargo-audit
 
 stages:
   - test
