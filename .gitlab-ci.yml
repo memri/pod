@@ -9,8 +9,12 @@ stages:
   - build_push_DO
   - build_push_Gitlab
 
+tags:
+  - docker
+
 test:
   stage: test
+  image: rust:slim
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
