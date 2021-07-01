@@ -9,9 +9,6 @@ stages:
   - build_push_DO
   - build_push_Gitlab
 
-tags:
-  - docker
-
 test:
   stage: test
   image: rust:slim
