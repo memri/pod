@@ -5,7 +5,7 @@ variables:
   APT_CACHE_DIR: $CI_PROJECT_DIR/apt
 
 before_script:
-  - apt-get update -yq
+  - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
   - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
   - cargo install cargo-audit
   - rustup component add rustfmt
