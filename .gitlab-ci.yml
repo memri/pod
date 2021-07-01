@@ -13,7 +13,7 @@ test:
   stage: test
   tags:
     - internal-memri
-  image: realcundo/docker-rust-aio
+  image: ekidd/rust-musl-builder
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
