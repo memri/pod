@@ -11,9 +11,9 @@ stages:
 
 test:
   stage: test
-  tags:
-    - internal-memri
-  image: ekidd/rust-musl-builder
+  # tags:
+  #   - internal-memri
+  # image: ekidd/rust-musl-builder
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
