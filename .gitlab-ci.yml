@@ -4,6 +4,7 @@ before_script:
   - apt-get update && apt-get install -y libsqlcipher-dev
   - cargo install cargo-audit
   - rustup component add rustfmt
+  - rustup component add clippy
 
 cache:
   key: "$CI_JOB_NAME"
