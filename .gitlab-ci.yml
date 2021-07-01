@@ -5,6 +5,12 @@ before_script:
   - cargo install cargo-audit
   - rustup component add rustfmt
 
+cache:
+  key: "$CI_JOB_NAME"
+  paths:
+    - $HOME/.cargo/
+    - target/
+
 stages:
   - test
   - docs
