@@ -1,6 +1,5 @@
 use lazy_static::lazy_static;
 use std::net::IpAddr;
-use std::path::PathBuf;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
@@ -111,21 +110,6 @@ pub struct CliOptions {
     /// for details on what it is, and how it works.
     #[structopt(long)]
     pub shared_server: bool,
-
-    /// Deprecated: schema file to use.
-    /// Note that this Schema is in the process of being re-written to a different format,
-    /// The way it works will change in a breaking manner.
-    #[structopt(
-        long,
-        name = "SCHEMA_FILE",
-        parse(from_os_str),
-        default_value = "res/default_schema.json"
-    )]
-    pub schema_file: PathBuf,
-
-    /// Validate the schema file and exit. Useful in combination with the --schema-file CLI key.
-    #[structopt(long)]
-    pub validate_schema: bool,
 }
 
 lazy_static! {
@@ -157,8 +141,6 @@ pub mod tests {
             insecure_non_tls: Some(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
             insecure_http_headers: false,
             shared_server: false,
-            schema_file: Default::default(),
-            validate_schema: false,
         }
     }
 }

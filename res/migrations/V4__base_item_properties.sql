@@ -13,7 +13,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "ccf9f0cba490ed58fa967f6a1136fc8"),
-    "valueType", "text"
+    "valueType", "Text"
 );
 
 
@@ -32,7 +32,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "904ecd61ba00152d9ab9f235c13217"),
-    "valueType", "text"
+    "valueType", "Text"
 );
 
 
@@ -51,7 +51,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "cb8b4455cdcabd25ba9d0eaabcc3786"),
-    "valueType", "datetime"
+    "valueType", "DateTime"
 );
 
 
@@ -70,7 +70,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "d1757e7395932c32cc1dcecc03b2977"),
-    "valueType", "datetime"
+    "valueType", "DateTime"
 );
 
 
@@ -89,7 +89,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "8f492d26bd192ad53cf07f3ad36cbae7"),
-    "valueType", "datetime"
+    "valueType", "DateTime"
 );
 
 
@@ -108,5 +108,5 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "8716a96393c48255542ca6d54afe2bc6"),
-    "valueType", "bool"
+    "valueType", "Bool"
 );

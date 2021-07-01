@@ -12,7 +12,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "419d1188b61dfa7d0a18e20794c843"),
-    "valueType", "text"
+    "valueType", "Text"
 );
 
 
@@ -30,7 +30,7 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "16fa737654dc376a20976d8ec89033c2"),
-    "valueType", "text"
+    "valueType", "Text"
 );
 
 
@@ -48,5 +48,5 @@ INSERT INTO strings(item, name, value) VALUES(
 );
 INSERT INTO strings(item, name, value) VALUES(
     (SELECT rowid FROM items WHERE id = "25994759432d4a636599c5e9c987eb95"),
-    "valueType", "text"
+    "valueType", "Text"
 );
