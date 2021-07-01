@@ -11,7 +11,7 @@ stages:
 
 test:
   stage: test
-  image: rust:slim
+  image: realcundo/docker-rust-aio
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
