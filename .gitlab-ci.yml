@@ -7,6 +7,7 @@ variables:
 before_script:
   - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
   - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
+  - apt-get install -y docker.io
   - cargo install cargo-audit
   - rustup component add rustfmt
   - rustup component add clippy
@@ -39,7 +40,6 @@ test:
     
 build_push_DO:
   stage: build_push_DO
-  image: docker:dind
   script:
     - echo -n $Access_Token | docker login -u $Access_Token --password-stdin $Docker_Repo
     - >
@@ -52,7 +52,6 @@ build_push_DO:
 
 build_push_Gitlab:
   stage: build_push_Gitlab
-  image: docker:dind
   script:
     - echo -n $CI_REGISTRY_PASSWORD | docker login --username $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - >
