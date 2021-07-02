@@ -41,7 +41,7 @@ test:
 build_push_DO:
   stage: build_push_DO
   script:
-    - systemctl start docker
+    - service docker start
     - echo -n $Access_Token | docker login -u $Access_Token --password-stdin $Docker_Repo
     - >
       docker build
@@ -54,7 +54,7 @@ build_push_DO:
 build_push_Gitlab:
   stage: build_push_Gitlab
   script:
-    - systemctl start docker 
+    - service docker start
     - echo -n $CI_REGISTRY_PASSWORD | docker login --username $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - >
       docker build
