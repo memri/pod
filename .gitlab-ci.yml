@@ -1,7 +1,22 @@
-# WARNING:
-# Project currently uses GitLab shell runner instead of proper containers.
-#
-# Merge requests to improve this are welcomed!
+image: rust:latest
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+  APT_CACHE_DIR: $CI_PROJECT_DIR/apt
+
+before_script:
+  - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
+  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
+  - cargo install cargo-audit
+  - rustup component add rustfmt
+  - rustup component add clippy
+
+cache:
+  key: "$CI_JOB_NAME"
+  paths:
+    - apt/
+    - cargo/
+    - target/
 
 stages:
   - test
