@@ -44,8 +44,8 @@ pub fn run_plugin_container(
     let container_id = format!(
         "{}-{}-{}-{}",
         pod_owner,
-        "plugin",
-        "test",
+        container_image,
+        item,
         new_random_item_id()
     );
     if cli_options.use_kubernetes {
@@ -131,7 +131,7 @@ fn run_kubernetes_container(
 ) -> Result<()> {
     let mut args: Vec<String> = Vec::with_capacity(7);
     args.push("run".to_string());
-    args.push(container_id);
+    args.push("test-123");
     args.push(format!("--image={}", container_image));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
