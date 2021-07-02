@@ -39,7 +39,7 @@ test:
     
 build_push_DO:
   stage: build_push_DO
-  image: docker
+  image: docker:dind
   script:
     - echo -n $Access_Token | docker login -u $Access_Token --password-stdin $Docker_Repo
     - >
@@ -52,7 +52,7 @@ build_push_DO:
 
 build_push_Gitlab:
   stage: build_push_Gitlab
-  image: docker
+  image: docker:dind
   script:
     - echo -n $CI_REGISTRY_PASSWORD | docker login --username $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - >
