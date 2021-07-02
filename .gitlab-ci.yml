@@ -7,7 +7,7 @@ variables:
 before_script:
   - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
   - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
-  - apt-get install -y docker.io
+  #- apt-get install -y docker.io
   - cargo install cargo-audit
   - rustup component add rustfmt
   - rustup component add clippy
@@ -40,8 +40,12 @@ test:
     
 build_push_DO:
   stage: build_push_DO
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  before_script:
+    - docker info
   script:
-    - service docker start
     - echo -n $Access_Token | docker login -u $Access_Token --password-stdin $Docker_Repo
     - >
       docker build
