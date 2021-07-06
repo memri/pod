@@ -42,10 +42,9 @@ pub fn run_plugin_container(
     let auth = database_key.create_plugin_auth()?;
     let auth = serde_json::to_string(&auth)?;
     let container_id = format!(
-        "{}-{}-{}-{}",
-        pod_owner,
-        container_image,
-        item,
+        "{}-{}-{}",
+        pod_owner.chars().take(10).collect(),
+        container_image.chars().take(15).collect(),
         new_random_item_id()
     );
     if cli_options.use_kubernetes {
