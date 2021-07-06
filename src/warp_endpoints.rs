@@ -13,6 +13,7 @@ use crate::constants;
 use crate::database_api;
 use crate::database_migrate_refinery;
 use crate::error::Error;
+use crate::error::ErrorContext;
 use crate::error::Result;
 use crate::file_api;
 use crate::internal_api;
@@ -230,8 +231,10 @@ fn initialize_db(
 ) -> Result<Connection> {
     let database_path = format!("{}{}", &owner, constants::DATABASE_SUFFIX);
     let database_path = PathBuf::from(constants::DATABASE_DIR).join(database_path);
-    let mut conn = Connection::open(database_path).unwrap();
-    DatabaseKey::execute_sqlite_pragma(database_key, &conn)?;
+    let mut conn = Connection::open(database_path)
+        .context_str("Failed to open database file (does Pod have filesystem access?)")?;
+    DatabaseKey::execute_sqlite_pragma(database_key, &conn)
+        .context_str("Failed to open the database file (did databaseKey change between runs?)")?;
     conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     let mut init_db = init_db.write()?;
     if !init_db.contains(owner) {

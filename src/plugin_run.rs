@@ -163,8 +163,8 @@ fn run_any_command(cmd: &str, args: &[String], container_id: &str) -> Result<()>
         Err(err) => Err(Error {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             msg: format!(
-                "Failed to run plugin container triggered by item.rowid{}, {}",
-                container_id, err
+                "Failed to execute {}, a plugin container triggered by item.rowid {}, {}",
+                cmd, container_id, err
             ),
         }),
     }
