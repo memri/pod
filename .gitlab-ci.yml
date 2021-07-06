@@ -32,8 +32,8 @@ stages:
 
 test:
   stage: test
-  # tags:
-  #   - internal-memri
+  tags:
+    - internal-memri
   # image: ekidd/rust-musl-builder
   script:
     - cargo fmt --all -- --check
