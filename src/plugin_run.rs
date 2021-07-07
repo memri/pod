@@ -30,15 +30,15 @@ pub fn run_plugin_container(
         "Trying to run plugin container for target_item_id {}",
         target_item_id
     );
-    let item = internal_api::get_item_tx(tx, schema, target_item_id)?;
-    let item = item.into_iter().next().ok_or_else(|| Error {
+    let target_item = internal_api::get_item_tx(tx, schema, target_item_id)?;
+    let target_item = target_item.into_iter().next().ok_or_else(|| Error {
         code: StatusCode::BAD_REQUEST,
         msg: format!(
             "Failed to find target item {} to run a plugin against",
             target_item_id
         ),
     })?;
-    let item = serde_json::to_string(&item)?;
+    let target_item_json = serde_json::to_string(&target_item)?;
     let auth = database_key.create_plugin_auth()?;
     let auth = serde_json::to_string(&auth)?;
     let container_id = format!(
@@ -51,7 +51,7 @@ pub fn run_plugin_container(
         run_kubernetes_container(
             &container_image,
             container_id,
-            &target_item_id,
+            &target_item_json,
             pod_owner,
             &auth,
             triggered_by_item_id,
@@ -61,7 +61,7 @@ pub fn run_plugin_container(
         run_docker_container(
             &container_image,
             container_id,
-            &target_item_id,
+            &target_item_json,
             pod_owner,
             &auth,
             triggered_by_item_id,
@@ -84,7 +84,7 @@ pub fn run_plugin_container(
 fn run_docker_container(
     container_image: &str,
     container_id: String,
-    target_item: &str,
+    target_item_json: &str,
     pod_owner: &str,
     pod_auth: &str,
     triggered_by_item_id: &str,
@@ -101,7 +101,7 @@ fn run_docker_container(
         "--env=POD_FULL_ADDRESS={}",
         callback_address(cli_options)
     ));
-    args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
+    args.push(format!("--env=POD_TARGET_ITEM={}", target_item_json));
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
@@ -122,7 +122,7 @@ fn run_docker_container(
 fn run_kubernetes_container(
     container_image: &str,
     container_id: String,
-    target_item: &str,
+    target_item_json: &str,
     pod_owner: &str,
     pod_auth: &str,
     triggered_by_item_id: &str,
@@ -136,7 +136,7 @@ fn run_kubernetes_container(
         "--env=POD_FULL_ADDRESS={}",
         callback_address(cli_options)
     ));
-    args.push(format!("--env=POD_TARGET_ITEM={}", target_item));
+    args.push(format!("--env=POD_TARGET_ITEM={}", target_item_json));
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
