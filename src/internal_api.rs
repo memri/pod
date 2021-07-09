@@ -88,10 +88,7 @@ pub fn create_item_tx(
         return Err(err);
     }
     let time_now = Utc::now().timestamp_millis();
-    let ignore_insertion = triggers::trigger_before_item_create(schema, &item)?;
-    if ignore_insertion {
-        return Ok("___ignored___".to_string());
-    }
+    let _ignore_insertion = triggers::trigger_before_item_create(schema, &item)?;
     let rowid = database_api::insert_item_base(
         tx,
         &id,
@@ -476,29 +473,6 @@ mod tests {
             .unwrap_err()
             .msg
             .contains(expected_error));
-        }
-
-        {
-            // ignore already defined Schemas
-            let json = json!({
-                "type": "ItemPropertySchema",
-                "itemType": "Person",
-                "propertyName": "dateCreated",
-                "valueType": "DateTime",
-            });
-            let create_item: CreateItem = serde_json::from_value(json).unwrap();
-            assert_eq!(
-                internal_api::create_item_tx(
-                    &tx,
-                    &minimal_schema,
-                    create_item,
-                    "",
-                    &cli,
-                    &database_key
-                )
-                .unwrap(),
-                "___ignored___"
-            );
         }
 
         let bad_empty_schema = Schema {
