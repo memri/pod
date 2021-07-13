@@ -84,7 +84,23 @@ pub struct CliOptions {
     )]
     pub tls_priv_key: String,
 
-    #[structopt(long, parse(try_from_str = parse_key_val), number_of_values=1, name="INSECURE_PLUGIN_SCRIPT")]
+    /// Override a certain Plugin container to run a script instead.
+    /// The value specified should be of the form `image_name=/path/to/your/local/script`.
+    /// Whenever Pod is supposed to run a container with this name, it will run
+    /// the specified script instead. This argument can be useful during plugin development,
+    ///
+    /// for example: `my_plugin_container_name=/home/john/memri/my_plugin/script.py`
+    /// or `my_plugin_container_name=C:\\memri\\my_plugin\\plugin.exe`
+    /// or `my_plugin_container_name=/Users/john/memri/my_plugin/script.py`
+    ///
+    /// Note that running scripts instead of containers is not secure. A container is limited
+    /// in its access to the filesystem, but running a script is only secure if you know and trust
+    /// the script.
+    #[structopt(
+        long,
+        parse(try_from_str = parse_key_val),
+        number_of_values = 1,
+    )]
     pub insecure_plugin_script: Vec<(String, String)>,
 
     /// Do not use https when starting the server, instead run on http://127.0.0.1.
