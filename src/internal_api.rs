@@ -475,29 +475,6 @@ mod tests {
             .contains(expected_error));
         }
 
-        {
-            // ignore already defined Schemas
-            let json = json!({
-                "type": "ItemPropertySchema",
-                "itemType": "Person",
-                "propertyName": "dateCreated",
-                "valueType": "DateTime",
-            });
-            let create_item: CreateItem = serde_json::from_value(json).unwrap();
-            assert_eq!(
-                internal_api::create_item_tx(
-                    &tx,
-                    &minimal_schema,
-                    create_item,
-                    "",
-                    &cli,
-                    &database_key
-                )
-                .unwrap(),
-                "___ignored___"
-            );
-        }
-
         let bad_empty_schema = Schema {
             property_types: HashMap::new(),
         };
