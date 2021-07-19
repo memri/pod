@@ -44,7 +44,7 @@ pub fn run_plugin_container(
     let container_id = format!(
         "{}-{}-{}",
         pod_owner.chars().take(10).collect::<String>(),
-        container_image.chars().take(15).collect::<String>(),
+        container_image.chars().take(8).collect::<String>(),
         new_random_item_id()
     );
     if cli_options.use_kubernetes {
