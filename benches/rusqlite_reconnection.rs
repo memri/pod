@@ -7,9 +7,8 @@ use rusqlite::Connection;
 /// accessing the DB and closing the connection.
 fn open_file_connection() {
     let conn = Connection::open("target/criterion/deleteme.db").unwrap();
-    let params: &[i64] = &[];
     let result = conn
-        .execute("UPDATE test SET uid = 91 WHERE uid = 91;", params)
+        .execute("UPDATE test SET uid = 91 WHERE uid = 91;", [])
         .unwrap();
     assert_eq!(result, 0);
 }
