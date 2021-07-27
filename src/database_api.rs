@@ -163,6 +163,7 @@ pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
         .context(|| format!("SQL query: {}", sql_query))?;
 
     for (index, param) in params_vec.into_iter().enumerate() {
+        // SQLite parameters are 1-based, not 0-based, so we need to add 1 to the index.
         stmt.raw_bind_parameter(index + 1, param)?;
     }
     let mut rows: Rows = stmt.raw_query();
