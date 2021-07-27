@@ -9,8 +9,8 @@ use log::debug;
 use rusqlite::params;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::Row;
+use rusqlite::Rows;
 use rusqlite::Transaction as Tx;
-use rusqlite::NO_PARAMS;
 use std::collections::HashMap;
 use warp::http::StatusCode;
 
@@ -161,7 +161,12 @@ pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
     let mut stmt = tx
         .prepare_cached(&sql_query)
         .context(|| format!("SQL query: {}", sql_query))?;
-    let mut rows = stmt.query(params_vec)?;
+
+    for (index, param) in params_vec.into_iter().enumerate() {
+        stmt.raw_bind_parameter(index + 1, param)?;
+    }
+    let mut rows: Rows = stmt.raw_query();
+
     let mut result = Vec::new();
     let mut num_left = query._limit;
     while let Some(row) = rows.next()? {
@@ -436,7 +441,7 @@ pub fn get_schema(tx: &Tx) -> Result<Schema> {
         AND thisType.name = 'valueType';",
         )
         .context_str("Failed to prepare SQL get_schema query")?;
-    let mut rows = stmt.query(NO_PARAMS)?;
+    let mut rows = stmt.query([])?;
     let mut property_types: HashMap<String, SchemaPropertyType> = HashMap::new();
     while let Some(row) = rows.next()? {
         let this_property: String = row.get(0)?;
