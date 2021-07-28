@@ -84,6 +84,23 @@ docker run \
   "$containerImage"
 ```
 
+# Development script overrides
+During development, you can override Pod to execute a local script in your system
+instead of a docker container. This allows you testing new versions of your plugin incrementally,
+without having to re-build a docker image each time.
+
+To do that, run `pod` with the `--insecure-plugin-script` command line key to override
+certain plugin container image with a local script on your machine.
+Run `./examples/run_development.sh --help` to see full details on the CLI.
+
+You should trust the script if you want to execute locally: such script will have
+all the same permissions as the user who you run `pod` from (most likely, your main non-root user).
+
+Note that this override is only possible locally during development.
+On a deployed system there will never be any local script overrides and only properly built
+docker images will be allowed, guaranteeing security and reproducibility.
+Containers are additionally be run on different machines than the Pod one.
+
 # How are plugins started
 Plugins are started via **docker** (or a dedicated container in production environment).
 Pod will set the following environment variables for plugins:
