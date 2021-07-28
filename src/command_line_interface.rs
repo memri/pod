@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use std::error::Error;
 use std::net::IpAddr;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -83,6 +84,25 @@ pub struct CliOptions {
     )]
     pub tls_priv_key: String,
 
+    /// Override a certain Plugin container to run a script instead.
+    /// The value specified should be of the form `image_name=/path/to/your/local/script`.
+    /// Whenever Pod is supposed to run a container with this name, it will run
+    /// the specified script instead. This argument can be useful during plugin development,
+    ///
+    /// for example: `my_plugin_container_name=/home/john/memri/my_plugin/script.py`
+    /// or `my_plugin_container_name=C:\\memri\\my_plugin\\plugin.exe`
+    /// or `my_plugin_container_name=/Users/john/memri/my_plugin/script.py`
+    ///
+    /// Note that running scripts instead of containers is not secure. A container is limited
+    /// in its access to the filesystem, but running a script is only secure if you know and trust
+    /// the script.
+    #[structopt(
+        long,
+        parse(try_from_str = parse_key_val),
+        number_of_values = 1,
+    )]
+    pub insecure_plugin_script: Vec<(String, String)>,
+
     /// Do not use https when starting the server, instead run on http://127.0.0.1.
     /// Running on loopback interface (127.0.0.1) means that only apps
     /// from within the same computer will be able to access Pod.
@@ -112,6 +132,19 @@ pub struct CliOptions {
     pub shared_server: bool,
 }
 
+fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error>>
+where
+    T: std::str::FromStr,
+    T::Err: Error + 'static,
+    U: std::str::FromStr,
+    U::Err: Error + 'static,
+{
+    let pos = s
+        .find('=')
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
+    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
 lazy_static! {
     pub static ref VERSION: String = crate::internal_api::get_project_version();
 }
@@ -135,6 +168,7 @@ pub mod tests {
             use_kubernetes: false,
             plugins_callback_address: None,
             plugins_docker_network: None,
+            insecure_plugin_script: Vec::new(),
             tls_pub_crt: "".to_string(),
             tls_priv_key: "".to_string(),
             non_tls: true,
