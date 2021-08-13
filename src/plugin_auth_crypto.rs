@@ -9,6 +9,7 @@ use chacha20poly1305::Key;
 use chacha20poly1305::XChaCha20Poly1305;
 use chacha20poly1305::XNonce;
 use rusqlite::Connection;
+use std::ops::Not;
 use warp::hyper::StatusCode;
 use zeroize::Zeroize;
 
@@ -46,8 +47,8 @@ pub fn extract_database_key(plugin_auth: &PluginAuth) -> Result<DatabaseKey> {
     let encrypted_permissions = hex::decode(&plugin_auth.data.encrypted_permissions)?;
     let nonce = XNonce::from_slice(&nonce);
     let cipher = &global_static::CIPHER;
-    let decrypted = cipher.decrypt(&nonce, encrypted_permissions.as_ref())?;
-    if decrypted.len() != 32 {
+    let decrypted = cipher.decrypt(nonce, encrypted_permissions.as_ref())?;
+    if decrypted.len() != 32 && decrypted.is_empty().not() {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!("Key has incorrect length: {}", decrypted.len()),
