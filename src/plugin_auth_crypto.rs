@@ -47,7 +47,7 @@ pub fn extract_database_key(plugin_auth: &PluginAuth) -> Result<DatabaseKey> {
     let nonce = XNonce::from_slice(&nonce);
     let cipher = &global_static::CIPHER;
     let decrypted = cipher.decrypt(&nonce, encrypted_permissions.as_ref())?;
-    if decrypted.len() != 32 {
+    if decrypted.len() != 32 && decrypted.len() != 0 {
         return Err(Error {
             code: StatusCode::BAD_REQUEST,
             msg: format!("Key has incorrect length: {}", decrypted.len()),
