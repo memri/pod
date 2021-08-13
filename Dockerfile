@@ -3,7 +3,6 @@
 FROM rust:1.54-slim as cargo-build
 
 WORKDIR /usr/src/pod
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
 
 
 #### Compile dependencies and cache them in a docker layer
@@ -33,9 +32,8 @@ RUN cargo build --release && mv target/release/pod ./ && rm -rf target
 #### After Pod has been built, create a small docker image with just the Pod
 
 FROM debian:buster-slim
-COPY --from=cargo-build /usr/bin/docker /usr/bin/docker
 COPY --from=cargo-build /usr/src/pod/pod pod
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y libsqlcipher-dev curl && rm -rf /var/lib/apt/lists/*
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y docker.io libsqlcipher-dev curl && rm -rf /var/lib/apt/lists/*
 ARG use_kubernetes=false
 RUN if [ "$use_kubernetes" = "true" ] ; then \
       curl -LO https://storage.googleapis.com/kubernetes-release/release/"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"/bin/linux/amd64/kubectl \
