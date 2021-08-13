@@ -161,6 +161,24 @@ pub async fn run_server(cli_options: CliOptions) {
         );
 
     let init_db = initialized_databases_arc.clone();
+    let upload_file_b = file_api
+        .and(warp::path!(String / "upload_file_b" / String / String))
+        .and(warp::path::end())
+        .and(warp::body::bytes())
+        .map(
+            move |owner: String, auth_json: String, expected_sha256: String, body: Bytes| {
+                let result = warp_endpoints::upload_file_b(
+                    owner,
+                    init_db.deref(),
+                    auth_json,
+                    expected_sha256,
+                    &body,
+                );
+                respond_with_result(result.map(|()| warp::reply::json(&serde_json::json!({}))))
+            },
+        );
+
+    let init_db = initialized_databases_arc.clone();
     let get_file = file_api
         .and(warp::path!(String / "get_file"))
         .and(warp::path::end())
@@ -216,6 +234,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(get_edges.with(&headers))
         .or(create_edge.with(&headers))
         .or(upload_file.with(&headers))
+        .or(upload_file_b.with(&headers))
         .or(get_file.with(&headers))
         .or(origin_request);
 
