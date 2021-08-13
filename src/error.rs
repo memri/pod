@@ -65,6 +65,16 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl From<serde_path_to_error::Error<serde_json::Error>> for Error {
+    fn from(err: serde_path_to_error::Error<serde_json::Error>) -> Error {
+        let msg = format!("JSON deserialization error {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
+
 impl<T> From<std::sync::PoisonError<T>> for Error {
     fn from(err: std::sync::PoisonError<T>) -> Error {
         let msg = format!(
