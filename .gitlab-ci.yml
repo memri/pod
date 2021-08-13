@@ -18,9 +18,9 @@ before_script:
 cache:
   key: "$CI_JOB_NAME"
   paths:
-    - apt/
-    - cargo/
-    - target/
+    - $CI_PROJECT_DIR/apt/
+    - $CI_PROJECT_DIR/cargo/
+    - $CI_PROJECT_DIR/target/
 
 stages:
   - test
