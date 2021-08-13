@@ -52,8 +52,6 @@ The key will internally be used with [sqlcipher](https://github.com/sqlcipher/sq
 For testing (and for testing only!) you can use any 64 hex characters, e.g. all zeroes.
 
 #### Auth json of "plugin" type
-Note: plugin keys are NOT implemented yet, use "client" keys for now (to be changed 2021-04 - 2021-05).
-
 Plugins receive authentication information when they [are started by the Pod](./Plugins.md).
 
 Their authentication key should be:
@@ -358,6 +356,15 @@ cryptographic information about the file, and the request will also fail.
 If `sha256` matches, the file has not yet been uploaded to Pod and if an item
 with such `sha256` already exists in DB, Pod will accept the file and store it.
 The properties `nonce` and `key` will be updated for this item.
+
+
+### POST /v4/$owner_key/upload_file_b/$auth/$sha256hashOfTheFile
+```text
+RAW-FILE-BINARY
+```
+The `auth` should be a URL-encoded Authorization JSON ([see above](#Auth-json)).
+
+Otherwise, this API endpoint behaves exactly like `upload_file` above.
 
 
 ### POST /v4/$owner_key/get_file

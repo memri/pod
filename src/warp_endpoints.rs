@@ -173,8 +173,23 @@ pub fn upload_file(
     expected_sha256: String,
     body: &[u8],
 ) -> Result<()> {
-    // auth_wrapper and the HTTP request will be re-done for more proper structure later
     let database_key = DatabaseKey::from(database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
+    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
+    in_transaction(&mut conn, |tx| {
+        file_api::upload_file(tx, &owner, &expected_sha256, body)
+    })
+}
+
+pub fn upload_file_b(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    auth_json: String,
+    expected_sha256: String,
+    body: &[u8],
+) -> Result<()> {
+    let auth: AuthKey = serde_json::from_str(&auth_json)?;
+    let database_key = auth_to_database_key(auth)?;
     let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
