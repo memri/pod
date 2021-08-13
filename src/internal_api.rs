@@ -99,7 +99,7 @@ pub fn create_item_tx(
         item.deleted,
     )?;
     for (prop_name, prop_value) in &item.fields {
-        insert_property(tx, schema, rowid, &prop_name, &prop_value)?;
+        insert_property(tx, schema, rowid, prop_name, prop_value)?;
     }
     triggers::trigger_after_item_create(
         tx,

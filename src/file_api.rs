@@ -79,7 +79,7 @@ pub fn get_file(tx: &Transaction, owner: &str, sha256: &str) -> Result<Vec<u8>> 
     let (key, nonce) = find_key_and_nonce_by_sha256(tx, sha256)?;
     let (key, nonce) = (Key::from_slice(&key), XNonce::from_slice(&nonce));
     let cipher = XChaCha20Poly1305::new(key);
-    let plaintext = cipher.decrypt(&nonce, file.as_ref())?;
+    let plaintext = cipher.decrypt(nonce, file.as_ref())?;
     Ok(plaintext)
 }
 
