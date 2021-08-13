@@ -58,18 +58,21 @@ pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
     Ok(result)
 }
 
-const DEFAULT_ITEM_ID_CHARSET: &[u8] = b"0123456789abcdef";
 /// Generate a new random item id.
 /// This implementation chooses to generate 32 random hex characters.
 pub fn new_random_item_id() -> String {
+    new_random_string(32)
+}
+pub fn new_random_string(length: usize) -> String {
     let mut rng = rand::thread_rng();
-    (0..32)
+    (0..length)
         .map(|_| {
-            let idx = rng.gen_range(0..DEFAULT_ITEM_ID_CHARSET.len());
-            DEFAULT_ITEM_ID_CHARSET[idx] as char
+            let idx = rng.gen_range(0..HEX_CHARACTERS.len());
+            HEX_CHARACTERS[idx] as char
         })
         .collect()
 }
+const HEX_CHARACTERS: &[u8] = b"0123456789abcdef";
 
 pub fn create_item_tx(
     tx: &Tx,

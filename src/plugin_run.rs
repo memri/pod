@@ -2,9 +2,9 @@ use crate::command_line_interface::CliOptions;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal_api;
+use crate::internal_api::new_random_string;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema::Schema;
-use internal_api::new_random_item_id;
 use log::info;
 use rusqlite::Transaction;
 use std::collections::HashMap;
@@ -43,13 +43,6 @@ pub fn run_plugin_container(
     let auth = database_key.create_plugin_auth()?;
     let auth = serde_json::to_string(&auth)?;
 
-    let container_id = format!(
-        "{}-{}-{}",
-        pod_owner.chars().take(10).collect::<String>(),
-        container_image.chars().take(15).collect::<String>(),
-        new_random_item_id()
-    );
-
     let script_override = cli_options
         .insecure_plugin_script
         .iter()
@@ -69,7 +62,6 @@ pub fn run_plugin_container(
     } else if cli_options.use_kubernetes {
         run_kubernetes_container(
             &container_image,
-            container_id,
             &target_item_json,
             pod_owner,
             &auth,
@@ -79,7 +71,6 @@ pub fn run_plugin_container(
     } else {
         run_docker_container(
             &container_image,
-            container_id,
             &target_item_json,
             pod_owner,
             &auth,
@@ -122,7 +113,6 @@ fn run_local_script(
 ///     "$containerImage"
 fn run_docker_container(
     container_image: &str,
-    container_id: String,
     target_item_json: &str,
     pod_owner: &str,
     pod_auth: &str,
@@ -133,6 +123,21 @@ fn run_docker_container(
         Some(net) => net.to_string(),
         None => "host".to_string(),
     };
+    let container_id = format!(
+        "{}-{}-{}",
+        pod_owner
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .collect::<String>(),
+        container_image
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .collect::<String>(),
+        triggered_by_item_id
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .collect::<String>()
+    );
     let mut args: Vec<String> = Vec::with_capacity(10);
     args.push("run".to_string());
     args.push(format!("--network={}", docker_network));
@@ -161,13 +166,31 @@ fn run_docker_container(
 ///     --env=POD_AUTH_JSON="{...json...}" \
 fn run_kubernetes_container(
     container_image: &str,
-    container_id: String,
     target_item_json: &str,
     pod_owner: &str,
     pod_auth: &str,
     triggered_by_item_id: &str,
     cli_options: &CliOptions,
 ) -> Result<()> {
+    let container_id = format!(
+        "c{}-{}-{}-{}",
+        pod_owner
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .take(10)
+            .collect::<String>(),
+        container_image
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .take(20)
+            .collect::<String>(),
+        triggered_by_item_id
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .take(20)
+            .collect::<String>(),
+        new_random_string(8)
+    );
     let mut args: Vec<String> = Vec::with_capacity(7);
     args.push("run".to_string());
     args.push(container_id);
