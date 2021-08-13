@@ -1,6 +1,6 @@
 #### The image base should be the same as in .gitlab-ci.yml
 #### Second stage of the Dockerfile (below) should use the same base (rust:slim or it's parent)
-FROM rust:slim as cargo-build
+FROM rust:1.54-slim as cargo-build
 
 WORKDIR /usr/src/pod
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
