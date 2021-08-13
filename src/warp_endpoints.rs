@@ -46,10 +46,10 @@ pub fn get_item(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::get_item_tx(&tx, &schema, &payload)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::get_item_tx(tx, &schema, &payload)
     })
 }
 
@@ -62,10 +62,10 @@ pub fn create_item(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::create_item_tx(&tx, &schema, payload, &owner, cli, &database_key)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::create_item_tx(tx, &schema, payload, &owner, cli, &database_key)
     })
 }
 
@@ -77,10 +77,10 @@ pub fn update_item(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::update_item_tx(&tx, &schema, &payload.id, payload.fields)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::update_item_tx(tx, &schema, &payload.id, payload.fields)
     })
 }
 
@@ -93,10 +93,10 @@ pub fn bulk(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::bulk_tx(&tx, &schema, payload, &owner, cli, &database_key)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::bulk_tx(tx, &schema, payload, &owner, cli, &database_key)
     })
 }
 
@@ -108,10 +108,10 @@ pub fn delete_item(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::delete_item_tx(&tx, &schema, &payload)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::delete_item_tx(tx, &schema, &payload)
     })
 }
 
@@ -123,8 +123,8 @@ pub fn create_edge(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
-    in_transaction(&mut conn, |tx| internal_api::create_edge(&tx, payload))
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
+    in_transaction(&mut conn, |tx| internal_api::create_edge(tx, payload))
 }
 
 pub fn get_edges(
@@ -135,10 +135,10 @@ pub fn get_edges(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::get_edges(&tx, payload, &schema)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::get_edges(tx, payload, &schema)
     })
 }
 
@@ -150,10 +150,10 @@ pub fn search(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(&tx)?;
-        internal_api::search(&tx, &schema, payload)
+        let schema = database_api::get_schema(tx)?;
+        internal_api::search(tx, &schema, payload)
     })
 }
 
@@ -170,7 +170,7 @@ pub fn upload_file(
 ) -> Result<()> {
     // auth_wrapper and the HTTP request will be re-done for more proper structure later
     let database_key = DatabaseKey::from(database_key)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
         file_api::upload_file(tx, &owner, &expected_sha256, body)
@@ -185,7 +185,7 @@ pub fn get_file(
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
-    let mut conn: Connection = check_owner_and_initialize_db(&owner, &init_db, &database_key)?;
+    let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
     in_transaction(&mut conn, |tx| {
         file_api::get_file(tx, &owner, &payload.sha256)

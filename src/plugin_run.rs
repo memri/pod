@@ -59,7 +59,7 @@ pub fn run_plugin_container(
     if let Some(script_path) = script_override {
         run_local_script(
             &container_image,
-            &script_path,
+            script_path,
             &target_item_json,
             pod_owner,
             &auth,
@@ -98,7 +98,7 @@ fn run_local_script(
     triggered_by_item_id: &str,
     cli_options: &CliOptions,
 ) -> Result<()> {
-    let pod_full_address = callback_address(&cli_options, false);
+    let pod_full_address = callback_address(cli_options, false);
     let args: Vec<String> = Vec::new();
     let mut env_vars = HashMap::new();
     env_vars.insert("POD_FULL_ADDRESS", pod_full_address.as_str());

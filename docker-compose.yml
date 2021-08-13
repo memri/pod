@@ -19,7 +19,7 @@ services:
       - "/pod"
       - "--owners=ANY"
       - "--insecure-non-tls=0.0.0.0"
-      - "--plugins-callback-address=pod_pod_1:3030"
+      - "--plugins-callback-address=http://pod_pod_1:3030"
       - "--plugins-docker-network=pod_memri-net"
 
 volumes:

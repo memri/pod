@@ -260,14 +260,14 @@ pub async fn run_server(cli_options: CliOptions) {
     } else {
         let cert_path = &cli_options.tls_pub_crt;
         let key_path = &cli_options.tls_priv_key;
-        if PathBuf::from_str(&cert_path)
+        if PathBuf::from_str(cert_path)
             .map(|p| !p.exists())
             .unwrap_or(true)
         {
             error!("Certificate public key {} not found", cert_path);
             std::process::exit(1)
         };
-        if PathBuf::from_str(&key_path)
+        if PathBuf::from_str(key_path)
             .map(|p| !p.exists())
             .unwrap_or(true)
         {
