@@ -33,6 +33,7 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::RwLock;
 use warp::http::status::StatusCode;
+use warp::hyper::body::Bytes;
 
 //
 // Items API:
@@ -41,8 +42,10 @@ use warp::http::status::StatusCode;
 pub fn get_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<String>,
+    body: Bytes,
 ) -> Result<Vec<Value>> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<String> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -56,9 +59,11 @@ pub fn get_item(
 pub fn create_item(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<CreateItem>,
+    body: Bytes,
     cli: &CliOptions,
 ) -> Result<String> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<CreateItem> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -69,11 +74,9 @@ pub fn create_item(
     })
 }
 
-pub fn update_item(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<UpdateItem>,
-) -> Result<()> {
+pub fn update_item(owner: String, init_db: &RwLock<HashSet<String>>, body: Bytes) -> Result<()> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<UpdateItem> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -87,9 +90,11 @@ pub fn update_item(
 pub fn bulk(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<Bulk>,
+    body: Bytes,
     cli: &CliOptions,
 ) -> Result<Value> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<Bulk> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -100,11 +105,9 @@ pub fn bulk(
     })
 }
 
-pub fn delete_item(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<String>,
-) -> Result<()> {
+pub fn delete_item(owner: String, init_db: &RwLock<HashSet<String>>, body: Bytes) -> Result<()> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<String> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -118,8 +121,10 @@ pub fn delete_item(
 pub fn create_edge(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<CreateEdge>,
+    body: Bytes,
 ) -> Result<String> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<CreateEdge> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -130,8 +135,10 @@ pub fn create_edge(
 pub fn get_edges(
     owner: String,
     init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<GetEdges>,
+    body: Bytes,
 ) -> Result<Vec<Value>> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<GetEdges> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -142,11 +149,9 @@ pub fn get_edges(
     })
 }
 
-pub fn search(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<Search>,
-) -> Result<Vec<Value>> {
+pub fn search(owner: String, init_db: &RwLock<HashSet<String>>, body: Bytes) -> Result<Vec<Value>> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<Search> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;
@@ -177,11 +182,9 @@ pub fn upload_file(
     })
 }
 
-pub fn get_file(
-    owner: String,
-    init_db: &RwLock<HashSet<String>>,
-    body: PayloadWrapper<GetFile>,
-) -> Result<Vec<u8>> {
+pub fn get_file(owner: String, init_db: &RwLock<HashSet<String>>, body: Bytes) -> Result<Vec<u8>> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<GetFile> = serde_path_to_error::deserialize(body)?;
     let auth = body.auth;
     let payload = body.payload;
     let database_key = auth_to_database_key(auth)?;

@@ -1,11 +1,3 @@
-use crate::api_model::Bulk;
-use crate::api_model::CreateEdge;
-use crate::api_model::CreateItem;
-use crate::api_model::GetEdges;
-use crate::api_model::GetFile;
-use crate::api_model::PayloadWrapper;
-use crate::api_model::Search;
-use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
 use crate::error::Result;
@@ -63,8 +55,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let create_item = items_api
         .and(warp::path!(String / "create_item"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<CreateItem>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let cli = cli_options_arc_clone.deref();
             let result = warp_endpoints::create_item(owner, init_db.deref(), body, cli);
             let result = result.map(|result| warp::reply::json(&result));
@@ -75,8 +67,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let get_item = items_api
         .and(warp::path!(String / "get_item"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<String>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::get_item(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -86,8 +78,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let update_item = items_api
         .and(warp::path!(String / "update_item"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<UpdateItem>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::update_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
@@ -97,8 +89,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let get_edges = items_api
         .and(warp::path!(String / "get_edges"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<GetEdges>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::get_edges(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -108,8 +100,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let create_edge = items_api
         .and(warp::path!(String / "create_edge"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<CreateEdge>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::create_edge(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -120,8 +112,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let bulk_action = items_api
         .and(warp::path!(String / "bulk"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<Bulk>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let cli = cli_options_arc_clone.deref();
             let result = warp_endpoints::bulk(owner, init_db.deref(), body, cli);
             let result = result.map(|value| warp::reply::json(&value));
@@ -132,8 +124,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let delete_item = items_api
         .and(warp::path!(String / "delete_item"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<String>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::delete_item(owner, init_db.deref(), body);
             let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
@@ -143,8 +135,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let search = items_api
         .and(warp::path!(String / "search"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<Search>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::search(owner, init_db.deref(), body);
             let result = result.map(|result| warp::reply::json(&result));
             respond_with_result(result)
@@ -172,8 +164,8 @@ pub async fn run_server(cli_options: CliOptions) {
     let get_file = file_api
         .and(warp::path!(String / "get_file"))
         .and(warp::path::end())
-        .and(warp::body::json())
-        .map(move |owner: String, body: PayloadWrapper<GetFile>| {
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
             let result = warp_endpoints::get_file(owner, init_db.deref(), body);
             respond_with_result(result)
         });
