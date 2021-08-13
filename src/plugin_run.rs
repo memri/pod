@@ -193,6 +193,7 @@ fn run_kubernetes_container(
     );
     let mut args: Vec<String> = Vec::with_capacity(7);
     args.push("run".to_string());
+    args.push("--rm".to_string());
     args.push(container_id);
     args.push(format!("--image={}", container_image));
     args.push(format!(
