@@ -9,9 +9,9 @@ use chacha20poly1305::Key;
 use chacha20poly1305::XChaCha20Poly1305;
 use chacha20poly1305::XNonce;
 use rusqlite::Connection;
+use std::ops::Not;
 use warp::hyper::StatusCode;
 use zeroize::Zeroize;
-use std::ops::Not;
 
 pub fn generate_xchacha20poly1305_cipher() -> XChaCha20Poly1305 {
     let key: [u8; 32] = rand::random();
