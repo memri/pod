@@ -188,6 +188,12 @@ pub fn upload_file_b(
     expected_sha256: String,
     body: &[u8],
 ) -> Result<()> {
+    let auth_json = percent_encoding::percent_decode_str(&auth_json)
+        .decode_utf8()
+        .map_err(|err| Error {
+            code: StatusCode::BAD_REQUEST,
+            msg: format!("Failed to decode UTF-8 authorization JSON, {}", err),
+        })?;
     let auth: AuthKey = serde_json::from_str(&auth_json)?;
     let database_key = auth_to_database_key(auth)?;
     let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
