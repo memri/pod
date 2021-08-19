@@ -943,6 +943,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log",
+ "percent-encoding",
  "rand",
  "refinery",
  "regex",
