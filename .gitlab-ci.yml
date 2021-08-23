@@ -52,7 +52,7 @@ build_push_DO:
   before_script:
     - echo building for digital ocean
   script:
-    - echo "{\"auths\":{\"$Docker_Repo\":{\"auth\":\"$Access_Token\",\"password\":\"$Access_Token\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"$Docker_Repo\":{\"username\":\"$Access_Token\",\"password\":\"$Access_Token\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --build-arg use_kubernetes=true --destination $Docker_Repo/polis/pod-dev:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
 
 build_push_Gitlab:
