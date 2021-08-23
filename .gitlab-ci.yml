@@ -3,14 +3,16 @@ image: rust:latest
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
   APT_CACHE_DIR: $CI_PROJECT_DIR/apt
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
 
-default:
-  tags:
-    - docker
+services:
+  - docker:19.03.12-dind
 
 before_script:
   - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
   - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y libsqlcipher-dev
+  #- apt-get install -y docker.io
   - cargo install cargo-audit
   - rustup component add rustfmt
   - rustup component add clippy
@@ -23,18 +25,47 @@ cache:
     - target/
 
 stages:
-  - test
+  #- test
   - docs
+  - build_push_DO
+  - build_push_Gitlab
 
-test:
-  stage: test
+# test:
+#   stage: test
+#   tags:
+#     - internal-memri
+#   # image: ekidd/rust-musl-builder
+#   script:
+#     - cargo fmt --all -- --check
+#     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
+#     - if grep --recursive '::{' src/; then exit -1; fi
+#     - cargo audit
+#     - cargo test
+#     - ./tools/test_curl.sh
+    
+build_push_DO:
+  stage: build_push_DO
+  image: 
+    # We recommend using the CERN version of the Kaniko image: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    entrypoint: [""]
+  before_script:
+    - echo building for digital ocean
   script:
-    - cargo fmt --all -- --check
-    - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
-    - if grep --recursive '::{' src/; then exit -1; fi
-    - cargo audit
-    - cargo test
-    - ./tools/test_curl.sh
+    - echo "{\"auths\":{\"$Docker_Repo\":{\"auth\":\"$Access_Token\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --build-arg use_kubernetes=true --destination $Docker_Repo/polis/pod-dev:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+
+build_push_Gitlab:
+  stage: build_push_Gitlab
+  image: 
+    # We recommend using the CERN version of the Kaniko image: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    entrypoint: [""]
+  before_script:
+    - echo building for gitlab
+  script:
+        - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+        - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --build-arg use_kubernetes=false --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
 
 pages:
   stage: docs
