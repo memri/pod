@@ -195,7 +195,7 @@ fn run_kubernetes_container(
     args.push("run".to_string());
     args.push("--restart=Never".to_string());
     args.push(container_id);
-    args.push(format!("--labels=app={},type=plugin", container_id));
+    args.push(format!("--labels=app={},type=plugin", &container_id));
     args.push(format!("--image={}", container_image));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
