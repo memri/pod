@@ -191,11 +191,11 @@ fn run_kubernetes_container(
             .collect::<String>(),
         new_random_string(8)
     );
-    let mut args: Vec<String> = Vec::with_capacity(7);
+    let mut args: Vec<String> = Vec::with_capacity(9);
     args.push("run".to_string());
     args.push("--restart=Never".to_string());
     args.push(container_id);
-    args.push(format!("--labels=app={},type=plugin", &container_id));
+    args.push(format!("--labels=app={},type=plugin", container_id.clone()));
     args.push(format!("--image={}", container_image));
     args.push(format!(
         "--env=POD_FULL_ADDRESS={}",
