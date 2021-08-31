@@ -191,7 +191,7 @@ fn run_kubernetes_container(
             .collect::<String>(),
         new_random_string(8)
     );
-    let mut args: Vec<String> = Vec::with_capacity(9);
+    let mut args: Vec<String> = Vec::with_capacity(10);
     let s = container_id.clone();
     args.push("run".to_string());
     args.push("--restart=Never".to_string());
@@ -207,6 +207,7 @@ fn run_kubernetes_container(
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
+    args.push(format!("--env=PLUGIN_DNS={}.dev.pod.memri.io", s.clone()));
     let envs: HashMap<&str, &str> = HashMap::new();
     run_any_command("kubectl", &args, &envs, triggered_by_item_id)
 }
