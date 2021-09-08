@@ -130,6 +130,22 @@ pub struct CliOptions {
     /// for details on what it is, and how it works.
     #[structopt(long)]
     pub shared_server: bool,
+
+    /// SMTP relay server to use (advanced option).
+    #[structopt(long)]
+    pub email_smtp_relay: Option<String>,
+
+    /// SMTP relay server port to use (advanced option).
+    #[structopt(long)]
+    pub email_smtp_port: Option<u16>,
+
+    /// SMTP relay server user (advanced option).
+    #[structopt(long)]
+    pub email_smtp_user: Option<String>,
+
+    /// SMTP relay server password (advanced option).
+    #[structopt(long)]
+    pub email_smtp_password: Option<String>,
 }
 
 fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error>>
@@ -175,6 +191,10 @@ pub mod tests {
             insecure_non_tls: Some(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
             insecure_http_headers: false,
             shared_server: false,
+            email_smtp_relay: None,
+            email_smtp_port: None,
+            email_smtp_user: None,
+            email_smtp_password: None,
         }
     }
 }

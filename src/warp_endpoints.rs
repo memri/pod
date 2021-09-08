@@ -6,12 +6,14 @@ use crate::api_model::GetEdges;
 use crate::api_model::GetFile;
 use crate::api_model::PayloadWrapper;
 use crate::api_model::Search;
+use crate::api_model::SendEmail;
 use crate::api_model::UpdateItem;
 use crate::command_line_interface;
 use crate::command_line_interface::CliOptions;
 use crate::constants;
 use crate::database_api;
 use crate::database_migrate_refinery;
+use crate::email;
 use crate::error::Error;
 use crate::error::ErrorContext;
 use crate::error::Result;
@@ -214,6 +216,26 @@ pub fn get_file(owner: String, init_db: &RwLock<HashSet<String>>, body: Bytes) -
     in_transaction(&mut conn, |tx| {
         file_api::get_file(tx, &owner, &payload.sha256)
     })
+}
+
+//
+// Email API
+//
+
+pub fn send_email(
+    owner: String,
+    init_db: &RwLock<HashSet<String>>,
+    body: Bytes,
+    cli: &CliOptions,
+) -> Result<()> {
+    let body = &mut serde_json::Deserializer::from_slice(body.deref());
+    let body: PayloadWrapper<SendEmail> = serde_path_to_error::deserialize(body)?;
+    let auth = body.auth;
+    let payload = body.payload;
+    let database_key = auth_to_database_key(auth)?;
+    let conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
+    conn.execute_batch("SELECT 1 FROM items;")?; // Check DB access
+    email::send_email(payload, cli)
 }
 
 //

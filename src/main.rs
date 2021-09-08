@@ -6,6 +6,7 @@ mod constants;
 pub mod database_api;
 mod database_migrate_refinery;
 mod database_utils;
+mod email;
 mod error;
 mod file_api;
 mod global_static;
