@@ -191,21 +191,31 @@ fn run_kubernetes_container(
             .collect::<String>(),
         new_random_string(8)
     );
-    let mut args: Vec<String> = Vec::with_capacity(7);
-    args.push("run".to_string());
-    args.push("--rm".to_string());
-    args.push(container_id);
-    args.push(format!("--image={}", container_image));
-    args.push(format!(
-        "--env=POD_FULL_ADDRESS={}",
-        callback_address(cli_options, false)
-    ));
-    args.push(format!("--env=POD_TARGET_ITEM={}", target_item_json));
-    args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
-    args.push(format!("--env=POD_OWNER={}", pod_owner));
-    args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    let envs: HashMap<&str, &str> = HashMap::new();
-    run_any_command("kubectl", &args, &envs, triggered_by_item_id)
+    let plugin_public_dns_domain = if let Some(base) = &cli_options.plugins_public_domain {
+        format!("--env=PLUGIN_DNS=https://{}.{}", container_id, base)
+    } else {
+        log::warn!("Plugin public DNS is not configured for the Pod but a kubernetes Plugin is run. Using localhost as the public domain...");
+        "--env=PLUGIN_DNS=http://localhost".to_string()
+    };
+    let args: Vec<String> = vec![
+        "run".to_string(),
+        "--restart=Never".to_string(),
+        container_id.clone(),
+        format!("--labels=app={},type=plugin", container_id),
+        "--port=8080".to_string(),
+        "--image-pull-policy=Always".to_string(),
+        format!("--image={}", container_image),
+        format!(
+            "--env=POD_FULL_ADDRESS={}",
+            callback_address(cli_options, false)
+        ),
+        format!("--env=POD_TARGET_ITEM={}", target_item_json),
+        format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id),
+        format!("--env=POD_OWNER={}", pod_owner),
+        format!("--env=POD_AUTH_JSON={}", pod_auth),
+        plugin_public_dns_domain,
+    ];
+    run_any_command("kubectl", &args, &HashMap::new(), triggered_by_item_id)
 }
 
 fn run_any_command(

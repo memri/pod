@@ -53,6 +53,13 @@ pub struct CliOptions {
     )]
     pub plugins_callback_address: Option<String>,
 
+    /// Plugin's public address, as seen by Memri clients and the external network.
+    /// This is passed to the Plugins so that they can know (and advertise) where they are.
+    ///
+    /// If not specified, Pod will assume the plugin runs on `localhost`.
+    #[structopt(long, env)]
+    pub plugins_public_domain: Option<String>,
+
     /// Docker network to use when running plugins, e.g. `docker run --network=XXX ...`
     /// If not set, "host" will be used, which means that started plugins
     /// will share the network with the host system.
@@ -183,6 +190,7 @@ pub mod tests {
             owners: "ANY".to_string(),
             use_kubernetes: false,
             plugins_callback_address: None,
+            plugins_public_domain: None,
             plugins_docker_network: None,
             insecure_plugin_script: Vec::new(),
             tls_pub_crt: "".to_string(),
