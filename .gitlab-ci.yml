@@ -22,7 +22,7 @@ cache:
     - $CI_PROJECT_DIR/target/
 
 stages:
-  - test
+  #- test
   - docs
   - build_push_DO
   - build_push_Gitlab
