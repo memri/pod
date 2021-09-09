@@ -27,18 +27,18 @@ stages:
   - build_push_DO
   - build_push_Gitlab
 
-test:
-  stage: test
-  tags:
-    - internal-memri
-  # image: ekidd/rust-musl-builder
-  script:
-    - cargo fmt --all -- --check
-    - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
-    - if grep --recursive '::{' src/; then exit -1; fi
-    - cargo audit
-    - cargo test
-    - ./tools/test_curl.sh
+# test:
+#   stage: test
+#   tags:
+#     - internal-memri
+#   # image: ekidd/rust-musl-builder
+#   script:
+#     - cargo fmt --all -- --check
+#     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
+#     - if grep --recursive '::{' src/; then exit -1; fi
+#     - cargo audit
+#     - cargo test
+#     - ./tools/test_curl.sh
     
 build_push_DO:
   stage: build_push_DO
