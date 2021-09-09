@@ -3,10 +3,8 @@ image: rust:latest
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
   APT_CACHE_DIR: $CI_PROJECT_DIR/apt
-
-default:
-  tags:
-    - docker
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
 
 before_script:
   - apt-get update -o dir::cache::archives="$APT_CACHE_DIR" -yq
@@ -18,16 +16,19 @@ before_script:
 cache:
   key: "$CI_JOB_NAME"
   paths:
-    - apt/
-    - cargo/
-    - target/
+    - $CI_PROJECT_DIR/apt/
+    - $CI_PROJECT_DIR/cargo/
+    - $CI_PROJECT_DIR/target/
 
 stages:
   - test
   - docs
+  - publish_docker_images
 
 test:
   stage: test
+  tags:
+    - internal-memri
   script:
     - cargo fmt --all -- --check
     - touch src/main.rs && cargo clippy --all-targets --all-features -- -D warnings
@@ -35,6 +36,19 @@ test:
     - cargo audit
     - cargo test
     - ./tools/test_curl.sh
+
+publish_docker_images:
+  stage: build_push_DO
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    - echo building for digital ocean
+  script:
+    - echo "{\"auths\":{\"$Docker_Repo\":{\"username\":\"$Access_Token\",\"password\":\"$Access_Token\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --build-arg use_kubernetes=true --destination $Docker_Repo/polis/pod-dev:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --build-arg use_kubernetes=false --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
 
 pages:
   stage: docs
