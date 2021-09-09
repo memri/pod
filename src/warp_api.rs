@@ -197,7 +197,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .map(move |owner: String, body: Bytes| {
             let cli = cli_options_arc_clone.deref();
             let result = warp_endpoints::send_email(owner, init_db.deref(), body, cli);
-            let result = result.map(|result| warp::reply::json(&result));
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
             respond_with_result(result)
         });
 

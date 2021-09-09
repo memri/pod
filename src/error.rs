@@ -85,6 +85,16 @@ impl From<lettre::address::AddressError> for Error {
     }
 }
 
+impl From<lettre::error::Error> for Error {
+    fn from(err: lettre::error::Error) -> Error {
+        let msg = format!("Email error: {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
+
 impl From<lettre::transport::smtp::Error> for Error {
     fn from(err: lettre::transport::smtp::Error) -> Error {
         let msg = format!("Email sending error: {}", err);
