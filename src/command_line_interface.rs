@@ -107,7 +107,7 @@ pub struct CliOptions {
     /// Running on loopback interface (127.0.0.1) means that only apps
     /// from within the same computer will be able to access Pod.
     /// This option might be used during development as an alternative to self-signed certificates.
-    #[structopt(short = "t", long)]
+    #[structopt(short = "t", long, env = "POD_NON_TLS")]
     pub non_tls: bool,
 
     /// Unsafe version of --non-tls that runs on a public network, e.g. "http://0.0.0.0".
@@ -128,8 +128,24 @@ pub struct CliOptions {
 
     /// Run server as a "SharedServer". See `/docs/SharedServer.md` documentation
     /// for details on what it is, and how it works.
-    #[structopt(long)]
+    #[structopt(long, env)]
     pub shared_server: bool,
+
+    /// SMTP relay server to use (advanced option).
+    #[structopt(long, env)]
+    pub email_smtp_relay: Option<String>,
+
+    /// SMTP relay server port to use (advanced option).
+    #[structopt(long, default_value = "465", env)]
+    pub email_smtp_port: u16,
+
+    /// SMTP relay server user (advanced option).
+    #[structopt(long, env)]
+    pub email_smtp_user: Option<String>,
+
+    /// SMTP relay server password (advanced option).
+    #[structopt(long, env)]
+    pub email_smtp_password: Option<String>,
 }
 
 fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error>>
@@ -175,6 +191,10 @@ pub mod tests {
             insecure_non_tls: Some(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
             insecure_http_headers: false,
             shared_server: false,
+            email_smtp_relay: None,
+            email_smtp_port: 465,
+            email_smtp_user: None,
+            email_smtp_password: None,
         }
     }
 }

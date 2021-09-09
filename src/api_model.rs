@@ -134,6 +134,14 @@ pub struct Search {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SendEmail {
+    pub to: String,
+    pub subject: String,
+    pub body: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SortOrder {
     /// Ascending
     Asc,

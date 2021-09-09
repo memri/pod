@@ -75,6 +75,36 @@ impl From<serde_path_to_error::Error<serde_json::Error>> for Error {
     }
 }
 
+impl From<lettre::address::AddressError> for Error {
+    fn from(err: lettre::address::AddressError) -> Error {
+        let msg = format!("Email address error: {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
+
+impl From<lettre::error::Error> for Error {
+    fn from(err: lettre::error::Error) -> Error {
+        let msg = format!("Email error: {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
+
+impl From<lettre::transport::smtp::Error> for Error {
+    fn from(err: lettre::transport::smtp::Error) -> Error {
+        let msg = format!("Email sending error: {}", err);
+        Error {
+            code: StatusCode::BAD_REQUEST,
+            msg,
+        }
+    }
+}
+
 impl<T> From<std::sync::PoisonError<T>> for Error {
     fn from(err: std::sync::PoisonError<T>) -> Error {
         let msg = format!(

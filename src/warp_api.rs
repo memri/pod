@@ -188,6 +188,19 @@ pub async fn run_server(cli_options: CliOptions) {
             respond_with_result(result)
         });
 
+    let init_db = initialized_databases_arc.clone();
+    let cli_options_arc_clone = cli_options_arc.clone();
+    let send_email = items_api
+        .and(warp::path!(String / "send_email"))
+        .and(warp::path::end())
+        .and(warp::body::bytes())
+        .map(move |owner: String, body: Bytes| {
+            let cli = cli_options_arc_clone.deref();
+            let result = warp_endpoints::send_email(owner, init_db.deref(), body, cli);
+            let result = result.map(|()| warp::reply::json(&serde_json::json!({})));
+            respond_with_result(result)
+        });
+
     let insecure_http_headers = Arc::new(cli_options.insecure_http_headers);
     let origin_request =
         warp::options()
@@ -236,6 +249,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(upload_file.with(&headers))
         .or(upload_file_b.with(&headers))
         .or(get_file.with(&headers))
+        .or(send_email.with(&headers))
         .or(origin_request);
 
     let not_found = warp::any().map(|| {

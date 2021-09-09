@@ -4,7 +4,7 @@ version = "0.4.3"
 authors = [
   "Bijun Li <bijun.li@polis.global>",
   "Ruben Seggers <ruben.seggers@polis.global>",
-  "Vasili Novikov (copyright transferred to Polis) <n1dr+cm3513git@ya.ru>",
+  "Vasili Novikov (copyright transferred to Polis) <vasili.memri+gitlab@gmail.com>",
   "Youp Mickers (copyright transferred to Polis) <polisyoup@gmail.com>",
 ]
 edition = "2018"
@@ -21,6 +21,7 @@ field_count = "0.1.1"
 field_count_derive = "0.1.1"
 hex = "0.4.3"
 lazy_static = "1.4.0"
+lettre = { version = "0.10.0-rc.3", default-features = false, features = ["builder", "rustls-tls", "smtp-transport"] }
 libc = "0.2.98"
 log = "0.4.14"
 percent-encoding = "2.1.0"
