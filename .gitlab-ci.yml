@@ -38,7 +38,7 @@ test:
     - ./tools/test_curl.sh
 
 publish_docker_images:
-  stage: build_push_DO
+  stage: publish_docker_images
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
