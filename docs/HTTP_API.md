@@ -315,8 +315,6 @@ Returns an empty object if the operation is successful.
 
 
 # Plugins API
-⚠️ Isn't fully implemented yet, assume the real implementation to arrive 2021-04 - 2021-05
-
 Plugins help getting data into your Pod and enriching it.
 Plugins must be authorized and started by the user.
 
@@ -337,6 +335,31 @@ See [Plugins](./Plugins.md) on how plugins are started exactly.
 
 ⚠️ UNSTABLE: We might require more properties for Plugins to start in the future,
 e.g. permission limitation.
+
+
+# Email API
+Email API is a temporary functionality of Pod that allows it to send emails.
+
+### POST /v4/$owner_key/send_email
+To send an item to a particular user via the Pod, make the following API request:
+```json5
+{
+  "auth": $auth_json,
+  "payload": {
+    "to": "address@example.com",
+    "subject": "Example subject",
+    "body": "Example message body."
+  }
+}
+```
+This will make Pod send that single email and return a success if the email was
+accepted by the configured SMTP server.
+
+No retries will be made if SMTP connection did not succeed.
+
+No changes will be made to the database.
+
+⚠️ UNSTABLE: the API is unstable and might be removed without prior notice.
 
 
 # File API
