@@ -208,7 +208,10 @@ fn run_kubernetes_container(
     args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    args.push(format!("--env=PLUGIN_DNS=http://{}.dev.pod.memri.io", s.clone()));
+    args.push(format!(
+        "--env=PLUGIN_DNS=http://{}.dev.pod.memri.io",
+        s.clone()
+    ));
     let envs: HashMap<&str, &str> = HashMap::new();
     run_any_command("kubectl", &args, &envs, triggered_by_item_id)
 }
