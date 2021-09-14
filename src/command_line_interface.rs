@@ -128,11 +128,6 @@ pub struct CliOptions {
     #[structopt(long, name = "NETWORK_INTERFACE", env = "POD_INSECURE_NON_TLS")]
     pub insecure_non_tls: Option<IpAddr>,
 
-    /// Add `Access-Control-Allow-Origin: *` header to all HTTP responses,
-    /// and make the server answer to ORIGIN requests.
-    #[structopt(long)]
-    pub insecure_http_headers: bool,
-
     /// Run server as a "SharedServer". See `/docs/SharedServer.md` documentation
     /// for details on what it is, and how it works.
     #[structopt(long, env)]
@@ -197,7 +192,6 @@ pub mod tests {
             tls_priv_key: "".to_string(),
             non_tls: true,
             insecure_non_tls: Some(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
-            insecure_http_headers: false,
             shared_server: false,
             email_smtp_relay: None,
             email_smtp_port: 465,

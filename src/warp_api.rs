@@ -29,10 +29,7 @@ pub async fn run_server(cli_options: CliOptions) {
     info!("Starting {} HTTP server", package_name);
 
     let mut headers = HeaderMap::new();
-    if cli_options.insecure_http_headers {
-        info!("Adding insecure http headers Access-Control-Allow-Origin header as per CLI option");
-        headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
-    }
+    headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     let headers = warp::reply::with::headers(headers);
 
     let items_api = warp::path("v4")
@@ -201,32 +198,22 @@ pub async fn run_server(cli_options: CliOptions) {
             respond_with_result(result)
         });
 
-    let insecure_http_headers = Arc::new(cli_options.insecure_http_headers);
     let origin_request =
         warp::options()
             .and(warp::header::<String>("origin"))
             .map(move |_origin| {
-                if *insecure_http_headers {
-                    let builder = http::response::Response::builder()
-                        .status(StatusCode::OK)
-                        .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                        .header(
-                            "access-control-allow-headers",
-                            "Origin, X-Requested-With, Content-Type, Accept",
-                        )
-                        .header("access-control-allow-credentials", "true")
-                        .header("access-control-max-age", "300")
-                        .header("access-control-allow-origin", "*");
-                    builder
-                        .header("vary", "origin")
-                        .body("".to_string())
-                        .unwrap()
-                } else {
-                    http::Response::builder()
-                        .status(StatusCode::METHOD_NOT_ALLOWED)
-                        .body(String::new())
-                        .expect("Failed to return an empty body")
-                }
+                let builder = http::response::Response::builder()
+                    .status(StatusCode::OK)
+                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+                    .header(
+                        "access-control-allow-headers",
+                        "Origin, X-Requested-With, Content-Type, Accept",
+                    )
+                    .header("access-control-max-age", "300");
+                builder
+                    .header("vary", "origin")
+                    .body("".to_string())
+                    .unwrap()
             });
 
     let always_enabled_filters = version.with(&headers).or(create_item.with(&headers));
@@ -250,7 +237,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(upload_file_b.with(&headers))
         .or(get_file.with(&headers))
         .or(send_email.with(&headers))
-        .or(origin_request);
+        .or(origin_request.with(&headers));
 
     let not_found = warp::any().map(|| {
         warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
