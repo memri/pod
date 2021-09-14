@@ -237,7 +237,7 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(upload_file_b.with(&headers))
         .or(get_file.with(&headers))
         .or(send_email.with(&headers))
-        .or(origin_request);
+        .or(origin_request.with(&headers));
 
     let not_found = warp::any().map(|| {
         warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
