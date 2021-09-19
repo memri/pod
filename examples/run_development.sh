@@ -16,5 +16,4 @@ fi
 exec target/debug/pod \
   --owners=ANY \
   --insecure-non-tls=0.0.0.0 \
-  --insecure-http-headers \
   "$@"

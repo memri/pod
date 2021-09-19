@@ -13,5 +13,4 @@ examples/generate_self-signed_certificate.sh
 
 exec cargo run -- \
   --owners=ANY
-  --insecure-http-headers \
   "$@"
