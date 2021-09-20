@@ -185,10 +185,11 @@ pub fn bulk_tx(
     database_key: &DatabaseKey,
 ) -> Result<Value> {
     info!(
-        "Performing bulk action with {} new items, {} updated items, {} deleted items",
+        "Performing bulk action with {} new items, {} updated items, {} deleted items, {} created edges",
         bulk.create_items.len(),
         bulk.update_items.len(),
         bulk.delete_items.len(),
+        bulk.create_edges.len(),
     );
     let mut created_items = Vec::new();
     for item in bulk.create_items {
