@@ -7,13 +7,13 @@ if ! test -e Cargo.toml; then
   exit 1
 fi
 
-cargo build
+cargo build --release
 
 if ! test -v RUST_LOG; then
   export RUST_LOG=pod=debug,info
 fi
 
-exec target/debug/pod \
+exec target/release/pod \
   --owners=ANY \
   --insecure-non-tls=0.0.0.0 \
   "$@"

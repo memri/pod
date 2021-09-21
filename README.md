@@ -15,9 +15,10 @@ See documentation on:
 * How are data types defined in [Schema](./docs/Schema.md)
 * [Schema synchronization](./docs/Synchronization.md) between clients/plugins and the Pod
 
+
 ## Build & Run
-There are 3 main ways to run Pod: building it locally/natively, building it in docker,
-and using pre-built docker images to just run it.
+There are 3 main ways to run Pod: using pre-built docker images to just run it,
+building it in docker, and building it locally/natively.
 
 ### Run pre-built docker image of Pod
 This is the fastest way to get Pod running on your system,
@@ -28,18 +29,16 @@ To use this option:
 POD_VERSION="dev-de929382" docker-compose --file examples/using-prebuilt-docker.yml up
 ```
 
-
 ### Run in docker
 This is the least involved way to build locally. To build&run Pod inside docker:
 ```sh
 docker-compose up --build
 ```
 
-
 ### Local build/run
 This is the fastest way to compile Pod from source,
-for example, if you're making any changes in Pod and want to test it.
-It will also work on any OS and CPU architecture, it will cache build artifacts whenever possible.
+for example, if you're making any changes in Pod and want to test it.  
+It will also work on any OS and CPU architecture.
 
 You will need Rust >= 1.45 and sqlcipher:
 
@@ -51,12 +50,9 @@ apt-get install sqlcipher libsqlcipher-dev build-essential
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-After this, you can run Pod with either of these options:
+After this, you can run Pod with:
 ```sh
 ./examples/run_development.sh
-cargo run -- --help
-cargo run -- --owners=ANY
-cargo run --release -- owners=ANY  # release build, e.g. if you want to test performance
 ```
 
 

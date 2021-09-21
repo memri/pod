@@ -7,8 +7,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
-    image: pod:latest
     ports:
       - "0.0.0.0:3030:3030"
     networks:
