@@ -23,9 +23,8 @@ building it in docker, and building it locally/natively.
 ### Run pre-built docker image of Pod
 This is the fastest way to get Pod running on your system,
 however it only works for Pod versions that have already been built on our server.  
-To use this option:
+To run branch "dev" on commit "de929382":
 ```
-# in this example, we're running Pod version "dev-de929382" ("branch-commit")
 POD_VERSION="dev-de929382" docker-compose --file examples/using-prebuilt-docker.yml up
 ```
 
