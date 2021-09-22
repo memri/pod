@@ -79,7 +79,7 @@ Pod uses SQLite database as its storage mechanism.
 When running Pod, a file named `data/db/*.db3` will be created.
 You can use the following command to browse the database locally:
 ```
-sqlcipher -cmd "PRAGMA key = \"x'yourDatabaseKey'\";" data/db/*.db3
+sqlcipher -cmd "PRAGMA key = \"x'yourDatabaseKey'\";" data/db/your_database_file
 ```
 For example, `.schema` will display the current database schema.
 

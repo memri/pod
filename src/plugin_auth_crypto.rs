@@ -81,11 +81,9 @@ impl std::fmt::Debug for DatabaseKey {
 impl DatabaseKey {
     /// Set encryption for a database connection, taking care of memory zeroing in the process.
     pub fn execute_sqlite_pragma(&self, conn: &Connection) -> Result<()> {
-        let mut encoded = hex::encode(&self.database_key);
-        let mut sql = format!("PRAGMA key = \"x'{}'\";", &encoded);
+        let mut sql = format!("PRAGMA key = \"x'{}'\";", self.database_key);
         conn.execute_batch(&sql)?;
         sql.zeroize();
-        encoded.zeroize();
         Ok(())
     }
 
