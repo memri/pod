@@ -6,25 +6,40 @@ It's written in Rust and provides an HTTP interface for use by the clients.
 
 See documentation on:
 
-* Pod-s [HTTP API](./docs/HTTP_API.md)
+* How to run Pod (this document)
+* Pod [HTTP API](./docs/HTTP_API.md)
 * Writing [Plugins](https://blog.memri.io/getting-started-building-a-plugin/)
 * Running [Plugins](./docs/Plugins.md)
 * [Security](./docs/Security.md)
 * What is a [Shared Server](./docs/SharedServer.md)
 * How are data types defined in [Schema](./docs/Schema.md)
 * [Schema synchronization](./docs/Synchronization.md) between clients/plugins and the Pod
-* How to run Pod (this document)
 
-## Run in docker
-To run Pod inside docker:
+
+## Build & Run
+There are 3 main ways to run Pod: using pre-built docker images to just run it,
+building it in docker, and building it locally/natively.
+
+### Run pre-built docker image of Pod
+This is the fastest way to get Pod running on your system,
+however it only works for Pod versions that have already been built on our server.  
+To run branch "dev" on commit "de929382":
+```
+POD_VERSION="dev-de929382" docker-compose --file examples/using-prebuilt-docker.yml up
+```
+
+### Run in docker
+This is the least involved way to build locally. To build&run Pod inside docker:
 ```sh
 docker-compose up --build
 ```
 
+### Local build/run
+This is the fastest way to compile Pod from source,
+for example, if you're making any changes in Pod and want to test it.  
+It will also work on any OS and CPU architecture.
 
-## Local build/run
-
-In order to build Pod locally, you need Rust and sqlcipher:
+You will need Rust >= 1.45 and sqlcipher:
 
 * On MacOS: `brew install rust sqlcipher`
 * On ArchLinux: `pacman -S --needed rust sqlcipher base-devel`
@@ -33,17 +48,9 @@ In order to build Pod locally, you need Rust and sqlcipher:
 apt-get install sqlcipher libsqlcipher-dev build-essential
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
-* Submit merge requests for your other OS. :)  
-  The minimum required Rust version for any OS is 1.45.
 
 After this, you can run Pod with:
 ```sh
-cargo run -- --help
-cargo run -- --owners=ANY
-```
-
-Or the easy-to-use development version:
-```
 ./examples/run_development.sh
 ```
 
@@ -64,10 +71,6 @@ You can read about various components of the server:
 * Rusqlite database driver: [github.com/rusqlite/rusqlite](https://github.com/rusqlite/rusqlite)
 * Warp HTTP engine: [github.com/seanmonstar/warp](https://github.com/seanmonstar/warp)
 * Rust language: [rust-lang.org](https://www.rust-lang.org/)
-
-
-## HTTP API
-Pod's API is documented in detail [here](./docs/HTTP_API.md).
 
 
 ## Database
