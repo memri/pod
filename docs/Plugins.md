@@ -109,10 +109,6 @@ Pod will set the following environment variables for plugins:
   e.g. `https://x.x.x.x:80` or `http://localhost:3030`.
   You can call the endpoints via a URL like `$POD_FULL_ADDRESS/version`.
 
-* `PLUGIN_DNS` = the public address of the Plugin, as visible from the outside,
-  by Memri clients and users.
-  Note that plugins themselves should only listen on http port 8080.
-
 * `POD_TARGET_ITEM` = the JSON of the item that the plugin needs to run against.
   For example:
 ```json
