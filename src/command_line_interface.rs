@@ -61,17 +61,18 @@ pub struct CliOptions {
     pub plugins_public_domain: Option<String>,
 
     /// Docker network to use when running plugins, e.g. `docker run --network=XXX ...`
-    /// If not set, "host" will be used, which means that started plugins
+    /// If not set, "bridge" will be used, which means that started plugins
     /// will share the network with the host system.
     /// If Pod itself is running inside docker, please run both Pod and plugins
     /// in identical network that will then not be shared with the host system
     /// (this is covered in docker-compose.yml by default).
     #[structopt(
         long,
+        default_value = "bridge",
         name = "PLUGINS_DOCKER_NETWORK",
-        env = "POD_PLUGINS_DOCKER_NETWORK"
+        env = "POD_PLUGINS_DOCKER_NETWORK",
     )]
-    pub plugins_docker_network: Option<String>,
+    pub plugins_docker_network: String,
 
     /// File to read https public certificate from.
     #[structopt(
@@ -186,7 +187,7 @@ pub mod tests {
             use_kubernetes: false,
             plugins_callback_address: None,
             plugins_public_domain: None,
-            plugins_docker_network: None,
+            plugins_docker_network: "bridge".to_string(),
             insecure_plugin_script: Vec::new(),
             tls_pub_crt: "".to_string(),
             tls_priv_key: "".to_string(),

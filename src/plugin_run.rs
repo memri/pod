@@ -122,10 +122,6 @@ fn run_docker_container(
     triggered_by_item_id: &str,
     cli_options: &CliOptions,
 ) -> Result<()> {
-    let docker_network = match &cli_options.plugins_docker_network {
-        Some(net) => net.to_string(),
-        None => "host".to_string(),
-    };
     let container_id = format!(
         "{}-{}-{}",
         pod_owner
@@ -151,7 +147,7 @@ fn run_docker_container(
     };
     let args: Vec<String> = vec![
         "run".to_string(),
-        format!("--network={}", docker_network),
+        format!("--network={}", cli_options.plugins_docker_network),
         format!(
             "--env=POD_FULL_ADDRESS={}",
             callback_address(cli_options, true)
