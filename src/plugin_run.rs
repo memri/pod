@@ -6,8 +6,10 @@ use crate::internal_api::new_random_string;
 use crate::plugin_auth_crypto::DatabaseKey;
 use crate::schema::Schema;
 use log::info;
+use rand::Rng;
 use rusqlite::Transaction;
 use std::collections::HashMap;
+use std::net::TcpListener;
 use std::process::Command;
 use warp::http::status::StatusCode;
 
@@ -97,6 +99,7 @@ fn run_local_script(
     env_vars.insert("POD_PLUGINRUN_ID", triggered_by_item_id);
     env_vars.insert("POD_OWNER", pod_owner);
     env_vars.insert("POD_AUTH_JSON", pod_auth);
+    env_vars.insert("PLUGIN_DNS", "http://localhost:8080");
     run_any_command(plugin_path, &args, &env_vars, triggered_by_item_id)
 }
 
@@ -138,21 +141,29 @@ fn run_docker_container(
             .filter(|c| c.is_ascii_alphanumeric())
             .collect::<String>()
     );
-    let mut args: Vec<String> = Vec::with_capacity(10);
-    args.push("run".to_string());
-    args.push(format!("--network={}", docker_network));
-    args.push(format!(
-        "--env=POD_FULL_ADDRESS={}",
-        callback_address(cli_options, true)
-    ));
-    args.push(format!("--env=POD_TARGET_ITEM={}", target_item_json));
-    args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
-    args.push(format!("--env=POD_OWNER={}", pod_owner));
-    args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    args.push(format!("--name={}", sanitize_docker_name(&container_id)));
-    args.push("--rm".to_string());
-    args.push("--".to_string());
-    args.push(container_image.to_string());
+    let port = if let Some(p) = find_unused_tcp_port() {
+        p
+    } else {
+        return Err(Error {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            msg: "Failed to find unused TCP port to open port for a Plugin".to_string(),
+        });
+    };
+    let args: Vec<String> = vec![
+       "run".to_string(),
+        format!("--network={}", docker_network),
+        format!("--env=POD_FULL_ADDRESS={}", callback_address(cli_options, true)),
+        format!("--env=POD_TARGET_ITEM={}", target_item_json),
+        format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id),
+        format!("--env=POD_OWNER={}", pod_owner),
+        format!("--env=POD_AUTH_JSON={}", pod_auth),
+        format!("--env=PLUGIN_DNS=http://localhost:{}", port),
+        format!("--publish={}:8080", port),
+        format!("--name={}", sanitize_docker_name(&container_id)),
+        "--rm".to_string(),
+        "--".to_string(),
+        container_image.to_string(),
+    ];
     let envs: HashMap<&str, &str> = HashMap::new();
     run_any_command("docker", &args, &envs, triggered_by_item_id)
 }
@@ -306,4 +317,17 @@ pub fn escape_bash_arg(str: &str) -> String {
         let quoted = str.replace("'", "'\\''"); // end quoting, append the literal, start quoting
         return format!("'{}'", quoted);
     }
+}
+
+/// WARNING: this method is not solid against TOCTOU problem.
+/// By the time this port will be used, it might already be taken
+fn find_unused_tcp_port() -> Option<u16> {
+    let mut rng = rand::thread_rng();
+    for _ in 0..10 {
+        let port = rng.gen_range(15_000..25_000);
+        if TcpListener::bind(("127.0.0.1", port)).is_ok() {
+            return Some(port);
+        }
+    }
+    None
 }
