@@ -201,7 +201,7 @@ mod tests {
     fn test_file_upload_get() -> Result<()> {
         let mut conn = new_conn();
         let tx = conn.transaction().unwrap();
-        let schema = database_api::get_schema(&tx)?;
+        let mut schema = database_api::get_schema(&tx)?;
         let cli = command_line_interface::tests::test_cli();
         let database_key = DatabaseKey::from("".to_string()).unwrap();
         let owner = "testOwner".to_string();
@@ -214,7 +214,7 @@ mod tests {
             "sha256": &sha,
         });
         let sha_item = serde_json::from_value(json)?;
-        internal_api::create_item_tx(&tx, &schema, sha_item, &owner, &cli, &database_key)?;
+        internal_api::create_item_tx(&tx, &mut schema, sha_item, &owner, &cli, &database_key)?;
 
         upload_file(&tx, &owner, &sha, &[])?;
 

@@ -76,7 +76,7 @@ const HEX_CHARACTERS: &[u8] = b"0123456789abcdef";
 
 pub fn create_item_tx(
     tx: &Tx,
-    schema: &Schema,
+    schema: &mut Schema,
     item: CreateItem,
     pod_owner: &str,
     cli: &CliOptions,
@@ -91,7 +91,7 @@ pub fn create_item_tx(
         return Err(err);
     }
     let time_now = Utc::now().timestamp_millis();
-    let _ignore_insertion = triggers::trigger_before_item_create(schema, &item)?;
+    let _is_new_schema = triggers::add_item_as_schema_opt(schema, &item)?;
     let rowid = database_api::insert_item_base(
         tx,
         &id,
@@ -178,7 +178,7 @@ pub fn delete_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<()> {
 
 pub fn bulk_tx(
     tx: &Tx,
-    schema: &Schema,
+    schema: &mut Schema,
     bulk: Bulk,
     pod_owner: &str,
     cli: &CliOptions,
@@ -387,7 +387,7 @@ mod tests {
         let item_struct: CreateItem = serde_json::from_value(item_json).unwrap();
         let result = internal_api::create_item_tx(
             &tx,
-            &database_api::get_schema(&tx)?,
+            &mut database_api::get_schema(&tx)?,
             item_struct.clone(),
             "",
             &cli,
@@ -405,7 +405,7 @@ mod tests {
         let schema_struct: CreateItem = serde_json::from_value(schema_json).unwrap();
         let result = internal_api::create_item_tx(
             &tx,
-            &database_api::get_schema(&tx)?,
+            &mut database_api::get_schema(&tx)?,
             schema_struct,
             "",
             &cli,
@@ -416,7 +416,7 @@ mod tests {
         // Now insert the Person with already in place
         let result = internal_api::create_item_tx(
             &tx,
-            &database_api::get_schema(&tx)?,
+            &mut database_api::get_schema(&tx)?,
             item_struct,
             "",
             &cli,
@@ -434,7 +434,7 @@ mod tests {
         let database_key = DatabaseKey::from("".to_string()).unwrap();
 
         let tx = conn.transaction().unwrap();
-        let minimal_schema = database_api::get_schema(&tx).unwrap();
+        let mut minimal_schema = database_api::get_schema(&tx).unwrap();
 
         let json = json!({
             "type": "ItemPropertySchema",
@@ -448,7 +448,7 @@ mod tests {
             let create_item: CreateItem = serde_json::from_value(json.clone()).unwrap();
             internal_api::create_item_tx(
                 &tx,
-                &minimal_schema,
+                &mut minimal_schema,
                 create_item,
                 "",
                 &cli,
@@ -468,7 +468,7 @@ mod tests {
             let expected_error = "Schema for property dateCreated is already defined to type DateTime, cannot override to type Bool";
             assert!(internal_api::create_item_tx(
                 &tx,
-                &minimal_schema,
+                &mut minimal_schema,
                 create_item,
                 "",
                 &cli,
@@ -479,13 +479,13 @@ mod tests {
             .contains(expected_error));
         }
 
-        let bad_empty_schema = Schema {
+        let mut bad_empty_schema = Schema {
             property_types: HashMap::new(),
         };
         let create_item: CreateItem = serde_json::from_value(json).unwrap();
         let result = internal_api::create_item_tx(
             &tx,
-            &bad_empty_schema,
+            &mut bad_empty_schema,
             create_item,
             "",
             &cli,
@@ -504,21 +504,21 @@ mod tests {
         let cli = command_line_interface::tests::test_cli();
         let db_key = DatabaseKey::from("".to_string()).unwrap();
         let tx = conn.transaction().unwrap();
-        let schema = database_api::get_schema(&tx).unwrap();
+        let mut schema = database_api::get_schema(&tx).unwrap();
 
         let person1 = {
             let person = json!({
                 "type": "Person",
             });
             let person: CreateItem = serde_json::from_value(person).unwrap();
-            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+            create_item_tx(&tx, &mut schema, person, "", &cli, &db_key).unwrap()
         };
         let person2 = {
             let person = json!({
                 "type": "Person",
             });
             let person: CreateItem = serde_json::from_value(person).unwrap();
-            create_item_tx(&tx, &schema, person, "", &cli, &db_key).unwrap()
+            create_item_tx(&tx, &mut schema, person, "", &cli, &db_key).unwrap()
         };
         let _edge = {
             let json = json!({

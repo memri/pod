@@ -71,8 +71,8 @@ pub fn create_item(
     let database_key = auth_to_database_key(auth)?;
     let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(tx)?;
-        internal_api::create_item_tx(tx, &schema, payload, &owner, cli, &database_key)
+        let mut schema = database_api::get_schema(tx)?;
+        internal_api::create_item_tx(tx, &mut schema, payload, &owner, cli, &database_key)
     })
 }
 
@@ -102,8 +102,8 @@ pub fn bulk(
     let database_key = auth_to_database_key(auth)?;
     let mut conn: Connection = check_owner_and_initialize_db(&owner, init_db, &database_key)?;
     in_transaction(&mut conn, |tx| {
-        let schema = database_api::get_schema(tx)?;
-        internal_api::bulk_tx(tx, &schema, payload, &owner, cli, &database_key)
+        let mut schema = database_api::get_schema(tx)?;
+        internal_api::bulk_tx(tx, &mut schema, payload, &owner, cli, &database_key)
     })
 }
 

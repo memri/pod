@@ -13,6 +13,7 @@ use crate::plugin_auth_crypto::DatabaseKey;
 use crate::plugin_run;
 use crate::schema::Schema;
 use crate::schema::SchemaPropertyType;
+use crate::triggers::SchemaAdditionChange::*;
 use rusqlite::Transaction as Tx;
 use serde::Deserialize;
 use serde::Serialize;
@@ -33,8 +34,18 @@ pub struct PluginRunItem {
     pub target_item_id: String,
 }
 
-/// Returns whether the item insertion should be ignored
-pub fn trigger_before_item_create(schema: &Schema, item: &CreateItem) -> Result<bool> {
+pub enum SchemaAdditionChange {
+    NotASchema,
+    NewSchemaAdded,
+    OldSchemaIgnored,
+}
+
+/// If an item is a Schema, add it to the schema. Return the change.
+/// Fail if an incompatible schema is attempted to be inserted.
+pub fn add_item_as_schema_opt(
+    schema: &mut Schema,
+    item: &CreateItem,
+) -> Result<SchemaAdditionChange> {
     // We'll do something ugly here.
     // We'll convert the item into JSON and back into the desired type for type check and parsing.
     // This is easier code-wise than to do manual conversions.
@@ -45,7 +56,7 @@ pub fn trigger_before_item_create(schema: &Schema, item: &CreateItem) -> Result<
             .context(|| format!("Parsing of Schema item {:?}, {}:{}", item, file!(), line!()))?;
         if let Some(old) = schema.property_types.get(&parsed.property_name) {
             if old == &parsed.value_type {
-                Ok(true)
+                Ok(OldSchemaIgnored)
             } else {
                 Err(Error {
                     code: StatusCode::BAD_REQUEST,
@@ -53,10 +64,13 @@ pub fn trigger_before_item_create(schema: &Schema, item: &CreateItem) -> Result<
                 })
             }
         } else {
-            Ok(false)
+            schema
+                .property_types
+                .insert(parsed.property_name, parsed.value_type);
+            Ok(NewSchemaAdded)
         }
     } else {
-        Ok(false)
+        Ok(NotASchema)
     }
 }
 
