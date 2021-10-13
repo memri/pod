@@ -39,6 +39,8 @@ test:
 
 publish_docker_images:
   stage: publish_docker_images
+  tags:
+    - internal-memri
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
