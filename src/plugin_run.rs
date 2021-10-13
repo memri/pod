@@ -138,7 +138,7 @@ fn run_docker_container(
             .filter(|c| c.is_ascii_alphanumeric())
             .collect::<String>()
     );
-    let mut args: Vec<String> = Vec::with_capacity(10);
+    let mut args: Vec<String> = Vec::with_capacity(11);
     args.push("run".to_string());
     args.push(format!("--network={}", docker_network));
     args.push(format!(
@@ -150,6 +150,7 @@ fn run_docker_container(
     args.push(format!("--env=POD_OWNER={}", pod_owner));
     args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
     args.push(format!("--name={}", sanitize_docker_name(&container_id)));
+    args.push("--pull=always".to_string());
     args.push("--rm".to_string());
     args.push("--".to_string());
     args.push(container_image.to_string());
