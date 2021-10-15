@@ -116,10 +116,10 @@ pub struct EdgeSearch {}
 pub struct Search {
     pub id: Option<String>,
     pub _type: Option<String>,
-    #[serde(rename = "dateServerModified>=")]
-    pub date_server_modified_gte: Option<i64>,
-    #[serde(rename = "dateServerModified<")]
-    pub date_server_modified_lt: Option<i64>,
+    #[serde(rename = "id>=")]
+    pub id_gte: Option<String>,
+    #[serde(rename = "id<")]
+    pub id_lt: Option<String>,
     pub deleted: Option<bool>,
     #[serde(default = "default_api_sort_order", rename = "_sortOrder")]
     pub sort_order: SortOrder,
@@ -159,7 +159,6 @@ fn default_api_sort_order() -> SortOrder {
 fn default_api_limit() -> u64 {
     u64::MAX
 }
-
 //
 // Files API:
 //
