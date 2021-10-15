@@ -125,6 +125,8 @@ pub struct Search {
     pub sort_order: SortOrder,
     #[serde(default = "default_api_limit", rename = "_limit")]
     pub limit: u64,
+    #[serde(rename = "_offset")]
+    pub offset: Option<u64>,
     #[serde(rename = "[[edges]]")]
     pub forward_edges: Option<EdgeSearch>,
     #[serde(rename = "~[[edges]]")]

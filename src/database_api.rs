@@ -71,6 +71,7 @@ pub fn get_item_base(tx: &Tx, rowid: Rowid) -> Result<Option<ItemBase>> {
         deleted: None,
         sort_order: SortOrder::Asc,
         _limit: 1,
+        _offset: None,
     };
     let item = search_items(tx, &database_search)?.into_iter().next();
     Ok(item)
@@ -96,6 +97,7 @@ pub struct DatabaseSearch<'a> {
     pub deleted: Option<bool>,
     pub sort_order: SortOrder,
     pub _limit: u64,
+    pub _offset: Option<u64>,
 }
 
 fn parse_item_base(row: &Row) -> Result<ItemBase> {
@@ -169,14 +171,19 @@ pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
     let mut rows: Rows = stmt.raw_query();
 
     let mut result = Vec::new();
+    let mut num_skip = query._offset.unwrap_or(0);
     let mut num_left = query._limit;
     while let Some(row) = rows.next()? {
-        if num_left == 0 {
-            break;
+        if num_skip == 0 {
+            if num_left == 0 {
+                break;
+            } else {
+                num_left -= 1;
+            }
+            result.push(parse_item_base(row)?);
         } else {
-            num_left -= 1;
-        }
-        result.push(parse_item_base(row)?);
+            num_skip -= 1;
+        }    
     }
     Ok(result)
 }
@@ -660,6 +667,7 @@ pub mod tests {
             deleted,
             sort_order: SortOrder::Asc,
             _limit: u64::MAX,
+            _offset: None,
         };
         search_items(tx, &database_search)
     }
@@ -723,6 +731,7 @@ pub mod tests {
                 deleted: None,
                 sort_order: SortOrder::Asc,
                 _limit: 1,
+                _offset: None,
             };
             assert_eq!(search_items(&tx, &query)?.len(), 1);
 

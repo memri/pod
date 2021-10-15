@@ -50,6 +50,7 @@ pub fn get_item_tx(tx: &Tx, schema: &Schema, id: &str) -> Result<Vec<Value>> {
         deleted: None,
         sort_order: SortOrder::Asc,
         limit: 1,
+        offset: Some(0),
         forward_edges: None,
         backward_edges: None,
         other_properties: Default::default(),
@@ -333,6 +334,7 @@ pub fn search(tx: &Tx, schema: &Schema, query: Search) -> Result<Vec<Value>> {
         deleted: query.deleted,
         sort_order: query.sort_order,
         _limit: query.limit,
+        _offset: query.offset,
     };
     let items = database_api::search_items(tx, &database_search)?;
     let mut result = Vec::new();
