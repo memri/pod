@@ -110,6 +110,7 @@ fn parse_item_base(row: &Row) -> Result<ItemBase> {
     })
 }
 
+#[allow(clippy::comparison_chain)]
 pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
     let mut sql_query = "\
         SELECT \
@@ -170,13 +171,22 @@ pub fn search_items(tx: &Tx, query: &DatabaseSearch) -> Result<Vec<ItemBase>> {
 
     let mut result = Vec::new();
     let mut num_left = query._limit;
+    let mut last_date: Option<DbTime> = None;
     while let Some(row) = rows.next()? {
-        if num_left == 0 {
-            break;
-        } else {
+        let item = parse_item_base(row)?;
+        if num_left > 1 {
             num_left -= 1;
+        } else if num_left == 1 {
+            num_left = 0;
+            last_date = Some(item.date_server_modified);
+        } else if let Some(last_date) = last_date {
+            if last_date != item.date_server_modified {
+                break;
+            }
+        } else {
+            break;
         }
-        result.push(parse_item_base(row)?);
+        result.push(item);
     }
     Ok(result)
 }
@@ -758,6 +768,29 @@ pub mod tests {
             .len(),
             1,
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_limiting() -> Result<()> {
+        let mut conn = new_conn();
+        let tx = conn.transaction()?;
+        let date = Utc::now().timestamp_millis();
+        let _item1 = insert_item_base(&tx, "one", "Person", date, date, date, false)?;
+        let _item2 = insert_item_base(&tx, "two", "Book", date, date, date, false)?;
+        let _item3 = insert_item_base(&tx, "three", "Street", date, date, date + 1, false)?;
+        let query = DatabaseSearch {
+            rowid: None,
+            id: None,
+            _type: None,
+            date_server_modified_gte: Some(date),
+            date_server_modified_lt: None,
+            deleted: None,
+            sort_order: SortOrder::Asc,
+            _limit: 1,
+        };
+        // 1 main item + 1 other item with identical `dateServerModified`
+        assert_eq!(search_items(&tx, &query)?.len(), 2);
         Ok(())
     }
 

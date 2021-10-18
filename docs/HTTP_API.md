@@ -258,8 +258,8 @@ Mark an item as deleted:
     "dateServerModified>=": 1234567890, // date filter
     "dateServerModified<": 1234567890,
     "deleted": false, // deleted filter
-    "_sortOrder": "DESC", // sort by server modification either "ASC" (by default) or "DESC"
-    "_limit": 100, // limit the result set
+    "_sortOrder": "Asc", // sort by server modification date, either "Asc" (by default) or "Desc"
+    "_limit": 100, // minimum number of items to return, see below
     "[[edges]]": {}, // include all forward edges in the response
     "~[[edges]]": {}, // include all backward edges in the response
   }
@@ -271,6 +271,10 @@ The endpoint will return an array of items which have all the properties above.
 
 As a first step of the 2021-03 Pod rewrite, only the above properties are supported.
 In the future, any item properties will be available.
+
+If `_limit` is specified, response will include the first `_limit` number of items
+from the database, plus also all other items
+with exactly the same `dateServerModified` as the last one.
 
 The properties of `"[[edges]]"` and `"~[[edges]]"` are
 ["magic constants"](https://en.wikipedia.org/wiki/Magic_number_(programming)) for now.
