@@ -138,21 +138,23 @@ fn run_docker_container(
             .filter(|c| c.is_ascii_alphanumeric())
             .collect::<String>()
     );
-    let mut args: Vec<String> = Vec::with_capacity(10);
-    args.push("run".to_string());
-    args.push(format!("--network={}", docker_network));
-    args.push(format!(
-        "--env=POD_FULL_ADDRESS={}",
-        callback_address(cli_options, true)
-    ));
-    args.push(format!("--env=POD_TARGET_ITEM={}", target_item_json));
-    args.push(format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id));
-    args.push(format!("--env=POD_OWNER={}", pod_owner));
-    args.push(format!("--env=POD_AUTH_JSON={}", pod_auth));
-    args.push(format!("--name={}", sanitize_docker_name(&container_id)));
-    args.push("--rm".to_string());
-    args.push("--".to_string());
-    args.push(container_image.to_string());
+    let args: Vec<String> = vec![
+        "run".to_string(),
+        format!("--network={}", docker_network),
+        format!(
+            "--env=POD_FULL_ADDRESS={}",
+            callback_address(cli_options, true)
+        ),
+        format!("--env=POD_TARGET_ITEM={}", target_item_json),
+        format!("--env=POD_PLUGINRUN_ID={}", triggered_by_item_id),
+        format!("--env=POD_OWNER={}", pod_owner),
+        format!("--env=POD_AUTH_JSON={}", pod_auth),
+        format!("--name={}", sanitize_docker_name(&container_id)),
+        "--pull=always".to_string(),
+        "--rm".to_string(),
+        "--".to_string(),
+        container_image.to_string(),
+    ];
     let envs: HashMap<&str, &str> = HashMap::new();
     run_any_command("docker", &args, &envs, triggered_by_item_id)
 }
