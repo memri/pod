@@ -20,6 +20,9 @@ See documentation on:
 There are 3 main ways to run Pod: using pre-built docker images to just run it,
 building it in docker, and building it locally/natively.
 
+In all of the approaches, you will also need `docker` version 20.10.0 (2020-12-08)
+if you want to run Plugins in containers.
+
 ### Run pre-built docker image of Pod
 This is the fastest way to get Pod running on your system,
 however it only works for Pod versions that have already been built on our server.  
