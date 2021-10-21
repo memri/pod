@@ -140,6 +140,7 @@ fn run_docker_container(
     );
     let args: Vec<String> = vec![
         "run".to_string(),
+        "--pull=always".to_string(),
         format!("--network={}", docker_network),
         format!(
             "--env=POD_FULL_ADDRESS={}",
@@ -150,7 +151,6 @@ fn run_docker_container(
         format!("--env=POD_OWNER={}", pod_owner),
         format!("--env=POD_AUTH_JSON={}", pod_auth),
         format!("--name={}", sanitize_docker_name(&container_id)),
-        "--pull=always".to_string(),
         "--rm".to_string(),
         "--".to_string(),
         container_image.to_string(),
