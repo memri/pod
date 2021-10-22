@@ -29,6 +29,7 @@ pub async fn run_server(cli_options: CliOptions) {
     info!("Starting {} HTTP server", package_name);
 
     let mut headers = HeaderMap::new();
+    // XXX: this not need it anymore
     headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
     let headers = warp::reply::with::headers(headers);
 
@@ -198,24 +199,6 @@ pub async fn run_server(cli_options: CliOptions) {
             respond_with_result(result)
         });
 
-    let origin_request =
-        warp::options()
-            .and(warp::header::<String>("origin"))
-            .map(move |_origin| {
-                let builder = http::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
-                    .header(
-                        "access-control-allow-headers",
-                        "Origin, X-Requested-With, Content-Type, Accept",
-                    )
-                    .header("access-control-max-age", "300");
-                builder
-                    .header("vary", "origin")
-                    .body("".to_string())
-                    .unwrap()
-            });
-
     let always_enabled_filters = version.with(&headers).or(create_item.with(&headers));
 
     let sensitive_filters = warp::any().and_then(|| async move {
@@ -225,6 +208,7 @@ pub async fn run_server(cli_options: CliOptions) {
             Err(warp::reject::not_found()) // reject in order to pass to filters below
         }
     });
+
     let sensitive_filters = sensitive_filters
         .or(get_item.with(&headers))
         .or(bulk_action.with(&headers))
@@ -236,14 +220,63 @@ pub async fn run_server(cli_options: CliOptions) {
         .or(upload_file.with(&headers))
         .or(upload_file_b.with(&headers))
         .or(get_file.with(&headers))
-        .or(send_email.with(&headers))
-        .or(origin_request.with(&headers));
+        .or(send_email.with(&headers));
 
-    let not_found = warp::any().map(|| {
-        warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
-    });
+    //  XXX: this avoid all the rejections come from
+    //  sensitive_filters
+    //
+    //  let not_found = warp::any().map(|| {
+    //      warp::reply::with_status("Endpoint not found", StatusCode::NOT_FOUND).into_response()
+    //  });
 
-    let filters = always_enabled_filters.or(sensitive_filters).or(not_found);
+    //  let filters = always_enabled_filters.or(sensitive_filters).or(not_found);
+    //
+    //
+    //  XXX we can use handle_error function (see the last function in the file)
+    //  to customize error msg with recover()
+    //
+    // let filters = always_enabled_filters.or(sensitive_filters).recover(handle_error).with(cors);
+    //
+    //
+    // XXX: this will always return MethodNotAllowed response regardless of rejection responses
+    // come from other filters, instead we can use warp::cors
+    //
+    // let origin_request =
+    //     warp::options()
+    //         .and(warp::header::<String>("origin"))
+    //         .map(move |_origin| {
+    //             let builder = http::response::Response::builder()
+    //                 .status(StatusCode::OK)
+    //                 .header("access-control-allow-methods", "HEAD, GET, POST, PUT")
+    //                 .header(
+    //                     "access-control-allow-headers",
+    //                     "Origin, X-Requested-With, Content-Type, Accept",
+    //                 )
+    //                 .header("access-control-max-age", "300");
+    //             builder
+    //                 .header("vary", "origin")
+    //                 .body("".to_string())
+    //                 .unwrap()
+    //         });
+    //
+
+    let cors = warp::cors()
+        .allow_methods(&[
+            http::Method::HEAD,
+            http::Method::GET,
+            http::Method::POST,
+            http::Method::PUT,
+        ])
+        .allow_headers(&[
+            http::header::ORIGIN,
+            http::header::CONTENT_TYPE,
+            http::header::ACCEPT,
+        ])
+        .allow_header("X-Requested-With")
+        .max_age(300)
+        .build();
+
+    let filters = always_enabled_filters.or(sensitive_filters).with(cors);
 
     if cli_options.non_tls || cli_options.insecure_non_tls.is_some() {
         let ip = if let Some(ip) = cli_options.insecure_non_tls {
@@ -327,3 +360,35 @@ fn check_public_ip(addr: &IpAddr) -> bool {
         _ => false,
     }
 }
+
+// XXX: customize error's msg
+// async fn handle_error(
+//     err: warp::Rejection,
+// ) -> std::result::Result<impl Reply, std::convert::Infallible> {
+//     if err.is_not_found() {
+//         return Ok(warp::reply::with_status(
+//             String::from("Endpoint Not Found"),
+//             StatusCode::NOT_FOUND,
+//         ));
+//     } else if let Some(e) = err.find::<crate::error::Error>() {
+//         // XXX: this for the project error types 
+//         return Ok(warp::reply::with_status(e.msg.clone(), e.code));
+//     } else if let Some(_) = err.find::<warp::reject::PayloadTooLarge>() {
+//         return Ok(warp::reply::with_status(
+//             String::from("PayloadTooLarge"),
+//             StatusCode::PAYLOAD_TOO_LARGE,
+//         ));
+//     } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+//         return Ok(warp::reply::with_status(
+//             String::from("MethodNotAllowed"),
+//             StatusCode::METHOD_NOT_ALLOWED,
+//         ));
+//     } else {
+//         return Ok(warp::reply::with_status(
+//             String::from("INTERNAL_SERVER_ERROR"),
+//             StatusCode::INTERNAL_SERVER_ERROR,
+//         ));
+//     }
+// }
+
+
