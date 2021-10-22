@@ -11,6 +11,7 @@ services:
       - "0.0.0.0:3030:3030"
     networks:
       - memri-net
+    hostname: pod
     volumes:
       - ./data/db:/data/db
       - ./data/files:/data/files
@@ -20,7 +21,7 @@ services:
       - "/pod"
       - "--owners=ANY"
       - "--insecure-non-tls=0.0.0.0"
-      - "--plugins-callback-address=http://pod_pod_1:3030"
+      - "--plugins-callback-address=http://pod:3030"
       - "--plugins-docker-network=pod_memri-net"
 
 volumes:
