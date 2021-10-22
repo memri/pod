@@ -88,3 +88,5 @@ For example, `.schema` will display the current database schema.
 
 If you want to fill the database with some example data, execute
 `res/example_data.sql` inside the database.
+
+... Test out caching...
