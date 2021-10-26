@@ -42,7 +42,7 @@ pub struct CliOptions {
 
     /// Set the callback address for plugins launched from within Pod.
     /// This should be the Pod-s address as seen by external plugins.
-    /// It defaults to "pod_pod_1:3030" if Pod is inside docker,
+    /// It defaults to "pod:3030" if Pod is inside docker,
     /// or "localhost:3030" on Linux,
     /// or "host.docker.internal:3030" on other operating systems.
     #[structopt(
