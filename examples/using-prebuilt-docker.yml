@@ -6,6 +6,7 @@ services:
       - "0.0.0.0:3030:3030"
     networks:
       - memri-net
+    hostname: pod
     volumes:
       - ./data/db:/data/db
       - ./data/files:/data/files
@@ -16,7 +17,7 @@ services:
       - "--owners=ANY"
       # Note that on a real system, you should not use non-https on 0.0.0.0
       - "--insecure-non-tls=0.0.0.0"
-      - "--plugins-callback-address=http://pod_pod_1:3030"
+      - "--plugins-callback-address=http://pod:3030"
       - "--plugins-docker-network=pod_memri-net"
 
 networks:
